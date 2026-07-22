@@ -459,6 +459,185 @@
     }
   })();
 
+  /* behaviour: lds-breadcrumb */
+  (function () {
+    /* Behaviour for <lds-breadcrumb>.
+     *
+     * When the trail overflows, middle items get data-overflow and an ellipsis
+     * control appears between the first and last items. expanded shows everything.
+     */
+
+    const state = new WeakMap();
+
+    LDS.behavior("lds-breadcrumb", {
+      connected(el) {
+        const overflow = el.$(".overflow");
+
+        syncLabel(el);
+        syncOverflowA11y(el, overflow);
+
+        const onOverflow = () => setExpanded(el, true);
+        overflow.addEventListener("click", onOverflow);
+
+        const slot = el.$("slot");
+        const onSlot = () => scheduleMeasure(el);
+        slot.addEventListener("slotchange", onSlot);
+
+        const ro = new ResizeObserver(() => scheduleMeasure(el));
+        ro.observe(el);
+
+        state.set(el, { onOverflow, onSlot, ro, raf: 0 });
+        scheduleMeasure(el);
+      },
+
+      disconnected(el) {
+        const s = state.get(el);
+        if (!s) return;
+        if (s.raf) cancelAnimationFrame(s.raf);
+        s.ro.disconnect();
+        state.delete(el);
+      },
+
+      attributeChanged(el, name) {
+        const overflow = el.$(".overflow");
+        if (!overflow) return;
+
+        if (name === "label") syncLabel(el);
+        if (name === "expanded") {
+          syncOverflowA11y(el, overflow);
+          scheduleMeasure(el);
+        }
+      },
+    });
+
+    function itemsOf(el) {
+      const slot = el.$("slot");
+      if (!slot) return [];
+      return slot.assignedElements({ flatten: true }).filter(function (node) {
+        return node.tagName === "LDS-BREADCRUMB-ITEM";
+      });
+    }
+
+    function scheduleMeasure(el) {
+      const s = state.get(el);
+      if (!s) return;
+      if (s.raf) cancelAnimationFrame(s.raf);
+      s.raf = requestAnimationFrame(function () {
+        s.raf = 0;
+        measure(el);
+      });
+    }
+
+    function measure(el) {
+      const items = itemsOf(el);
+      const overflow = el.$(".overflow");
+      if (!overflow) return;
+
+      /* Reset so we measure the full trail. */
+      items.forEach(function (item) {
+        item.removeAttribute("data-overflow");
+      });
+      el.removeAttribute("data-collapsed");
+
+      if (el.boolAttr("expanded") || items.length <= 2) {
+        overflow.hidden = true;
+        syncOverflowA11y(el, overflow);
+        return;
+      }
+
+      /* If everything fits, stay expanded visually with no overflow control. */
+      if (el.scrollWidth <= el.clientWidth + 1) {
+        overflow.hidden = true;
+        syncOverflowA11y(el, overflow);
+        return;
+      }
+
+      /* Collapse the middle: keep first + last (and last-1 if max-items allows). */
+      const keepTail = Math.max(1, parseInt(el.getAttribute("max-items") || "1", 10) || 1);
+      const lastKept = Math.max(1, items.length - keepTail);
+
+      for (let i = 1; i < lastKept; i++) {
+        items[i].setAttribute("data-overflow", "");
+      }
+
+      el.setAttribute("data-collapsed", "");
+      overflow.hidden = false;
+      syncOverflowA11y(el, overflow);
+
+      /* If still overflowing with only ends visible, drop extra tail items. */
+      if (el.scrollWidth > el.clientWidth + 1 && keepTail > 1) {
+        for (let i = items.length - keepTail; i < items.length - 1; i++) {
+          if (i > 0) items[i].setAttribute("data-overflow", "");
+        }
+      }
+    }
+
+    function setExpanded(el, expanded) {
+      if (el.boolAttr("expanded") === expanded) return;
+
+      const event = el.emit("lds-expand", { expanded: expanded });
+      if (event.defaultPrevented) return;
+
+      el.toggleAttribute("expanded", expanded);
+    }
+
+    function syncLabel(el) {
+      el.setAttribute("aria-label", el.getAttribute("label") || "Breadcrumb");
+    }
+
+    function syncOverflowA11y(el, overflow) {
+      overflow.setAttribute("aria-expanded", el.boolAttr("expanded") ? "true" : "false");
+      overflow.setAttribute("aria-label", "Show more path");
+    }
+  })();
+
+  /* behaviour: lds-breadcrumb-item */
+  (function () {
+    /* Behaviour for <lds-breadcrumb-item>.
+     *
+     * Forwards href/target onto the inner <a>. The current page drops href and
+     * sets aria-current="page" so it is not announced as a link.
+     */
+
+    LDS.behavior("lds-breadcrumb-item", {
+      connected(el) {
+        sync(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el.$(".link")) return;
+        if (name === "href" || name === "current" || name === "target") sync(el);
+      },
+    });
+
+    function sync(el) {
+      const link = el.$(".link");
+      if (!link) return;
+
+      const current = el.boolAttr("current");
+      const href = el.getAttribute("href");
+
+      if (current || !href) {
+        link.removeAttribute("href");
+        link.removeAttribute("target");
+        link.removeAttribute("rel");
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.setAttribute("href", href);
+        link.removeAttribute("aria-current");
+
+        const target = el.getAttribute("target");
+        if (target) {
+          link.setAttribute("target", target);
+          if (target === "_blank") link.setAttribute("rel", "noopener noreferrer");
+        } else {
+          link.removeAttribute("target");
+          link.removeAttribute("rel");
+        }
+      }
+    }
+  })();
+
   /* behaviour: lds-nav */
   (function () {
     /* Behaviour for <lds-nav>.
@@ -1039,6 +1218,258 @@
   height: 100%;
   fill: none;
   stroke: currentColor;
+}`,
+  });
+
+  /* component: lds-breadcrumb (draft) */
+  LDS.define({
+    tag: "lds-breadcrumb",
+    className: "LdsBreadcrumb",
+    observed: ["label", "expanded", "max-items"],
+    defaults: {"max-items": "1"},
+    template: `<nav class="root" part="root">
+  <div class="list" part="list" role="list">
+    <slot></slot>
+    <button type="button" class="overflow" part="overflow" hidden aria-expanded="false">
+      <span class="overflow__sep" aria-hidden="true"></span>
+      <span class="overflow__icon" aria-hidden="true"></span>
+    </button>
+  </div>
+</nav>`,
+    styles: `/* Hierarchy trail. Always one line: middle items collapse behind the overflow
+ * control when the host is too narrow; expanded shows every step. */
+
+:host {
+  --lds-breadcrumb-fg: var(--lds-color-fg-muted);
+  --lds-breadcrumb-fg-current: var(--lds-color-fg-default);
+  --lds-breadcrumb-gap: var(--lds-space-1);
+
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--lds-breadcrumb-fg);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--lds-breadcrumb-gap);
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Expanded in a tight container: scroll instead of wrapping (wrapping puts
+ * leading chevrons at the start of new lines). */
+:host([expanded]) .list {
+  overflow-x: auto;
+}
+
+.overflow {
+  display: none;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-breadcrumb-gap);
+  order: 2;
+
+  height: var(--lds-control-height-sm);
+  padding: 0;
+  padding-inline-end: var(--lds-space-1);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-color-fg-muted);
+
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+.overflow:hover {
+  color: var(--lds-color-fg-default);
+}
+
+.overflow:hover .overflow__icon {
+  background: var(--lds-color-bg-subtle);
+}
+
+.overflow:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([data-collapsed]:not([expanded])) .overflow {
+  display: inline-flex;
+}
+
+/* Match breadcrumb-item separators so Home > … > Current reads evenly. */
+.overflow__sep {
+  display: inline-flex;
+  flex: none;
+  width: 0.4em;
+  height: 0.4em;
+  margin-inline: var(--lds-space-1);
+  border-inline-end: 2px solid var(--lds-color-border-strong);
+  border-block-end: 2px solid var(--lds-color-border-strong);
+  rotate: -45deg;
+}
+
+.overflow__icon {
+  display: inline-flex;
+  position: relative;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  border-radius: var(--lds-control-radius-sm);
+  transition: background var(--lds-transition-control);
+}
+
+.overflow__icon::before,
+.overflow__icon::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  width: 0.25em;
+  height: 0.25em;
+  background: currentColor;
+  border-radius: var(--lds-radius-full);
+  translate: 0 -50%;
+}
+
+.overflow__icon::before {
+  inset-inline-start: calc(50% - 0.45em);
+  box-shadow: 0.45em 0 0 currentColor;
+}
+
+.overflow__icon::after {
+  inset-inline-start: calc(50% + 0.45em);
+}
+
+::slotted(lds-breadcrumb-item) {
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+::slotted(lds-breadcrumb-item:first-child) {
+  order: 1;
+}
+
+::slotted(lds-breadcrumb-item:not(:first-child)) {
+  order: 3;
+}
+
+/* Collapsed single-line: last step fills the remainder and ellipsizes. */
+:host([data-collapsed]:not([expanded])) ::slotted(lds-breadcrumb-item:last-child) {
+  flex: 1 1 0;
+  min-width: 0;
+}`,
+  });
+
+  /* component: lds-breadcrumb-item (draft) */
+  LDS.define({
+    tag: "lds-breadcrumb-item",
+    className: "LdsBreadcrumbItem",
+    observed: ["href", "target", "current"],
+    defaults: {},
+    template: `<span class="item" part="item" role="listitem">
+  <span class="sep" part="separator" aria-hidden="true"></span>
+  <a class="link" part="link"><slot></slot></a>
+</span>`,
+    styles: `/* One step in an lds-breadcrumb. The leading separator hides on :first-child. */
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+:host([hidden]),
+:host([data-overflow]) {
+  display: none;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lds-breadcrumb-gap, var(--lds-space-1));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sep {
+  display: inline-flex;
+  flex: none;
+  width: 0.4em;
+  height: 0.4em;
+  margin-inline: var(--lds-space-1);
+  border-inline-end: 2px solid var(--lds-color-border-strong);
+  border-block-end: 2px solid var(--lds-color-border-strong);
+  rotate: -45deg;
+}
+
+:host(:first-child) .sep {
+  display: none;
+}
+
+.link {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+  color: var(--lds-breadcrumb-fg, var(--lds-color-fg-muted));
+  text-decoration: none;
+  border-radius: var(--lds-control-radius-sm);
+  transition: color var(--lds-transition-control);
+}
+
+a.link:hover {
+  color: var(--lds-color-fg-link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.link:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([current]) .link,
+.link[aria-current="page"] {
+  color: var(--lds-breadcrumb-fg-current, var(--lds-color-fg-default));
+  font-weight: var(--lds-font-weight-semibold);
+  text-decoration: none;
+  pointer-events: none;
 }`,
   });
 

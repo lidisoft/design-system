@@ -1,0 +1,144 @@
+tag = "lds-breadcrumb"
+name = "Breadcrumb"
+category = "navigation"
+status = "draft"
+summary = "Hierarchy trail that collapses middle steps when space is tight."
+
+description = """
+Shows the path from a root to the current page. Compose with
+lds-breadcrumb-item. When the host is too narrow for the full trail, middle
+items hide behind an ellipsis control; expanded reveals them again.
+
+Separators are drawn by each item (hidden on the first). This is not a sidebar
+or top bar — use lds-nav / lds-navbar for those.
+"""
+
+a11y = """
+Renders a <nav> with role=\"list\" children. The host aria-label defaults to
+Breadcrumb; override with label when the page has multiple breadcrumb navs.
+
+- The overflow control is a real <button> with aria-expanded.
+- Mark the current page with current on the last lds-breadcrumb-item (sets
+  aria-current=\"page\" and removes the link).
+- Collapsed middle items are removed from the layout with data-overflow; they
+  return when expanded.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name for the nav. Defaults to Breadcrumb."
+
+[[attributes]]
+name = "expanded"
+type = "boolean"
+description = "Show the full trail even when it would otherwise collapse."
+
+[[attributes]]
+name = "max-items"
+type = "number"
+default = "1"
+description = "How many trailing items to keep visible when collapsed (first item is always kept)."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "Ordered lds-breadcrumb-item children."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-expand"
+detail = "{ expanded: boolean }"
+description = "Fired before expanded changes (overflow control). Cancel to keep the previous state."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "root"
+description = "The outer <nav>."
+
+[[parts]]
+name = "list"
+description = "The list wrapper around the slot."
+
+[[parts]]
+name = "overflow"
+description = "The ellipsis button shown when middle items are collapsed."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-breadcrumb-fg"
+default = "--lds-color-fg-muted"
+description = "Default step colour."
+
+[[css_vars]]
+name = "--lds-breadcrumb-fg-current"
+default = "--lds-color-fg-default"
+description = "Current page colour."
+
+[[css_vars]]
+name = "--lds-breadcrumb-gap"
+default = "--lds-space-1"
+description = "Space between steps and separators."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Default"
+description = "A short path ending on the current page."
+html = """
+<lds-breadcrumb>
+  <lds-breadcrumb-item href="#">Home</lds-breadcrumb-item>
+  <lds-breadcrumb-item href="#">Incidents</lds-breadcrumb-item>
+  <lds-breadcrumb-item current>SEV-1842</lds-breadcrumb-item>
+</lds-breadcrumb>
+"""
+
+[[stories]]
+name = "Long path"
+description = "Narrow the container to see middle items collapse behind the ellipsis."
+html = """
+<div style="max-width: 16rem; padding: var(--lds-space-3); border: 1px solid var(--lds-color-border-default); border-radius: var(--lds-radius-md)">
+  <lds-breadcrumb>
+    <lds-breadcrumb-item href="#">Home</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">Workspace</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">Incidents</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">2026</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">July</lds-breadcrumb-item>
+    <lds-breadcrumb-item current>SEV-1842 database failover</lds-breadcrumb-item>
+  </lds-breadcrumb>
+</div>
+"""
+
+[[stories]]
+name = "Expanded"
+description = "Force the full trail with expanded — middle steps stay visible (no collapse)."
+html = """
+<lds-breadcrumb expanded>
+  <lds-breadcrumb-item href="#">Home</lds-breadcrumb-item>
+  <lds-breadcrumb-item href="#">Workspace</lds-breadcrumb-item>
+  <lds-breadcrumb-item href="#">Incidents</lds-breadcrumb-item>
+  <lds-breadcrumb-item href="#">2026</lds-breadcrumb-item>
+  <lds-breadcrumb-item current>SEV-1842</lds-breadcrumb-item>
+</lds-breadcrumb>
+"""
+
+[[stories]]
+name = "Max items"
+description = "Keep two trailing steps visible when collapsed."
+html = """
+<div style="max-width: 18rem; padding: var(--lds-space-3); border: 1px solid var(--lds-color-border-default); border-radius: var(--lds-radius-md)">
+  <lds-breadcrumb max-items="2">
+    <lds-breadcrumb-item href="#">Home</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">Org</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">Team</lds-breadcrumb-item>
+    <lds-breadcrumb-item href="#">Schedules</lds-breadcrumb-item>
+    <lds-breadcrumb-item current>Primary</lds-breadcrumb-item>
+  </lds-breadcrumb>
+</div>
+"""

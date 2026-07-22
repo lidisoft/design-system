@@ -1,0 +1,74 @@
+/* One step in an lds-breadcrumb. The leading separator hides on :first-child. */
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+:host([hidden]),
+:host([data-overflow]) {
+  display: none;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lds-breadcrumb-gap, var(--lds-space-1));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sep {
+  display: inline-flex;
+  flex: none;
+  width: 0.4em;
+  height: 0.4em;
+  margin-inline: var(--lds-space-1);
+  border-inline-end: 2px solid var(--lds-color-border-strong);
+  border-block-end: 2px solid var(--lds-color-border-strong);
+  rotate: -45deg;
+}
+
+:host(:first-child) .sep {
+  display: none;
+}
+
+.link {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+  color: var(--lds-breadcrumb-fg, var(--lds-color-fg-muted));
+  text-decoration: none;
+  border-radius: var(--lds-control-radius-sm);
+  transition: color var(--lds-transition-control);
+}
+
+a.link:hover {
+  color: var(--lds-color-fg-link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.link:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([current]) .link,
+.link[aria-current="page"] {
+  color: var(--lds-breadcrumb-fg-current, var(--lds-color-fg-default));
+  font-weight: var(--lds-font-weight-semibold);
+  text-decoration: none;
+  pointer-events: none;
+}

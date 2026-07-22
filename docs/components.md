@@ -18,6 +18,8 @@ every LiDiSoft service needs.
 | `lds-nav` | **draft** — sidebar with item + group |
 | `lds-nav-item` | **draft** — sidebar destination |
 | `lds-nav-group` | **draft** — collapsible sidebar section |
+| `lds-breadcrumb` | **draft** — hierarchy trail with middle collapse |
+| `lds-breadcrumb-item` | **draft** — breadcrumb step |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -107,7 +109,8 @@ wiring into every control.
 | `lds-nav` | App sidebar | Brand / items / footer; `collapsed` icon rail via inherited CSS variables |
 | `lds-nav-item` | Sidebar destination | `href`, `active`, `disabled`; start/end slots for icons |
 | `lds-nav-group` | Collapsible section | `label`, `open`; trigger hides in a collapsed parent nav |
-| `lds-breadcrumb` | Hierarchy | Collapses in the middle when narrow |
+| `lds-breadcrumb` | Hierarchy trail | Collapses middle steps behind an ellipsis when narrow; `expanded`, `max-items` |
+| `lds-breadcrumb-item` | Breadcrumb step | `href`, `current`; leading separator hides on the first item |
 | `lds-menu` | Dropdown actions | `lds-menu-item`, separators; keyboard menu pattern |
 | `lds-tooltip` | Supplementary hints | Never the only source of information |
 | `lds-command` | Command palette | Depends on `lds-combobox`; high value, build late |

@@ -71,7 +71,8 @@ components will.
       (first nav deliverable; no drawer dependency)
 - [ ] **`lds-nav` + `lds-nav-item` + `lds-nav-group`** — sidebar with active
       items, collapsible groups and a collapsed icon rail
-- [ ] `lds-breadcrumb`
+- [ ] **`lds-breadcrumb` + `lds-breadcrumb-item`** — hierarchy trail; collapses
+      middle steps when narrow
 - [ ] `lds-timeline` — needed by tocsin's incident history
 - [ ] `lds-progress`, `lds-pagination`, `lds-banner`, `lds-code`
 

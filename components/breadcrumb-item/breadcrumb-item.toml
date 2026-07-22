@@ -1,0 +1,67 @@
+tag = "lds-breadcrumb-item"
+name = "Breadcrumb item"
+category = "navigation"
+status = "draft"
+summary = "One step in an lds-breadcrumb trail."
+
+description = """
+A link, or the current page when current is set (or href is omitted). Renders
+inside lds-breadcrumb; the leading chevron separator hides automatically on the
+first item.
+"""
+
+a11y = """
+Current items set aria-current=\"page\" on the inner control and drop href so
+they are not announced as links. Callers provide the visible label via the
+default slot.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "href"
+type = "string"
+description = "Navigation target. Omit (or set current) for the present page."
+
+[[attributes]]
+name = "target"
+type = "string"
+description = "Forwarded to the inner <a>. _blank also sets rel=\"noopener noreferrer\"."
+
+[[attributes]]
+name = "current"
+type = "boolean"
+description = "Marks this step as the current page."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "Step label."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "item"
+description = "Outer listitem wrapper."
+
+[[parts]]
+name = "separator"
+description = "Leading chevron; hidden on the first item."
+
+[[parts]]
+name = "link"
+description = "The inner <a> (or unlinked current control)."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "In a trail"
+description = "Items are meant to be composed inside lds-breadcrumb."
+html = """
+<lds-breadcrumb>
+  <lds-breadcrumb-item href="#">Product</lds-breadcrumb-item>
+  <lds-breadcrumb-item href="#">Docs</lds-breadcrumb-item>
+  <lds-breadcrumb-item current>Breadcrumb</lds-breadcrumb-item>
+</lds-breadcrumb>
+"""

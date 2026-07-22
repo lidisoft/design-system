@@ -1,0 +1,149 @@
+/* Hierarchy trail. Always one line: middle items collapse behind the overflow
+ * control when the host is too narrow; expanded shows every step. */
+
+:host {
+  --lds-breadcrumb-fg: var(--lds-color-fg-muted);
+  --lds-breadcrumb-fg-current: var(--lds-color-fg-default);
+  --lds-breadcrumb-gap: var(--lds-space-1);
+
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--lds-breadcrumb-fg);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--lds-breadcrumb-gap);
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Expanded in a tight container: scroll instead of wrapping (wrapping puts
+ * leading chevrons at the start of new lines). */
+:host([expanded]) .list {
+  overflow-x: auto;
+}
+
+.overflow {
+  display: none;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-breadcrumb-gap);
+  order: 2;
+
+  height: var(--lds-control-height-sm);
+  padding: 0;
+  padding-inline-end: var(--lds-space-1);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-color-fg-muted);
+
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+.overflow:hover {
+  color: var(--lds-color-fg-default);
+}
+
+.overflow:hover .overflow__icon {
+  background: var(--lds-color-bg-subtle);
+}
+
+.overflow:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([data-collapsed]:not([expanded])) .overflow {
+  display: inline-flex;
+}
+
+/* Match breadcrumb-item separators so Home > … > Current reads evenly. */
+.overflow__sep {
+  display: inline-flex;
+  flex: none;
+  width: 0.4em;
+  height: 0.4em;
+  margin-inline: var(--lds-space-1);
+  border-inline-end: 2px solid var(--lds-color-border-strong);
+  border-block-end: 2px solid var(--lds-color-border-strong);
+  rotate: -45deg;
+}
+
+.overflow__icon {
+  display: inline-flex;
+  position: relative;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  border-radius: var(--lds-control-radius-sm);
+  transition: background var(--lds-transition-control);
+}
+
+.overflow__icon::before,
+.overflow__icon::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  width: 0.25em;
+  height: 0.25em;
+  background: currentColor;
+  border-radius: var(--lds-radius-full);
+  translate: 0 -50%;
+}
+
+.overflow__icon::before {
+  inset-inline-start: calc(50% - 0.45em);
+  box-shadow: 0.45em 0 0 currentColor;
+}
+
+.overflow__icon::after {
+  inset-inline-start: calc(50% + 0.45em);
+}
+
+::slotted(lds-breadcrumb-item) {
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+::slotted(lds-breadcrumb-item:first-child) {
+  order: 1;
+}
+
+::slotted(lds-breadcrumb-item:not(:first-child)) {
+  order: 3;
+}
+
+/* Collapsed single-line: last step fills the remainder and ellipsizes. */
+:host([data-collapsed]:not([expanded])) ::slotted(lds-breadcrumb-item:last-child) {
+  flex: 1 1 0;
+  min-width: 0;
+}
