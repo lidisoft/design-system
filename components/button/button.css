@@ -156,6 +156,9 @@
 
 .btn__label {
   min-width: 0;
+  /* line-height: 1 (from .btn) + overflow:hidden clips descenders (g, y, p).
+   * A slightly taller line box keeps ellipsis clipping horizontal only. */
+  line-height: var(--lds-font-leading-snug);
   overflow: hidden;
   text-overflow: ellipsis;
 }
