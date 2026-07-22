@@ -1,0 +1,97 @@
+#
+# Dark theme.
+#
+# Overrides the semantic layer only. If you find yourself needing to override a
+# core token here, the semantic layer is missing an alias — add it there instead.
+#
+# Applied by setting data-lds-theme="dark" on <html>, or via LDS.setTheme("dark").
+# runtime/reset.css additionally maps prefers-color-scheme onto this selector.
+#
+
+[meta]
+layer = "theme"
+selector = "[data-lds-theme=\"dark\"]"
+
+[color.bg]
+canvas = "{color.gray.900}"
+subtle = "{color.gray.950}"
+muted = "{color.gray.800}"
+raised = "{color.gray.800}"
+inverse = "{color.gray.50}"
+overlay = "rgba(5, 7, 11, 0.7)"
+
+[color.fg]
+default = "{color.gray.100}"
+muted = "{color.gray.400}"
+subtle = "{color.gray.500}"
+disabled = "{color.gray.600}"
+inverse = "{color.gray.900}"
+"on-accent" = "{color.gray.0}"
+link = "{color.blue.300}"
+
+[color.border]
+subtle = "{color.gray.800}"
+default = "{color.gray.700}"
+strong = "{color.gray.600}"
+inverse = "{color.gray.300}"
+
+# Intents lighten one step in dark mode so they keep contrast against a dark
+# surface; the subtle/muted roles invert to dark tints rather than pale washes.
+[color.accent]
+subtle = "rgba(74, 159, 227, 0.12)"
+muted = "rgba(74, 159, 227, 0.22)"
+default = "{color.blue.400}"
+hover = "{color.blue.300}"
+active = "{color.blue.200}"
+border = "rgba(74, 159, 227, 0.35)"
+fg = "{color.blue.300}"
+
+[color.success]
+subtle = "rgba(58, 167, 87, 0.12)"
+muted = "rgba(58, 167, 87, 0.22)"
+default = "{color.green.400}"
+hover = "{color.green.300}"
+active = "{color.green.200}"
+border = "rgba(58, 167, 87, 0.35)"
+fg = "{color.green.300}"
+
+[color.warning]
+subtle = "rgba(245, 207, 43, 0.12)"
+muted = "rgba(245, 207, 43, 0.22)"
+default = "{color.yellow.400}"
+hover = "{color.yellow.300}"
+active = "{color.yellow.200}"
+border = "rgba(245, 207, 43, 0.35)"
+fg = "{color.yellow.300}"
+
+[color.danger]
+subtle = "rgba(245, 111, 92, 0.12)"
+muted = "rgba(245, 111, 92, 0.22)"
+default = "{color.coral.400}"
+hover = "{color.coral.300}"
+active = "{color.coral.200}"
+border = "rgba(245, 111, 92, 0.35)"
+fg = "{color.coral.300}"
+
+[color.neutral]
+subtle = "{color.gray.800}"
+muted = "{color.gray.700}"
+default = "{color.gray.100}"
+hover = "{color.gray.200}"
+active = "{color.gray.0}"
+border = "{color.gray.700}"
+fg = "{color.gray.300}"
+
+[color.focus]
+ring = "{color.blue.400}"
+"ring-offset" = "{color.bg.canvas}"
+
+[shadow]
+sm = "0 1px 2px rgba(0, 0, 0, 0.4)"
+md = "0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.35)"
+lg = "0 8px 20px rgba(0, 0, 0, 0.45), 0 24px 48px rgba(0, 0, 0, 0.4)"
+xl = "0 24px 64px rgba(0, 0, 0, 0.6)"
+inset = "inset 0 1px 2px rgba(0, 0, 0, 0.35)"
+
+[card]
+border = "{color.border.default}"

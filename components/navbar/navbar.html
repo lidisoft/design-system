@@ -1,0 +1,8 @@
+<header class="bar" part="bar">
+  <div class="brand" part="brand"><slot name="brand"></slot></div>
+  <button type="button" class="toggle" part="toggle" aria-expanded="false" aria-controls="links">
+    <span class="toggle__icon" aria-hidden="true"></span>
+  </button>
+  <nav class="links" part="links" id="links"><slot></slot></nav>
+  <div class="actions" part="actions"><slot name="actions"></slot></div>
+</header>

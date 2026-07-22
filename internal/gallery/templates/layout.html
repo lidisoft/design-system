@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} · LDS</title>
+  <!-- The gallery consumes the real bundle. If it looks wrong here, it is wrong. -->
+  <link rel="stylesheet" href="/dist/lds.css">
+  <link rel="stylesheet" href="/_gallery/gallery.css">
+</head>
+<body>
+  <a class="lds-skip-link" href="#main">Skip to content</a>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <strong>LDS</strong>
+        <span class="badge">v{{.Version}}</span>
+        {{if .Dev}}<span class="badge badge--dev">dev</span>{{end}}
+      </div>
+
+      <nav class="sidebar__nav" aria-label="Gallery">
+        <a href="/" {{if eq .Active "overview"}}aria-current="page"{{end}}>Overview</a>
+        <a href="/tokens" {{if eq .Active "tokens"}}aria-current="page"{{end}}>Tokens</a>
+
+        {{range .Nav}}
+          <p class="sidebar__group">{{title .Name}}</p>
+          {{range .Components}}
+            <a href="/components/{{.Tag}}" {{if eq $.Active .Tag}}aria-current="page"{{end}}>
+              {{.Name}}
+              <span class="status status--{{.Status}}">{{.Status}}</span>
+            </a>
+          {{end}}
+        {{end}}
+
+        {{if not .Nav}}<p class="sidebar__empty">No components yet.</p>{{end}}
+      </nav>
+
+      <button class="theme-toggle" type="button" data-theme-toggle>Toggle theme</button>
+    </aside>
+
+    <main class="main" id="main">
+      {{template "content" .}}
+    </main>
+  </div>
+
+  <script src="/dist/lds.js"></script>
+  <script>
+    /* Theme preference is gallery-local; consuming apps do their own thing. */
+    (function () {
+      var stored = localStorage.getItem("lds-gallery-theme");
+      if (stored) LDS.setTheme(stored);
+
+      document.querySelector("[data-theme-toggle]").addEventListener("click", function () {
+        var next = document.documentElement.getAttribute("data-lds-theme") === "dark" ? "light" : "dark";
+        LDS.setTheme(next);
+        localStorage.setItem("lds-gallery-theme", next);
+      });
+
+      document.querySelectorAll("[data-source-toggle]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var panel = document.getElementById(button.getAttribute("aria-controls"));
+          var open = button.getAttribute("aria-expanded") === "true";
+          button.setAttribute("aria-expanded", String(!open));
+          panel.hidden = open;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

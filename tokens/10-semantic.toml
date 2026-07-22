@@ -1,0 +1,171 @@
+#
+# Semantic tokens — the only layer components are allowed to reference.
+#
+# Every value here is an alias into 00-core.toml written as {dotted.path}.
+# A theme (tokens/themes/*.toml) overrides entries in this layer and nothing
+# else, which is what keeps theming to a small, reviewable diff.
+#
+
+[meta]
+layer = "semantic"
+
+# ---------------------------------------------------------------------------
+# Surfaces
+# ---------------------------------------------------------------------------
+
+[color.bg]
+canvas = "{color.gray.0}"
+subtle = "{color.gray.50}"
+muted = "{color.gray.100}"
+raised = "{color.gray.0}"
+inverse = "{color.gray.900}"
+overlay = "rgba(18, 21, 29, 0.55)"
+
+# ---------------------------------------------------------------------------
+# Foreground
+# ---------------------------------------------------------------------------
+
+[color.fg]
+default = "{color.gray.800}"
+muted = "{color.gray.600}"
+subtle = "{color.gray.500}"
+disabled = "{color.gray.400}"
+inverse = "{color.gray.100}"
+"on-accent" = "{color.gray.0}"
+link = "{color.blue.600}"
+
+# ---------------------------------------------------------------------------
+# Borders
+# ---------------------------------------------------------------------------
+
+[color.border]
+subtle = "{color.gray.100}"
+default = "{color.gray.200}"
+strong = "{color.gray.300}"
+inverse = "{color.gray.700}"
+
+# ---------------------------------------------------------------------------
+# Intents
+#
+# Each intent exposes the same five roles so components can switch intent with
+# a single attribute and no per-intent CSS.
+# ---------------------------------------------------------------------------
+
+[color.accent]
+subtle = "{color.blue.50}"
+muted = "{color.blue.100}"
+default = "{color.blue.500}"
+hover = "{color.blue.600}"
+active = "{color.blue.700}"
+border = "{color.blue.200}"
+fg = "{color.blue.700}"
+
+[color.success]
+subtle = "{color.green.50}"
+muted = "{color.green.100}"
+default = "{color.green.500}"
+hover = "{color.green.600}"
+active = "{color.green.700}"
+border = "{color.green.200}"
+fg = "{color.green.700}"
+
+[color.warning]
+subtle = "{color.yellow.50}"
+muted = "{color.yellow.100}"
+default = "{color.yellow.500}"
+hover = "{color.yellow.600}"
+active = "{color.yellow.700}"
+border = "{color.yellow.200}"
+fg = "{color.yellow.800}"
+
+[color.danger]
+subtle = "{color.coral.50}"
+muted = "{color.coral.100}"
+default = "{color.coral.500}"
+hover = "{color.coral.600}"
+active = "{color.coral.700}"
+border = "{color.coral.200}"
+fg = "{color.coral.700}"
+
+[color.neutral]
+subtle = "{color.gray.50}"
+muted = "{color.gray.100}"
+default = "{color.gray.800}"
+hover = "{color.gray.700}"
+active = "{color.gray.900}"
+border = "{color.gray.200}"
+fg = "{color.gray.700}"
+
+# ---------------------------------------------------------------------------
+# Focus — one ring, used by every focusable component.
+# ---------------------------------------------------------------------------
+
+[color.focus]
+ring = "{color.blue.500}"
+"ring-offset" = "{color.bg.canvas}"
+
+[focus]
+width = "2px"
+offset = "2px"
+
+# ---------------------------------------------------------------------------
+# Controls — the shared geometry of buttons, inputs, selects and switches.
+# Keeping these here is what makes a button and an input line up in a row.
+# ---------------------------------------------------------------------------
+
+[control.height]
+sm = "32px"
+md = "40px"
+lg = "48px"
+
+[control.padding-x]
+sm = "{space.3}"
+md = "{space.4}"
+lg = "{space.5}"
+
+[control.gap]
+sm = "{space.2}"
+md = "{space.2}"
+lg = "{space.3}"
+
+[control.font-size]
+sm = "{font.size.sm}"
+md = "{font.size.sm}"
+lg = "{font.size.md}"
+
+[control.radius]
+sm = "{radius.sm}"
+md = "{radius.md}"
+lg = "{radius.md}"
+pill = "{radius.full}"
+
+[control.border-width]
+default = "1px"
+
+# ---------------------------------------------------------------------------
+# Icons — shared sizes for <lds-icon>. Kept separate from control.height so
+# an icon can sit inside a control without matching its full height.
+# ---------------------------------------------------------------------------
+
+[icon.size]
+sm = "16px"
+md = "20px"
+lg = "24px"
+
+# ---------------------------------------------------------------------------
+# Surfaces built on top of the primitives
+# ---------------------------------------------------------------------------
+
+[card]
+radius = "{radius.lg}"
+padding = "{space.6}"
+shadow = "{shadow.md}"
+border = "{color.border.default}"
+
+[overlay]
+radius = "{radius.lg}"
+shadow = "{shadow.xl}"
+
+[transition]
+control = "{duration.fast} {easing.standard}"
+surface = "{duration.normal} {easing.standard}"

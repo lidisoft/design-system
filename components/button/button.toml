@@ -1,0 +1,203 @@
+tag = "lds-button"
+name = "Button"
+category = "primitives"
+status = "stable"
+summary = "Triggers an action. The reference implementation for every other component."
+
+description = """
+Button is the worked example the rest of the system is built against — it
+exercises attribute-driven variants, ::part exposure, a JS behaviour, and the
+shadow-DOM form participation problem that every interactive control hits.
+
+Read components/button/ alongside docs/component-authoring.md before adding a
+new component.
+"""
+
+a11y = """
+Renders a real <button> inside the shadow root, so keyboard activation, the
+implicit role and the disabled semantics come from the platform.
+
+- `disabled` sets the inner button's disabled property, removing it from the
+  tab order and suppressing activation.
+- `loading` keeps the button focusable but sets aria-busy and blocks activation,
+  because removing focus mid-interaction strands keyboard users.
+- Icon-only buttons have no accessible name from their slot content; the caller
+  must pass `label`, which is applied as aria-label.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "variant"
+type = "enum"
+values = ["primary", "secondary", "ghost", "danger", "link"]
+default = "primary"
+description = "Visual weight. One primary action per view; secondary for the rest."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Control height, drawn from the shared control.* tokens so buttons line up with inputs."
+
+[[attributes]]
+name = "type"
+type = "enum"
+values = ["button", "submit", "reset"]
+default = "button"
+description = "Form behaviour. submit/reset are forwarded to the containing form by the behaviour script."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks activation and removes the control from the tab order."
+
+[[attributes]]
+name = "loading"
+type = "boolean"
+description = "Shows a spinner and blocks activation while keeping focus. Use for in-flight requests."
+
+[[attributes]]
+name = "full-width"
+type = "boolean"
+description = "Stretches to the width of the container. Useful in narrow forms and drawers."
+
+[[attributes]]
+name = "pill"
+type = "boolean"
+description = "Fully rounded, matching the lidisoft.com marketing style."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name. Required when the button has no text, e.g. icon-only."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "The button label."
+
+[[slots]]
+name = "start"
+description = "Leading adornment, typically an icon."
+
+[[slots]]
+name = "end"
+description = "Trailing adornment, e.g. a chevron or count."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-click"
+detail = "{ originalEvent: PointerEvent }"
+description = "Dispatched on activation. Not fired while disabled or loading. Cancel it to suppress the form submit."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "button"
+description = "The inner <button> element."
+
+[[parts]]
+name = "label"
+description = "The wrapper around the default slot."
+
+[[parts]]
+name = "spinner"
+description = "The loading indicator."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-button-bg"
+default = "per variant"
+description = "Background. Set it to introduce a one-off colour without adding a variant."
+
+[[css_vars]]
+name = "--lds-button-fg"
+default = "per variant"
+description = "Text colour."
+
+[[css_vars]]
+name = "--lds-button-radius"
+default = "--lds-control-radius-md"
+description = "Corner radius. The pill attribute overrides this."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Variants"
+description = "Weight descends from primary to link. A view should contain exactly one primary button."
+html = """
+<div class="lds-cluster">
+  <lds-button variant="primary">Acknowledge</lds-button>
+  <lds-button variant="secondary">Reassign</lds-button>
+  <lds-button variant="ghost">Snooze</lds-button>
+  <lds-button variant="danger">Close incident</lds-button>
+  <lds-button variant="link">View timeline</lds-button>
+</div>
+"""
+
+[[stories]]
+name = "Sizes"
+description = "All three heights come from control.height.*, so a button and an input of the same size align."
+html = """
+<div class="lds-cluster">
+  <lds-button size="sm">Small</lds-button>
+  <lds-button size="md">Medium</lds-button>
+  <lds-button size="lg">Large</lds-button>
+</div>
+"""
+
+[[stories]]
+name = "States"
+description = "Disabled leaves the tab order; loading does not."
+html = """
+<div class="lds-cluster">
+  <lds-button>Default</lds-button>
+  <lds-button disabled>Disabled</lds-button>
+  <lds-button loading>Saving</lds-button>
+  <lds-button variant="secondary" loading>Loading</lds-button>
+</div>
+"""
+
+[[stories]]
+name = "With adornments"
+description = "The start and end slots take any content; they are not icon-specific."
+html = """
+<div class="lds-cluster">
+  <lds-button><span slot="start">&#9873;</span>Flag</lds-button>
+  <lds-button variant="secondary">Next<span slot="end">&#8594;</span></lds-button>
+  <lds-button variant="ghost" label="Dismiss"><span slot="start">&#10005;</span></lds-button>
+</div>
+"""
+
+[[stories]]
+name = "Pill and full width"
+description = "Pill matches the marketing site. Full width belongs in drawers and narrow forms."
+html = """
+<div class="lds-stack" style="max-width: 320px">
+  <lds-button pill>Get started</lds-button>
+  <lds-button variant="secondary" pill>Read the docs</lds-button>
+  <lds-button full-width>Full width</lds-button>
+</div>
+"""
+
+[[stories]]
+name = "In a form"
+description = "type=\"submit\" reaches the outer form even though the real button lives in a shadow root."
+html = """
+<form class="lds-stack" style="max-width: 320px" onsubmit="event.preventDefault(); this.querySelector('output').textContent = 'submitted'">
+  <label class="lds-stack" style="--lds-stack-gap: var(--lds-space-2)">
+    <span class="lds-eyebrow">Incident title</span>
+    <input name="title" style="height: var(--lds-control-height-md); border: 1px solid var(--lds-color-border-default); border-radius: var(--lds-control-radius-md); padding: 0 var(--lds-control-padding-x-md); background: var(--lds-color-bg-canvas)">
+  </label>
+  <div class="lds-cluster">
+    <lds-button type="submit">Create</lds-button>
+    <lds-button type="reset" variant="ghost">Reset</lds-button>
+    <output class="lds-muted"></output>
+  </div>
+</form>
+"""

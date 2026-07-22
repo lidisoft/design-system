@@ -1,0 +1,25 @@
+services:
+  gallery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${LDS_PORT:-8081}:8081"
+    volumes:
+      # Bind-mount the tree so Air sees edits; keep module and build caches in
+      # named volumes so they survive container recreation.
+      - .:/app
+      - go-mod:/go/pkg/mod
+      - go-build:/root/.cache/go-build
+    environment:
+      LDS_ADDR: ":8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  go-mod:
+  go-build:

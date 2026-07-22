@@ -1,0 +1,38 @@
+:host {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-icon-size-md);
+  height: var(--lds-icon-size-md);
+  color: currentColor;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  width: var(--lds-icon-size-sm);
+  height: var(--lds-icon-size-sm);
+}
+
+:host([size="md"]) {
+  width: var(--lds-icon-size-md);
+  height: var(--lds-icon-size-md);
+}
+
+:host([size="lg"]) {
+  width: var(--lds-icon-size-lg);
+  height: var(--lds-icon-size-lg);
+}
+
+.icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+}

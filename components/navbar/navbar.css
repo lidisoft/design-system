@@ -1,0 +1,222 @@
+/* Top-bar chrome. Compact mode collapses the link row into a toggle panel
+ * under the bar — not a drawer. Variants are custom properties on :host. */
+
+:host {
+  --lds-navbar-bg: var(--lds-color-bg-raised);
+  --lds-navbar-fg: var(--lds-color-fg-default);
+  --lds-navbar-border: var(--lds-color-border-subtle);
+  --lds-navbar-compact-at: var(--lds-breakpoint-md);
+  --lds-navbar-padding-x: var(--lds-space-4);
+  --lds-navbar-gap: var(--lds-space-3);
+
+  display: block;
+  color: var(--lds-navbar-fg);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([sticky]) {
+  position: sticky;
+  top: 0;
+  z-index: var(--lds-z-sticky);
+}
+
+/* --- Bar --------------------------------------------------------------- */
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-navbar-gap);
+
+  min-height: var(--lds-control-height-lg);
+  padding-block: var(--lds-space-2);
+  padding-inline: var(--lds-navbar-padding-x);
+
+  background: var(--lds-navbar-bg);
+  border-bottom: 1px solid var(--lds-navbar-border);
+  transition:
+    background var(--lds-transition-surface),
+    border-color var(--lds-transition-surface);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-space-2);
+  min-width: 0;
+}
+
+.links {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-1);
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-space-2);
+  margin-inline-start: auto;
+}
+
+/* --- Toggle ------------------------------------------------------------ */
+
+.toggle {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--lds-control-height-md);
+  height: var(--lds-control-height-md);
+  padding: 0;
+
+  color: var(--lds-color-fg-muted);
+  background: transparent;
+  border: var(--lds-control-border-width-default) solid transparent;
+  border-radius: var(--lds-control-radius-md);
+
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control),
+    border-color var(--lds-transition-control);
+}
+
+.toggle:hover {
+  color: var(--lds-color-fg-default);
+  background: var(--lds-color-bg-subtle);
+}
+
+.toggle:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.toggle__icon,
+.toggle__icon::before,
+.toggle__icon::after {
+  display: block;
+  width: 1.125em;
+  height: 2px;
+  background: currentColor;
+  border-radius: var(--lds-radius-full);
+}
+
+.toggle__icon {
+  position: relative;
+}
+
+.toggle__icon::before,
+.toggle__icon::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+}
+
+.toggle__icon::before {
+  translate: 0 -0.35em;
+}
+
+.toggle__icon::after {
+  translate: 0 0.35em;
+}
+
+/* --- Compact ----------------------------------------------------------- */
+
+:host([compact]) .toggle,
+:host([data-compact]) .toggle {
+  display: inline-flex;
+  order: 3;
+}
+
+:host([compact]) .actions,
+:host([data-compact]) .actions {
+  order: 2;
+  margin-inline-start: auto;
+}
+
+:host([compact]) .links,
+:host([data-compact]) .links {
+  display: none;
+  order: 4;
+  flex: none;
+  flex-basis: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--lds-space-1);
+  padding-block: var(--lds-space-2) var(--lds-space-3);
+  border-top: 1px solid var(--lds-navbar-border);
+}
+
+:host([compact][open]) .links,
+:host([data-compact][open]) .links {
+  display: flex;
+}
+
+:host([compact][open]) .toggle,
+:host([data-compact][open]) .toggle {
+  color: var(--lds-color-fg-default);
+  background: var(--lds-color-bg-muted);
+}
+
+/* --- Slotted content --------------------------------------------------- */
+
+::slotted([slot="brand"]) {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  color: var(--lds-navbar-fg);
+  text-decoration: none;
+}
+
+::slotted(a:not([slot])) {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-control-padding-x-sm);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-color-fg-muted);
+  text-decoration: none;
+  border-radius: var(--lds-control-radius-md);
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+::slotted(a:not([slot]):hover) {
+  color: var(--lds-color-fg-default);
+  background: var(--lds-color-bg-subtle);
+}
+
+::slotted(a:not([slot]):focus-visible) {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+::slotted(a[aria-current="page"]:not([slot])) {
+  color: var(--lds-color-accent-fg);
+  background: var(--lds-color-accent-subtle);
+}
+
+:host([compact]) ::slotted(a:not([slot])),
+:host([data-compact]) ::slotted(a:not([slot])) {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: var(--lds-control-height-lg);
+  padding-inline: var(--lds-control-padding-x-md);
+}

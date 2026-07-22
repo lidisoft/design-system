@@ -1,0 +1,211 @@
+/* Component styles are adopted into the shadow root, so selectors here are
+ * scoped and can stay short. Only :host and ::slotted() reach outward, and
+ * only --lds-* custom properties reach inward.
+ *
+ * Variants are expressed as custom-property assignments on :host, never as
+ * duplicated rule blocks — the .btn rule below is the single place geometry
+ * and colour are actually applied. */
+
+:host {
+  --lds-button-height: var(--lds-control-height-md);
+  --lds-button-padding-x: var(--lds-control-padding-x-md);
+  --lds-button-gap: var(--lds-control-gap-md);
+  --lds-button-font-size: var(--lds-control-font-size-md);
+  --lds-button-radius: var(--lds-control-radius-md);
+  --lds-button-bg: var(--lds-color-accent-default);
+  --lds-button-bg-hover: var(--lds-color-accent-hover);
+  --lds-button-bg-active: var(--lds-color-accent-active);
+  --lds-button-fg: var(--lds-color-fg-on-accent);
+  --lds-button-border: transparent;
+  --lds-button-shadow: none;
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+/* --- Sizes ------------------------------------------------------------- */
+
+:host([size="sm"]) {
+  --lds-button-height: var(--lds-control-height-sm);
+  --lds-button-padding-x: var(--lds-control-padding-x-sm);
+  --lds-button-gap: var(--lds-control-gap-sm);
+  --lds-button-font-size: var(--lds-control-font-size-sm);
+  --lds-button-radius: var(--lds-control-radius-sm);
+}
+
+:host([size="lg"]) {
+  --lds-button-height: var(--lds-control-height-lg);
+  --lds-button-padding-x: var(--lds-control-padding-x-lg);
+  --lds-button-gap: var(--lds-control-gap-lg);
+  --lds-button-font-size: var(--lds-control-font-size-lg);
+  --lds-button-radius: var(--lds-control-radius-lg);
+}
+
+/* --- Variants ---------------------------------------------------------- */
+
+:host([variant="secondary"]) {
+  --lds-button-bg: var(--lds-color-bg-canvas);
+  --lds-button-bg-hover: var(--lds-color-bg-subtle);
+  --lds-button-bg-active: var(--lds-color-bg-muted);
+  --lds-button-fg: var(--lds-color-fg-default);
+  --lds-button-border: var(--lds-color-border-default);
+  --lds-button-shadow: var(--lds-shadow-sm);
+}
+
+:host([variant="ghost"]) {
+  --lds-button-bg: transparent;
+  --lds-button-bg-hover: var(--lds-color-bg-subtle);
+  --lds-button-bg-active: var(--lds-color-bg-muted);
+  --lds-button-fg: var(--lds-color-fg-muted);
+  --lds-button-border: transparent;
+}
+
+:host([variant="danger"]) {
+  --lds-button-bg: var(--lds-color-danger-default);
+  --lds-button-bg-hover: var(--lds-color-danger-hover);
+  --lds-button-bg-active: var(--lds-color-danger-active);
+  --lds-button-fg: var(--lds-color-fg-on-accent);
+}
+
+:host([variant="link"]) {
+  --lds-button-bg: transparent;
+  --lds-button-bg-hover: transparent;
+  --lds-button-bg-active: transparent;
+  --lds-button-fg: var(--lds-color-fg-link);
+  --lds-button-padding-x: 0;
+  --lds-button-height: auto;
+}
+
+/* --- Modifiers --------------------------------------------------------- */
+
+:host([pill]) {
+  --lds-button-radius: var(--lds-control-radius-pill);
+}
+
+:host([full-width]) {
+  display: flex;
+  width: 100%;
+}
+
+:host([full-width]) .btn {
+  width: 100%;
+}
+
+/* --- The control ------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lds-button-gap);
+
+  min-width: 0;
+  height: var(--lds-button-height);
+  padding-inline: var(--lds-button-padding-x);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-button-font-size);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+
+  color: var(--lds-button-fg);
+  background: var(--lds-button-bg);
+  border: var(--lds-control-border-width-default) solid var(--lds-button-border);
+  border-radius: var(--lds-button-radius);
+  box-shadow: var(--lds-button-shadow);
+
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background var(--lds-transition-control),
+    border-color var(--lds-transition-control),
+    box-shadow var(--lds-transition-control),
+    transform var(--lds-transition-control);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--lds-button-bg-hover);
+}
+
+:host([variant="link"]) .btn:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.btn:active:not(:disabled) {
+  background: var(--lds-button-bg-active);
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.btn__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* CSS cannot see whether a slot has assigned nodes, so the behaviour script
+ * sets data-empty on slotchange. Without this an icon-only button carries the
+ * flex gap of a zero-width label. */
+.btn__label[data-empty] {
+  display: none;
+}
+
+/* --- Loading ----------------------------------------------------------- */
+
+.btn__spinner {
+  display: none;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--lds-radius-full);
+  animation: lds-button-spin var(--lds-duration-slower) linear infinite;
+}
+
+:host([loading]) .btn__spinner {
+  display: block;
+}
+
+/* Adornments are redundant next to a spinner and would make the control
+ * jump width mid-request. */
+:host([loading]) ::slotted([slot="start"]) {
+  display: none;
+}
+
+:host([loading]) .btn {
+  cursor: progress;
+}
+
+@keyframes lds-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Slotted adornments ------------------------------------------------ */
+
+::slotted([slot="start"]),
+::slotted([slot="end"]) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+}

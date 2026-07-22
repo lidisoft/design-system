@@ -1,0 +1,135 @@
+{{define "content"}}
+{{$c := .Component}}
+
+<header class="page-head">
+  <p class="lds-eyebrow">{{title $c.Category}}</p>
+  <h1 class="lds-display">{{$c.Name}}</h1>
+  <p class="lds-cluster">
+    <code class="tag">&lt;{{$c.Tag}}&gt;</code>
+    <span class="status status--{{$c.Status}}">{{$c.Status}}</span>
+  </p>
+  <p class="lds-lead">{{$c.Summary}}</p>
+  {{if $c.Description}}<p class="lds-muted">{{$c.Description}}</p>{{end}}
+</header>
+
+{{range $i, $story := .Stories}}
+  <section class="panel story">
+    <div class="lds-split">
+      <h2 class="lds-title">{{$story.Name}}</h2>
+      <button class="source-toggle" type="button"
+              data-source-toggle
+              aria-expanded="false"
+              aria-controls="source-{{$i}}">Source</button>
+    </div>
+    {{if $story.Description}}<p class="lds-muted">{{$story.Description}}</p>{{end}}
+
+    <div class="story__canvas">{{$story.Markup}}</div>
+
+    <pre class="code" id="source-{{$i}}" hidden><code>{{$story.Source}}</code></pre>
+  </section>
+{{end}}
+
+<section class="panel">
+  <h2 class="lds-title">Attributes</h2>
+  {{if $c.Attributes}}
+    <div class="table-scroll">
+      <table class="table">
+        <thead><tr><th>Name</th><th>Type</th><th>Values</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          {{range $c.Attributes}}
+            <tr>
+              <td><code>{{.Name}}</code></td>
+              <td class="lds-muted">{{defaultOr .Type}}</td>
+              <td class="lds-muted">{{joinValues .Values}}</td>
+              <td><code class="lds-muted">{{defaultOr .Default}}</code></td>
+              <td>{{.Description}}</td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}<p class="lds-muted">None.</p>{{end}}
+</section>
+
+<section class="panel">
+  <h2 class="lds-title">Slots</h2>
+  {{if $c.Slots}}
+    <div class="table-scroll">
+      <table class="table">
+        <thead><tr><th>Name</th><th>Description</th></tr></thead>
+        <tbody>
+          {{range $c.Slots}}
+            <tr><td><code>{{slotName .Name}}</code></td><td>{{.Description}}</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}<p class="lds-muted">None.</p>{{end}}
+</section>
+
+{{if $c.Events}}
+<section class="panel">
+  <h2 class="lds-title">Events</h2>
+  <div class="table-scroll">
+    <table class="table">
+      <thead><tr><th>Name</th><th>Detail</th><th>Description</th></tr></thead>
+      <tbody>
+        {{range $c.Events}}
+          <tr><td><code>{{.Name}}</code></td><td><code class="lds-muted">{{defaultOr .Detail}}</code></td><td>{{.Description}}</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}
+
+{{if $c.Parts}}
+<section class="panel">
+  <h2 class="lds-title">CSS parts</h2>
+  <p class="lds-muted">Style from outside with <code>{{$c.Tag}}::part(name)</code>.</p>
+  <div class="table-scroll">
+    <table class="table">
+      <thead><tr><th>Part</th><th>Description</th></tr></thead>
+      <tbody>
+        {{range $c.Parts}}<tr><td><code>{{.Name}}</code></td><td>{{.Description}}</td></tr>{{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}
+
+{{if $c.CSSVars}}
+<section class="panel">
+  <h2 class="lds-title">Custom properties</h2>
+  <div class="table-scroll">
+    <table class="table">
+      <thead><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        {{range $c.CSSVars}}
+          <tr><td><code>{{.Name}}</code></td><td><code class="lds-muted">{{defaultOr .Default}}</code></td><td>{{.Description}}</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}
+
+{{if $c.A11y}}
+<section class="panel">
+  <h2 class="lds-title">Accessibility</h2>
+  <p class="a11y">{{$c.A11y}}</p>
+</section>
+{{end}}
+
+<section class="panel">
+  <h2 class="lds-title">Source</h2>
+  <h3 class="lds-eyebrow">Template</h3>
+  <pre class="code"><code>{{index .Sources "template"}}</code></pre>
+  <h3 class="lds-eyebrow">Styles</h3>
+  <pre class="code"><code>{{index .Sources "styles"}}</code></pre>
+  {{if index .Sources "behavior"}}
+    <h3 class="lds-eyebrow">Behaviour</h3>
+    <pre class="code"><code>{{index .Sources "behavior"}}</code></pre>
+  {{end}}
+</section>
+{{end}}

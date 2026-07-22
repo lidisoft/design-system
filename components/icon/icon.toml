@@ -1,0 +1,121 @@
+tag = "lds-icon"
+name = "Icon"
+category = "primitives"
+status = "beta"
+summary = "Inline iconography from the build-time Lucide sprite."
+
+description = """
+Icons are assembled at build time from assets/icons/ into dist/icons.svg.
+The runtime injects the sprite into the light DOM once; each <lds-icon>
+clones the matching symbol into its shadow SVG (<use> cannot cross the
+shadow boundary for fragment IDs).
+
+Add icons with make icons; the generator validates sources and emits LDS.icons.
+"""
+
+a11y = """
+Decorative by default (aria-hidden). Pass label when the icon is the only
+content conveying meaning — it sets role=\"img\" and aria-label. Prefer a
+visible text label on the surrounding control when there is one; use label
+for icon-only buttons and status marks.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Icon id — the basename of an SVG in assets/icons/. See LDS.icons for the shipped list."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Drawn from icon.size.* tokens."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name. When set, the icon is exposed to assistive tech; otherwise it is decorative."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "svg"
+description = "The root SVG element."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Sizes"
+description = "sm / md / lg from icon.size tokens."
+html = """
+<div class="lds-cluster" style="align-items: center; font-size: var(--lds-font-size-md); color: var(--lds-color-fg-default)">
+  <lds-icon name="bell" size="sm"></lds-icon>
+  <lds-icon name="bell" size="md"></lds-icon>
+  <lds-icon name="bell" size="lg"></lds-icon>
+</div>
+"""
+
+[[stories]]
+name = "Decorative vs labelled"
+description = "Without label the icon is hidden from assistive tech; with label it is announced."
+html = """
+<div class="lds-cluster" style="align-items: center; color: var(--lds-color-fg-default)">
+  <span class="lds-cluster" style="align-items: center">
+    <lds-icon name="circle-check"></lds-icon>
+    <span>Saved</span>
+  </span>
+  <lds-icon name="alert-triangle" label="Warning" style="color: var(--lds-color-warning-fg)"></lds-icon>
+</div>
+"""
+
+[[stories]]
+name = "In a button"
+description = "Icons belong in button start/end slots like any other adornment."
+html = """
+<div class="lds-cluster">
+  <lds-button>
+    <lds-icon slot="start" name="check"></lds-icon>
+    Acknowledge
+  </lds-button>
+  <lds-button variant="secondary">
+    Next
+    <lds-icon slot="end" name="chevron-right"></lds-icon>
+  </lds-button>
+  <lds-button variant="ghost" label="Dismiss">
+    <lds-icon slot="start" name="x"></lds-icon>
+  </lds-button>
+</div>
+"""
+
+[[stories]]
+name = "Catalog"
+description = "Every icon shipped in this build."
+html = """
+<div class="lds-cluster" style="flex-wrap: wrap; gap: var(--lds-space-4); color: var(--lds-color-fg-default)">
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="alert-circle" size="lg"></lds-icon>alert-circle</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="alert-triangle" size="lg"></lds-icon>alert-triangle</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="bell" size="lg"></lds-icon>bell</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="check" size="lg"></lds-icon>check</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="chevron-down" size="lg"></lds-icon>chevron-down</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="chevron-left" size="lg"></lds-icon>chevron-left</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="chevron-right" size="lg"></lds-icon>chevron-right</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="chevron-up" size="lg"></lds-icon>chevron-up</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="circle-check" size="lg"></lds-icon>circle-check</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="copy" size="lg"></lds-icon>copy</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="external-link" size="lg"></lds-icon>external-link</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="info" size="lg"></lds-icon>info</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="loader-circle" size="lg"></lds-icon>loader-circle</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="menu" size="lg"></lds-icon>menu</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="minus" size="lg"></lds-icon>minus</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="more-horizontal" size="lg"></lds-icon>more-horizontal</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="plus" size="lg"></lds-icon>plus</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="search" size="lg"></lds-icon>search</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="settings" size="lg"></lds-icon>settings</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="trash-2" size="lg"></lds-icon>trash-2</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="user" size="lg"></lds-icon>user</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="x" size="lg"></lds-icon>x</span>
+</div>
+"""

@@ -1,0 +1,200 @@
+#
+# Core (primitive) tokens — the raw palette and scales.
+#
+# Nothing outside this file should hard-code a hex value or a magic number.
+# Components never reference core tokens directly; they go through the semantic
+# layer in 10-semantic.toml so themes have a single place to intervene.
+#
+
+[meta]
+layer = "core"
+
+# ---------------------------------------------------------------------------
+# Palette
+#
+# 500 is the brand anchor for each hue and matches lidisoft.com exactly.
+# ---------------------------------------------------------------------------
+
+[color.blue]
+50 = "#eef7fd"
+100 = "#d6ebfa"
+200 = "#b0d9f4"
+300 = "#83c1ec"
+400 = "#62b0e8"
+500 = "#4a9fe3"
+600 = "#3480c2"
+700 = "#29649b"
+800 = "#1f4a73"
+900 = "#16334f"
+
+[color.coral]
+50 = "#fef2f0"
+100 = "#fde0db"
+200 = "#fbc3ba"
+300 = "#f99e90"
+400 = "#f78475"
+500 = "#f56f5c"
+600 = "#d9503c"
+700 = "#ad3c2c"
+800 = "#822c20"
+900 = "#5a1e16"
+
+[color.yellow]
+50 = "#fefaeb"
+100 = "#fdf2c7"
+200 = "#fbe68c"
+300 = "#f8da51"
+400 = "#f6d43b"
+500 = "#f5cf2b"
+600 = "#d4b012"
+700 = "#a4880e"
+800 = "#77630b"
+900 = "#4f4207"
+
+[color.green]
+50 = "#eef9f1"
+100 = "#d5f0dc"
+200 = "#ade1ba"
+300 = "#79cb8e"
+400 = "#52b56d"
+500 = "#3aa757"
+600 = "#2d8544"
+700 = "#246a37"
+800 = "#1a4e28"
+900 = "#12351b"
+
+# Neutral ramp. 200 is the landing page --line, 600 is --ink-soft,
+# 800 is --ink and 900 is --bg-dark.
+[color.gray]
+0 = "#ffffff"
+25 = "#fbfcfe"
+50 = "#f6f8fb"
+100 = "#eef1f6"
+200 = "#e7ebf1"
+300 = "#cfd6e0"
+400 = "#a7b1c2"
+500 = "#7c8798"
+600 = "#4a5364"
+700 = "#333c4d"
+800 = "#1a1f2b"
+900 = "#12151d"
+950 = "#0b0e14"
+
+# ---------------------------------------------------------------------------
+# Spacing — 4px base grid, rem-relative so it respects user font settings.
+# ---------------------------------------------------------------------------
+
+[space]
+0 = "0"
+px = "1px"
+1 = "0.25rem"
+2 = "0.5rem"
+3 = "0.75rem"
+4 = "1rem"
+5 = "1.25rem"
+6 = "1.5rem"
+7 = "1.75rem"
+8 = "2rem"
+10 = "2.5rem"
+12 = "3rem"
+14 = "3.5rem"
+16 = "4rem"
+20 = "5rem"
+24 = "6rem"
+32 = "8rem"
+
+# ---------------------------------------------------------------------------
+# Typography
+# ---------------------------------------------------------------------------
+
+[font.family]
+sans = "\"Inter\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+display = "\"Space Grotesk\", \"Inter\", -apple-system, BlinkMacSystemFont, sans-serif"
+mono = "\"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+
+[font.size]
+"2xs" = "0.6875rem"
+xs = "0.75rem"
+sm = "0.875rem"
+md = "1rem"
+lg = "1.125rem"
+xl = "1.25rem"
+"2xl" = "1.5rem"
+"3xl" = "1.875rem"
+"4xl" = "2.25rem"
+"5xl" = "3rem"
+
+[font.weight]
+regular = "400"
+medium = "500"
+semibold = "600"
+bold = "700"
+extrabold = "800"
+
+[font.leading]
+none = "1"
+tight = "1.15"
+snug = "1.35"
+normal = "1.55"
+relaxed = "1.65"
+
+[font.tracking]
+tight = "-0.02em"
+normal = "0"
+wide = "0.04em"
+caps = "0.14em"
+
+# ---------------------------------------------------------------------------
+# Shape, elevation, motion
+# ---------------------------------------------------------------------------
+
+[radius]
+none = "0"
+xs = "4px"
+sm = "6px"
+md = "10px"
+lg = "16px"
+xl = "24px"
+full = "999px"
+
+[shadow]
+none = "none"
+sm = "0 1px 2px rgba(20, 30, 50, 0.06)"
+md = "0 1px 2px rgba(20, 30, 50, 0.04), 0 12px 32px rgba(20, 30, 50, 0.06)"
+lg = "0 8px 20px rgba(20, 30, 50, 0.10), 0 24px 48px rgba(20, 30, 50, 0.10)"
+xl = "0 24px 64px rgba(20, 30, 50, 0.18)"
+inset = "inset 0 1px 2px rgba(20, 30, 50, 0.06)"
+
+[duration]
+instant = "0ms"
+fast = "120ms"
+normal = "180ms"
+slow = "280ms"
+slower = "420ms"
+
+[easing]
+standard = "cubic-bezier(0.2, 0, 0.2, 1)"
+decelerate = "cubic-bezier(0, 0, 0.2, 1)"
+accelerate = "cubic-bezier(0.4, 0, 1, 1)"
+spring = "cubic-bezier(0.34, 1.56, 0.64, 1)"
+
+[z]
+base = "0"
+raised = "10"
+sticky = "50"
+drawer = "100"
+modal = "200"
+popover = "300"
+toast = "400"
+tooltip = "500"
+
+[breakpoint]
+sm = "480px"
+md = "768px"
+lg = "1024px"
+xl = "1280px"
+"2xl" = "1536px"
+
+[size]
+container = "1300px"
+prose = "68ch"

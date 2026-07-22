@@ -1,0 +1,23 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -buildvcs=false -o ./tmp/lds ./cmd/lds"
+  entrypoint = ["./tmp/lds", "serve", "--addr", ":8081"]
+  # Only Go sources need a restart. Token, template and component files are
+  # re-read on every request by the gallery in dev mode, so a browser refresh
+  # is enough for those — but they are watched anyway so the embedded gallery
+  # templates stay in sync.
+  include_ext = ["go", "html", "tmpl"]
+  exclude_dir = ["tmp", "dist", "docs", "memory", "vendor", "assets"]
+  exclude_regex = ["_test\\.go"]
+  delay = 1000
+  stop_on_error = true
+  send_interrupt = true
+  kill_delay = "500ms"
+
+[log]
+  time = true
+
+[misc]
+  clean_on_exit = true

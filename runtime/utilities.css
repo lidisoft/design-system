@@ -1,0 +1,138 @@
+/* ------------------------------------------------------------------
+ * Layout primitives and typography helpers.
+ *
+ * These are light-DOM classes, not components — layout is the one thing
+ * shadow DOM cannot own, because it has to arrange elements the consuming
+ * page created. Everything here is composable and single-purpose; this is
+ * not a utility framework and should not grow into one.
+ *
+ * Naming: .lds-<primitive>, modified by --lds-<primitive>-* custom
+ * properties rather than by variant classes.
+ * ------------------------------------------------------------------ */
+
+.lds-container {
+  width: 100%;
+  max-width: var(--lds-container-width, var(--lds-size-container));
+  margin-inline: auto;
+  padding-inline: var(--lds-space-6);
+}
+
+/* Vertical rhythm. Children are spaced, the container itself is not. */
+.lds-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-stack-gap, var(--lds-space-4));
+}
+
+/* Horizontal grouping that wraps instead of overflowing. */
+.lds-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: var(--lds-cluster-align, center);
+  gap: var(--lds-cluster-gap, var(--lds-space-3));
+}
+
+/* Pushes the last child away from the rest — nav bars, card footers. */
+.lds-split {
+  display: flex;
+  align-items: var(--lds-split-align, center);
+  justify-content: space-between;
+  gap: var(--lds-split-gap, var(--lds-space-4));
+}
+
+/* Responsive without media queries: columns fit as many as will hold
+ * --lds-grid-min, then wrap. */
+.lds-grid {
+  display: grid;
+  gap: var(--lds-grid-gap, var(--lds-space-6));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--lds-grid-min, 260px), 100%), 1fr)
+  );
+}
+
+/* Centres a column and caps its measure for readability. */
+.lds-prose {
+  max-width: var(--lds-prose-width, var(--lds-size-prose));
+}
+
+.lds-prose > * + * {
+  margin-top: var(--lds-space-4);
+}
+
+/* ------------------------------------------------------------------
+ * Typography helpers
+ * ------------------------------------------------------------------ */
+
+.lds-display {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-4xl);
+  font-weight: var(--lds-font-weight-bold);
+  line-height: var(--lds-font-leading-tight);
+  letter-spacing: var(--lds-font-tracking-tight);
+}
+
+.lds-title {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-2xl);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  letter-spacing: var(--lds-font-tracking-tight);
+}
+
+.lds-eyebrow {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-semibold);
+  letter-spacing: var(--lds-font-tracking-caps);
+  text-transform: uppercase;
+  color: var(--lds-color-fg-muted);
+}
+
+.lds-lead {
+  font-size: var(--lds-font-size-lg);
+  color: var(--lds-color-fg-muted);
+}
+
+.lds-muted {
+  color: var(--lds-color-fg-muted);
+}
+
+.lds-subtle {
+  color: var(--lds-color-fg-subtle);
+}
+
+/* ------------------------------------------------------------------
+ * Accessibility helpers
+ * ------------------------------------------------------------------ */
+
+/* Available to assistive technology, invisible on screen. */
+.lds-visually-hidden:not(:focus):not(:active) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard-only escape hatch to the main landmark. */
+.lds-skip-link {
+  position: absolute;
+  top: var(--lds-space-2);
+  left: var(--lds-space-2);
+  z-index: var(--lds-z-tooltip);
+  padding: var(--lds-space-2) var(--lds-space-4);
+  border-radius: var(--lds-radius-sm);
+  background: var(--lds-color-bg-raised);
+  box-shadow: var(--lds-shadow-lg);
+  transform: translateY(-200%);
+  transition: transform var(--lds-transition-control);
+}
+
+.lds-skip-link:focus-visible {
+  transform: translateY(0);
+}

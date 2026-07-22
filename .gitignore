@@ -1,0 +1,10 @@
+# Air / build output
+tmp/
+bin/
+
+# Local env
+.env
+
+# dist/ is deliberately NOT ignored: it is committed so that Go consumers can
+# embed the bundles with //go:embed and `go get` the module without a build
+# step. `make verify` fails if it drifts from the sources.

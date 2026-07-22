@@ -1,0 +1,73 @@
+{{define "content"}}
+<header class="page-head">
+  <p class="lds-eyebrow">LiDiSoft Design System</p>
+  <h1 class="lds-display">The building blocks of the LiDiSoft UI</h1>
+  <p class="lds-lead">
+    One CSS file, one JS file and an icon sprite, generated from TOML tokens and
+    component sources by a Go toolchain. No npm anywhere in the pipeline.
+  </p>
+</header>
+
+<section class="panel">
+  <h2 class="lds-title">How it fits together</h2>
+  <div class="lds-grid" style="--lds-grid-min: 220px">
+    <div>
+      <h3 class="lds-eyebrow">tokens/*.toml</h3>
+      <p class="lds-muted">Core primitives and semantic aliases. Themes override the semantic layer only.</p>
+    </div>
+    <div>
+      <h3 class="lds-eyebrow">components/&lt;name&gt;/</h3>
+      <p class="lds-muted">Metadata, shadow template, scoped styles and optional behaviour.</p>
+    </div>
+    <div>
+      <h3 class="lds-eyebrow">dist/lds.css</h3>
+      <p class="lds-muted">Fonts, reset, custom properties, theme blocks and layout utilities.</p>
+    </div>
+    <div>
+      <h3 class="lds-eyebrow">dist/lds.js</h3>
+      <p class="lds-muted">The runtime plus every custom element, styles adopted per shadow root.</p>
+    </div>
+    <div>
+      <h3 class="lds-eyebrow">dist/icons.svg</h3>
+      <p class="lds-muted">Build-time Lucide symbol sprite. Injected once for &lt;lds-icon&gt;.</p>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2 class="lds-title">Consuming it</h2>
+  <pre class="code"><code>&lt;link rel="stylesheet" href="/lds/lds.css"&gt;
+&lt;script src="/lds/lds.js" defer&gt;&lt;/script&gt;
+
+&lt;lds-button variant="primary"&gt;Acknowledge&lt;/lds-button&gt;</code></pre>
+  <p class="lds-muted">
+    Go services mount the bundle straight from the embedded filesystem — see
+    <code>docs/consuming.md</code>.
+  </p>
+</section>
+
+<section class="panel">
+  <h2 class="lds-title">Catalog</h2>
+  {{if .Nav}}
+    {{range .Nav}}
+      <h3 class="lds-eyebrow">{{title .Name}}</h3>
+      <ul class="catalog">
+        {{range .Components}}
+          <li>
+            <a href="/components/{{.Tag}}">
+              <strong>{{.Name}}</strong>
+              <code>&lt;{{.Tag}}&gt;</code>
+              <span class="status status--{{.Status}}">{{.Status}}</span>
+            </a>
+            <p class="lds-muted">{{.Summary}}</p>
+          </li>
+        {{end}}
+      </ul>
+    {{end}}
+  {{else}}
+    <p class="lds-muted">
+      Nothing here yet. Scaffold the first one with <code>go run ./cmd/lds new alert</code>.
+    </p>
+  {{end}}
+</section>
+{{end}}

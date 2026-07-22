@@ -1,0 +1,200 @@
+tag = "lds-navbar"
+name = "Navbar"
+category = "navigation"
+status = "draft"
+summary = "Horizontal app chrome: brand, links and actions, with a compact toggle panel."
+
+description = """
+Top-bar navigation for site and app shells. Slots hold the brand, primary
+links and trailing actions. Below the compact threshold — or when `compact` is
+set — links collapse behind a toggle and expand as an inline panel under the
+bar.
+
+This is not a sidebar. A future `lds-nav` covers vertical navigation and
+collapsible groups. The compact panel is not a drawer and does not trap focus.
+"""
+
+a11y = """
+Renders a real <header>, <nav> and <button>, so landmarks and keyboard
+activation come from the platform.
+
+- The toggle gets aria-label from `label` (defaults to "Menu") and reflects
+  `open` as aria-expanded.
+- Callers must give every link an accessible name and mark the current page
+  with aria-current="page".
+- The compact panel is not modal: no focus trap, Escape and outside click
+  close it. Prefer a drawer once overlay helpers exist if you need modal
+  behaviour.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "sticky"
+type = "boolean"
+description = "Pins the bar to the top of the scroll container."
+
+[[attributes]]
+name = "compact"
+type = "boolean"
+description = "Force compact chrome. Without it, compact mode follows host width vs --lds-navbar-compact-at."
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Expanded links panel while compact. Cleared automatically when leaving compact."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name for the menu toggle. Defaults to Menu when omitted."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "brand"
+description = "Leading identity — typically a linked wordmark."
+
+[[slots]]
+name = ""
+description = "Primary navigation links. Prefer real <a> elements; mark the current page with aria-current=\"page\"."
+
+[[slots]]
+name = "actions"
+description = "Trailing controls such as buttons or a theme toggle."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-toggle"
+detail = "{ open: boolean }"
+description = "Fired before open changes (toggle, Escape, outside click). Cancel to keep the previous state."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "bar"
+description = "The outer header row."
+
+[[parts]]
+name = "brand"
+description = "Wrapper around the brand slot."
+
+[[parts]]
+name = "links"
+description = "The <nav> wrapping the default slot."
+
+[[parts]]
+name = "actions"
+description = "Wrapper around the actions slot."
+
+[[parts]]
+name = "toggle"
+description = "The compact-mode menu button."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-navbar-bg"
+default = "--lds-color-bg-raised"
+description = "Bar background."
+
+[[css_vars]]
+name = "--lds-navbar-fg"
+default = "--lds-color-fg-default"
+description = "Default foreground, including the brand."
+
+[[css_vars]]
+name = "--lds-navbar-border"
+default = "--lds-color-border-subtle"
+description = "Bottom edge and the compact panel separator."
+
+[[css_vars]]
+name = "--lds-navbar-compact-at"
+default = "--lds-breakpoint-md"
+description = "Host width below which auto-compact engages. Ignored when compact is set."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Default"
+description = "Brand, links and a primary action. Resize the gallery pane to see auto-compact."
+html = """
+<lds-navbar>
+  <a slot="brand" href="#">LiDiSoft</a>
+  <a href="#" aria-current="page">Docs</a>
+  <a href="#">Pricing</a>
+  <a href="#">Blog</a>
+  <lds-button slot="actions" size="sm">Sign in</lds-button>
+</lds-navbar>
+"""
+
+[[stories]]
+name = "Sticky"
+description = "Stays pinned while the page scrolls. The filler below is only for the demo."
+html = """
+<lds-navbar sticky>
+  <a slot="brand" href="#">Tocsin</a>
+  <a href="#" aria-current="page">Incidents</a>
+  <a href="#">Schedules</a>
+  <a href="#">Settings</a>
+  <lds-button slot="actions" size="sm" variant="secondary">Account</lds-button>
+</lds-navbar>
+<div class="lds-stack" style="padding: var(--lds-space-6); min-height: 40vh">
+  <p class="lds-muted">Scroll the page to see the bar stick.</p>
+</div>
+"""
+
+[[stories]]
+name = "With actions"
+description = "Trailing slot accepts any controls; compose with lds-button."
+html = """
+<lds-navbar>
+  <a slot="brand" href="#">LiDiSoft</a>
+  <a href="#">Product</a>
+  <a href="#" aria-current="page">Docs</a>
+  <a href="#">Support</a>
+  <div slot="actions" class="lds-cluster">
+    <lds-button size="sm" variant="ghost">Log in</lds-button>
+    <lds-button size="sm">Get started</lds-button>
+  </div>
+</lds-navbar>
+"""
+
+[[stories]]
+name = "Active link"
+description = "Callers mark the current page with aria-current=\"page\"."
+html = """
+<lds-navbar>
+  <a slot="brand" href="#">LiDiSoft</a>
+  <a href="#">Overview</a>
+  <a href="#" aria-current="page">Components</a>
+  <a href="#">Tokens</a>
+</lds-navbar>
+"""
+
+[[stories]]
+name = "Forced compact"
+description = "compact forces the toggle regardless of width; open starts expanded."
+html = """
+<lds-navbar compact open style="max-width: 24rem">
+  <a slot="brand" href="#">LiDiSoft</a>
+  <a href="#" aria-current="page">Docs</a>
+  <a href="#">Pricing</a>
+  <a href="#">Changelog</a>
+  <lds-button slot="actions" size="sm" variant="secondary">Sign in</lds-button>
+</lds-navbar>
+"""
+
+[[stories]]
+name = "Long links"
+description = "Overflow case — long labels wrap in the compact panel and cluster when wide."
+html = """
+<lds-navbar>
+  <a slot="brand" href="#">LiDiSoft</a>
+  <a href="#" aria-current="page">Documentation</a>
+  <a href="#">Incident response playbooks</a>
+  <a href="#">Organization settings</a>
+  <lds-button slot="actions" size="sm" variant="ghost">Help</lds-button>
+</lds-navbar>
+"""
