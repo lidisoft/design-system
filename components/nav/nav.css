@@ -1,0 +1,106 @@
+/* App sidebar shell. Item and group chrome live in their own components;
+ * --lds-nav-* custom properties inherit into their shadows for collapsed mode. */
+
+:host {
+  --lds-nav-bg: var(--lds-color-bg-subtle);
+  --lds-nav-fg: var(--lds-color-fg-default);
+  --lds-nav-border: var(--lds-color-border-subtle);
+  --lds-nav-width: 15rem;
+  --lds-nav-padding: var(--lds-space-3);
+  --lds-nav-gap: var(--lds-space-1);
+  --lds-nav-item-label-display: inline;
+  --lds-nav-group-label-display: inline;
+  --lds-nav-group-chevron-display: inline-flex;
+
+  display: flex;
+  flex-direction: column;
+  width: var(--lds-nav-width);
+  min-height: 100%;
+  color: var(--lds-nav-fg);
+  background: var(--lds-nav-bg);
+  border-inline-end: 1px solid var(--lds-nav-border);
+  transition:
+    width var(--lds-transition-surface),
+    background var(--lds-transition-surface),
+    border-color var(--lds-transition-surface);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([collapsed]) {
+  --lds-nav-width: calc(var(--lds-control-height-md) + var(--lds-space-6));
+  --lds-nav-item-label-display: none;
+  --lds-nav-group-trigger-display: none;
+  --lds-nav-group-label-display: none;
+  --lds-nav-group-chevron-display: none;
+  --lds-nav-group-closed-display: flex;
+  --lds-nav-group-closed-pad: 0;
+}
+
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-space-3);
+  min-height: 0;
+  padding: var(--lds-nav-padding);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-space-2);
+}
+
+.brand[data-empty] {
+  display: none;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-nav-gap);
+  min-height: 0;
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--lds-nav-gap);
+  margin-block-start: auto;
+  padding-block-start: var(--lds-space-3);
+  border-block-start: 1px solid var(--lds-nav-border);
+}
+
+.footer[data-empty] {
+  display: none;
+}
+
+::slotted([slot="brand"]) {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-md);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  color: var(--lds-nav-fg);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host([collapsed]) .brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+:host([collapsed]) ::slotted([slot="brand"]) {
+  font-size: var(--lds-font-size-sm);
+}

@@ -1,0 +1,92 @@
+/* Collapsible section inside <lds-nav>. Open state is the `open` attribute.
+ * A collapsed parent nav sets --lds-nav-group-* vars so the rail stays usable. */
+
+:host {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+}
+
+.trigger {
+  display: var(--lds-nav-group-trigger-display, flex);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lds-control-gap-md);
+
+  width: 100%;
+  min-height: var(--lds-control-height-sm);
+  padding-inline: var(--lds-control-padding-x-sm);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-2xs);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--lds-font-tracking-caps);
+  text-transform: uppercase;
+  color: var(--lds-color-fg-subtle);
+  text-align: start;
+
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+.trigger:hover {
+  color: var(--lds-color-fg-muted);
+  background: var(--lds-color-bg-muted);
+}
+
+.trigger:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.trigger__label {
+  display: var(--lds-nav-group-label-display, inline);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trigger__chevron {
+  display: var(--lds-nav-group-chevron-display, inline-flex);
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  rotate: -45deg;
+  translate: 0 -0.1em;
+  transition: rotate var(--lds-transition-control);
+}
+
+:host([open]) .trigger__chevron {
+  rotate: 45deg;
+  translate: 0 0.05em;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  padding-inline-start: var(--lds-space-2);
+}
+
+:host(:not([open])) .items {
+  display: var(--lds-nav-group-closed-display, none);
+  padding-inline-start: var(--lds-nav-group-closed-pad, var(--lds-space-2));
+}

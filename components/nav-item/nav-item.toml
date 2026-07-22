@@ -1,0 +1,130 @@
+tag = "lds-nav-item"
+name = "Nav item"
+category = "navigation"
+status = "draft"
+summary = "A single destination in an lds-nav sidebar."
+
+description = """
+Renders a real <a> inside the shadow root. Use inside lds-nav (or lds-nav-group).
+Mark the current page with active. Leading and trailing slots take adornments —
+typically lds-icon.
+"""
+
+a11y = """
+The inner anchor receives href, aria-current when active, and aria-label from
+the label attribute or the default-slot text (so collapsed icon rails stay named).
+
+- disabled sets aria-disabled and removes the item from the tab order; clicks
+  are stopped on the host.
+- Prefer a visible text label; pass label when the item is icon-only.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "href"
+type = "string"
+description = "Navigation target, forwarded to the inner <a>."
+
+[[attributes]]
+name = "target"
+type = "string"
+description = "Forwarded to the inner <a>. _blank also sets rel=\"noopener noreferrer\"."
+
+[[attributes]]
+name = "active"
+type = "boolean"
+description = "Marks the current page (aria-current=\"page\") and applies the active style."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks activation and removes the item from the tab order."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name override. Defaults to the text of the default slot."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "start"
+description = "Leading adornment, typically an icon."
+
+[[slots]]
+name = ""
+description = "Item label."
+
+[[slots]]
+name = "end"
+description = "Trailing adornment, e.g. a count or chevron."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "item"
+description = "The inner <a>."
+
+[[parts]]
+name = "start"
+description = "Wrapper around the start slot."
+
+[[parts]]
+name = "label"
+description = "Wrapper around the default slot."
+
+[[parts]]
+name = "end"
+description = "Wrapper around the end slot."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-nav-item-bg"
+default = "transparent / active subtle"
+description = "Row background."
+
+[[css_vars]]
+name = "--lds-nav-item-fg"
+default = "muted / active accent"
+description = "Row foreground."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "States"
+description = "Default, active and disabled."
+html = """
+<div class="lds-stack" style="max-width: 16rem; --lds-stack-gap: var(--lds-space-1)">
+  <lds-nav-item href="#">
+    <lds-icon slot="start" name="bell"></lds-icon>
+    Incidents
+  </lds-nav-item>
+  <lds-nav-item href="#" active>
+    <lds-icon slot="start" name="search"></lds-icon>
+    Explore
+  </lds-nav-item>
+  <lds-nav-item href="#" disabled>
+    <lds-icon slot="start" name="settings"></lds-icon>
+    Settings
+  </lds-nav-item>
+</div>
+"""
+
+[[stories]]
+name = "With adornments"
+description = "Start and end slots."
+html = """
+<div class="lds-stack" style="max-width: 16rem; --lds-stack-gap: var(--lds-space-1)">
+  <lds-nav-item href="#" active>
+    <lds-icon slot="start" name="bell"></lds-icon>
+    Incidents
+    <span slot="end" class="lds-subtle" style="font-size: var(--lds-font-size-2xs)">3</span>
+  </lds-nav-item>
+  <lds-nav-item href="#" target="_blank">
+    Docs
+    <lds-icon slot="end" name="external-link"></lds-icon>
+  </lds-nav-item>
+</div>
+"""

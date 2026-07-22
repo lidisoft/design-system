@@ -10,7 +10,7 @@ links and trailing actions. Below the compact threshold — or when `compact` is
 set — links collapse behind a toggle and expand as an inline panel under the
 bar.
 
-This is not a sidebar. A future `lds-nav` covers vertical navigation and
+This is not a sidebar. Use `lds-nav` for vertical navigation and
 collapsible groups. The compact panel is not a drawer and does not trap focus.
 """
 

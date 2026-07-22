@@ -1,0 +1,97 @@
+/* Single sidebar destination. Label visibility follows --lds-nav-item-label-display
+ * inherited from a collapsed <lds-nav>. */
+
+:host {
+  --lds-nav-item-bg: transparent;
+  --lds-nav-item-bg-hover: var(--lds-color-bg-muted);
+  --lds-nav-item-fg: var(--lds-color-fg-muted);
+  --lds-nav-item-fg-active: var(--lds-color-accent-fg);
+  --lds-nav-item-bg-active: var(--lds-color-accent-subtle);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([active]) {
+  --lds-nav-item-bg: var(--lds-nav-item-bg-active);
+  --lds-nav-item-fg: var(--lds-nav-item-fg-active);
+  --lds-nav-item-bg-hover: var(--lds-color-accent-muted);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-control-gap-md);
+
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-control-padding-x-sm);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-nav-item-fg);
+  text-decoration: none;
+
+  background: var(--lds-nav-item-bg);
+  border-radius: var(--lds-control-radius-md);
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+.item:hover {
+  background: var(--lds-nav-item-bg-hover);
+  color: var(--lds-color-fg-default);
+}
+
+:host([active]) .item:hover {
+  color: var(--lds-nav-item-fg-active);
+}
+
+.item:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.item__start,
+.item__end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+}
+
+.item__start[data-empty],
+.item__end[data-empty] {
+  display: none;
+}
+
+.item__label {
+  display: var(--lds-nav-item-label-display, inline);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item__label[data-empty] {
+  display: none;
+}
+
+:host([disabled]) .item {
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+::slotted([slot="start"]),
+::slotted([slot="end"]) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+}

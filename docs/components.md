@@ -15,6 +15,9 @@ every LiDiSoft service needs.
 | `lds-button` | **stable** — the reference implementation |
 | `lds-icon` | **beta** — build-time Lucide sprite |
 | `lds-navbar` | **draft** — top bar with compact toggle |
+| `lds-nav` | **draft** — sidebar with item + group |
+| `lds-nav-item` | **draft** — sidebar destination |
+| `lds-nav-group` | **draft** — collapsible sidebar section |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -101,7 +104,9 @@ wiring into every control.
 | Tag | Purpose | Notes |
 |-----|---------|-------|
 | `lds-navbar` | Top bar | Brand / links / actions slots; auto or forced compact with an inline toggle panel. Active page via `aria-current="page"` on slotted links |
-| `lds-nav` | App sidebar | Future. `lds-nav-item`, active state, collapsible groups — not the top bar |
+| `lds-nav` | App sidebar | Brand / items / footer; `collapsed` icon rail via inherited CSS variables |
+| `lds-nav-item` | Sidebar destination | `href`, `active`, `disabled`; start/end slots for icons |
+| `lds-nav-group` | Collapsible section | `label`, `open`; trigger hides in a collapsed parent nav |
 | `lds-breadcrumb` | Hierarchy | Collapses in the middle when narrow |
 | `lds-menu` | Dropdown actions | `lds-menu-item`, separators; keyboard menu pattern |
 | `lds-tooltip` | Supplementary hints | Never the only source of information |

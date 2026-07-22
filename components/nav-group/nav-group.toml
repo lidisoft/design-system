@@ -1,0 +1,88 @@
+tag = "lds-nav-group"
+name = "Nav group"
+category = "navigation"
+status = "draft"
+summary = "Collapsible section of nav items inside an lds-nav."
+
+description = """
+Groups related lds-nav-item children under a labelled trigger. Open state is
+the open attribute. Inside a collapsed lds-nav, the trigger hides and items
+remain visible so the icon rail stays usable.
+"""
+
+a11y = """
+The trigger is a real <button> with aria-expanded reflecting open. The label
+attribute is the visible (and accessible) name of the section.
+
+- lds-toggle fires before open changes; cancel to keep the previous state.
+- Callers own the item names inside the group.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Section heading shown on the trigger."
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Expanded. Absent means collapsed (items still show in a collapsed parent nav)."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "Grouped lds-nav-item children."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-toggle"
+detail = "{ open: boolean }"
+description = "Fired before open changes. Cancel to keep the previous state."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "group"
+description = "Outer wrapper."
+
+[[parts]]
+name = "trigger"
+description = "The expand/collapse <button>."
+
+[[parts]]
+name = "label"
+description = "Text inside the trigger."
+
+[[parts]]
+name = "chevron"
+description = "Disclosure indicator."
+
+[[parts]]
+name = "items"
+description = "Wrapper around the default slot."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Closed and open"
+description = "Two groups side by side."
+html = """
+<div class="lds-cluster" style="align-items: start">
+  <div style="width: 15rem">
+    <lds-nav-group label="Closed">
+      <lds-nav-item href="#">Team</lds-nav-item>
+      <lds-nav-item href="#">Billing</lds-nav-item>
+    </lds-nav-group>
+  </div>
+  <div style="width: 15rem">
+    <lds-nav-group label="Open" open>
+      <lds-nav-item href="#" active>Team</lds-nav-item>
+      <lds-nav-item href="#">Billing</lds-nav-item>
+    </lds-nav-group>
+  </div>
+</div>
+"""

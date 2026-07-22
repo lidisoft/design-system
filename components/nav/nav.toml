@@ -1,0 +1,184 @@
+tag = "lds-nav"
+name = "Nav"
+category = "navigation"
+status = "draft"
+summary = "App sidebar: brand, nav items and footer, with an optional collapsed rail."
+
+description = """
+Vertical application navigation. Compose with lds-nav-item for destinations and
+lds-nav-group for collapsible sections. Collapsed mode narrows to an icon rail
+and inherits CSS variables into items and groups so labels hide without each
+child observing the parent.
+
+This is not the top bar — use lds-navbar for horizontal chrome.
+"""
+
+a11y = """
+Renders a real <aside> and <nav>. Callers should give the landmark a name when
+more than one nav is on the page (aria-label on the host).
+
+- Items expose their own names; collapsed rails rely on aria-label mirrored from
+  each item's text or label attribute.
+- Groups use a real <button> with aria-expanded. In the collapsed rail, group
+  triggers are hidden and their items stay visible.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "collapsed"
+type = "boolean"
+description = "Icon rail: narrow width, hide item labels and group triggers."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "brand"
+description = "Leading identity at the top of the sidebar."
+
+[[slots]]
+name = ""
+description = "Primary navigation — lds-nav-item and lds-nav-group."
+
+[[slots]]
+name = "footer"
+description = "Trailing block pinned to the bottom (account, help, collapse control)."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "root"
+description = "The outer <aside>."
+
+[[parts]]
+name = "brand"
+description = "Wrapper around the brand slot."
+
+[[parts]]
+name = "body"
+description = "The <nav> wrapping the default slot."
+
+[[parts]]
+name = "footer"
+description = "Wrapper around the footer slot."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-nav-bg"
+default = "--lds-color-bg-subtle"
+description = "Sidebar background."
+
+[[css_vars]]
+name = "--lds-nav-fg"
+default = "--lds-color-fg-default"
+description = "Default foreground, including the brand."
+
+[[css_vars]]
+name = "--lds-nav-border"
+default = "--lds-color-border-subtle"
+description = "Trailing edge and footer separator."
+
+[[css_vars]]
+name = "--lds-nav-width"
+default = "15rem"
+description = "Expanded width. Collapsed overrides this."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Default"
+description = "Brand, flat items, a group and a footer action."
+html = """
+<div style="display: flex; min-height: 28rem; border: 1px solid var(--lds-color-border-default); border-radius: var(--lds-radius-md); overflow: hidden">
+  <lds-nav>
+    <a slot="brand" href="#">Tocsin</a>
+    <lds-nav-item href="#" active>
+      <lds-icon slot="start" name="bell"></lds-icon>
+      Incidents
+    </lds-nav-item>
+    <lds-nav-item href="#">
+      <lds-icon slot="start" name="search"></lds-icon>
+      Explore
+    </lds-nav-item>
+    <lds-nav-group label="Workspace" open>
+      <lds-nav-item href="#">
+        <lds-icon slot="start" name="user"></lds-icon>
+        Team
+      </lds-nav-item>
+      <lds-nav-item href="#">
+        <lds-icon slot="start" name="settings"></lds-icon>
+        Settings
+      </lds-nav-item>
+    </lds-nav-group>
+    <lds-nav-item slot="footer" href="#">
+      <lds-icon slot="start" name="info"></lds-icon>
+      Help
+    </lds-nav-item>
+  </lds-nav>
+  <div style="flex: 1; padding: var(--lds-space-6); background: var(--lds-color-bg-canvas)">
+    <p class="lds-muted">Main content</p>
+  </div>
+</div>
+"""
+
+[[stories]]
+name = "Collapsed"
+description = "Icon rail — labels hide, groups stay expanded and triggers hide."
+html = """
+<div style="display: flex; min-height: 24rem; border: 1px solid var(--lds-color-border-default); border-radius: var(--lds-radius-md); overflow: hidden">
+  <lds-nav collapsed>
+    <a slot="brand" href="#">T</a>
+    <lds-nav-item href="#" active>
+      <lds-icon slot="start" name="bell"></lds-icon>
+      Incidents
+    </lds-nav-item>
+    <lds-nav-item href="#">
+      <lds-icon slot="start" name="search"></lds-icon>
+      Explore
+    </lds-nav-item>
+    <lds-nav-group label="Workspace" open>
+      <lds-nav-item href="#">
+        <lds-icon slot="start" name="user"></lds-icon>
+        Team
+      </lds-nav-item>
+      <lds-nav-item href="#">
+        <lds-icon slot="start" name="settings"></lds-icon>
+        Settings
+      </lds-nav-item>
+    </lds-nav-group>
+  </lds-nav>
+  <div style="flex: 1; padding: var(--lds-space-6); background: var(--lds-color-bg-canvas)">
+    <p class="lds-muted">Collapsed rail</p>
+  </div>
+</div>
+"""
+
+[[stories]]
+name = "With navbar"
+description = "Typical app chrome: top bar plus sidebar."
+html = """
+<div style="border: 1px solid var(--lds-color-border-default); border-radius: var(--lds-radius-md); overflow: hidden">
+  <lds-navbar>
+    <a slot="brand" href="#">Tocsin</a>
+    <a href="#" aria-current="page">App</a>
+    <a href="#">Docs</a>
+    <lds-button slot="actions" size="sm" variant="secondary">Account</lds-button>
+  </lds-navbar>
+  <div style="display: flex; min-height: 20rem">
+    <lds-nav>
+      <lds-nav-item href="#" active>
+        <lds-icon slot="start" name="bell"></lds-icon>
+        Incidents
+      </lds-nav-item>
+      <lds-nav-item href="#">
+        <lds-icon slot="start" name="settings"></lds-icon>
+        Settings
+      </lds-nav-item>
+    </lds-nav>
+    <div style="flex: 1; padding: var(--lds-space-6); background: var(--lds-color-bg-canvas)">
+      <p class="lds-muted">Shell composition</p>
+    </div>
+  </div>
+</div>
+"""

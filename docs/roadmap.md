@@ -69,7 +69,8 @@ components will.
 - [ ] `lds-menu`, `lds-tooltip`, `lds-popover`
 - [ ] **`lds-navbar`** — top bar with brand/links/actions and compact toggle
       (first nav deliverable; no drawer dependency)
-- [ ] `lds-nav` + `lds-nav-item` — sidebar; after navbar
+- [ ] **`lds-nav` + `lds-nav-item` + `lds-nav-group`** — sidebar with active
+      items, collapsible groups and a collapsed icon rail
 - [ ] `lds-breadcrumb`
 - [ ] `lds-timeline` — needed by tocsin's incident history
 - [ ] `lds-progress`, `lds-pagination`, `lds-banner`, `lds-code`

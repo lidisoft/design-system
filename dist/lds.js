@@ -459,6 +459,211 @@
     }
   })();
 
+  /* behaviour: lds-nav */
+  (function () {
+    /* Behaviour for <lds-nav>.
+     *
+     * CSS cannot see whether a named slot has assigned nodes, so brand and footer
+     * wrappers get data-empty for collapse.
+     */
+
+    LDS.behavior("lds-nav", {
+      connected(el) {
+        watchSlot(el, 'slot[name="brand"]', ".brand");
+        watchSlot(el, 'slot[name="footer"]', ".footer");
+      },
+    });
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        wrap.toggleAttribute("data-empty", slot.assignedNodes({ flatten: true }).length === 0);
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-nav-group */
+  (function () {
+    /* Behaviour for <lds-nav-group>.
+     *
+     * Toggles the `open` attribute; aria-expanded tracks it. Cancel lds-toggle to
+     * keep the previous state.
+     */
+
+    LDS.behavior("lds-nav-group", {
+      connected(el) {
+        const trigger = el.$(".trigger");
+
+        syncLabel(el, trigger);
+        syncExpanded(el, trigger);
+
+        trigger.addEventListener("click", () => {
+          setOpen(el, !el.boolAttr("open"));
+        });
+      },
+
+      attributeChanged(el, name) {
+        const trigger = el.$(".trigger");
+        if (!trigger) return;
+
+        if (name === "label") syncLabel(el, trigger);
+        if (name === "open") syncExpanded(el, trigger);
+      },
+    });
+
+    function setOpen(el, open) {
+      if (el.boolAttr("open") === open) return;
+
+      const event = el.emit("lds-toggle", { open: open });
+      if (event.defaultPrevented) return;
+
+      el.toggleAttribute("open", open);
+    }
+
+    function syncLabel(el, trigger) {
+      const label = el.$(".trigger__label");
+      const text = el.getAttribute("label") || "";
+      if (label) label.textContent = text;
+      if (text) {
+        trigger.removeAttribute("aria-label");
+      } else {
+        trigger.setAttribute("aria-label", "Section");
+      }
+    }
+
+    function syncExpanded(el, trigger) {
+      trigger.setAttribute("aria-expanded", el.boolAttr("open") ? "true" : "false");
+    }
+  })();
+
+  /* behaviour: lds-nav-item */
+  (function () {
+    /* Behaviour for <lds-nav-item>.
+     *
+     * Mirrors href / target / active / disabled onto the inner <a>, and blocks
+     * activation while disabled (the host itself is not a native disabled control).
+     */
+
+    LDS.behavior("lds-nav-item", {
+      connected(el) {
+        const item = el.$(".item");
+
+        syncLink(el, item);
+        syncActive(el, item);
+        syncDisabled(el, item);
+        watchSlot(el, ".item__start slot", ".item__start");
+        watchSlot(el, ".item__end slot", ".item__end");
+        watchSlot(el, ".item__label slot", ".item__label", () => syncName(el, item));
+        syncName(el, item);
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      attributeChanged(el, name) {
+        const item = el.$(".item");
+        if (!item) return;
+
+        if (name === "href" || name === "target") syncLink(el, item);
+        if (name === "active") syncActive(el, item);
+        if (name === "disabled") syncDisabled(el, item);
+        if (name === "label") syncName(el, item);
+      },
+    });
+
+    function syncLink(el, item) {
+      const href = el.getAttribute("href");
+      if (href) {
+        item.setAttribute("href", href);
+      } else {
+        item.removeAttribute("href");
+      }
+
+      const target = el.getAttribute("target");
+      if (target) {
+        item.setAttribute("target", target);
+        if (target === "_blank" && !item.hasAttribute("rel")) {
+          item.setAttribute("rel", "noopener noreferrer");
+        }
+      } else {
+        item.removeAttribute("target");
+      }
+    }
+
+    function syncActive(el, item) {
+      if (el.boolAttr("active")) {
+        item.setAttribute("aria-current", "page");
+      } else {
+        item.removeAttribute("aria-current");
+      }
+    }
+
+    function syncDisabled(el, item) {
+      const disabled = el.boolAttr("disabled");
+      item.toggleAttribute("aria-disabled", disabled);
+      if (disabled) {
+        item.setAttribute("tabindex", "-1");
+      } else {
+        item.removeAttribute("tabindex");
+      }
+    }
+
+    /* Keep an accessible name when the visible label is hidden in a collapsed rail. */
+    function syncName(el, item) {
+      const explicit = el.getAttribute("label");
+      if (explicit) {
+        item.setAttribute("aria-label", explicit);
+        return;
+      }
+
+      const slot = el.$(".item__label slot");
+      if (!slot) return;
+
+      const text = slot
+        .assignedNodes({ flatten: true })
+        .map((node) => node.textContent || "")
+        .join("")
+        .trim();
+
+      if (text) {
+        item.setAttribute("aria-label", text);
+      } else {
+        item.removeAttribute("aria-label");
+      }
+    }
+
+    function watchSlot(el, slotSel, wrapSel, onChange) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() === ""
+        );
+        wrap.toggleAttribute("data-empty", empty);
+        if (onChange) onChange();
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-navbar */
   (function () {
     /* Behaviour for <lds-navbar>.
@@ -834,6 +1039,344 @@
   height: 100%;
   fill: none;
   stroke: currentColor;
+}`,
+  });
+
+  /* component: lds-nav (draft) */
+  LDS.define({
+    tag: "lds-nav",
+    className: "LdsNav",
+    observed: ["collapsed"],
+    defaults: {},
+    template: `<aside class="root" part="root">
+  <div class="brand" part="brand"><slot name="brand"></slot></div>
+  <nav class="body" part="body"><slot></slot></nav>
+  <div class="footer" part="footer"><slot name="footer"></slot></div>
+</aside>`,
+    styles: `/* App sidebar shell. Item and group chrome live in their own components;
+ * --lds-nav-* custom properties inherit into their shadows for collapsed mode. */
+
+:host {
+  --lds-nav-bg: var(--lds-color-bg-subtle);
+  --lds-nav-fg: var(--lds-color-fg-default);
+  --lds-nav-border: var(--lds-color-border-subtle);
+  --lds-nav-width: 15rem;
+  --lds-nav-padding: var(--lds-space-3);
+  --lds-nav-gap: var(--lds-space-1);
+  --lds-nav-item-label-display: inline;
+  --lds-nav-group-label-display: inline;
+  --lds-nav-group-chevron-display: inline-flex;
+
+  display: flex;
+  flex-direction: column;
+  width: var(--lds-nav-width);
+  min-height: 100%;
+  color: var(--lds-nav-fg);
+  background: var(--lds-nav-bg);
+  border-inline-end: 1px solid var(--lds-nav-border);
+  transition:
+    width var(--lds-transition-surface),
+    background var(--lds-transition-surface),
+    border-color var(--lds-transition-surface);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([collapsed]) {
+  --lds-nav-width: calc(var(--lds-control-height-md) + var(--lds-space-6));
+  --lds-nav-item-label-display: none;
+  --lds-nav-group-trigger-display: none;
+  --lds-nav-group-label-display: none;
+  --lds-nav-group-chevron-display: none;
+  --lds-nav-group-closed-display: flex;
+  --lds-nav-group-closed-pad: 0;
+}
+
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-space-3);
+  min-height: 0;
+  padding: var(--lds-nav-padding);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-space-2);
+}
+
+.brand[data-empty] {
+  display: none;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-nav-gap);
+  min-height: 0;
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--lds-nav-gap);
+  margin-block-start: auto;
+  padding-block-start: var(--lds-space-3);
+  border-block-start: 1px solid var(--lds-nav-border);
+}
+
+.footer[data-empty] {
+  display: none;
+}
+
+::slotted([slot="brand"]) {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-md);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  color: var(--lds-nav-fg);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host([collapsed]) .brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+:host([collapsed]) ::slotted([slot="brand"]) {
+  font-size: var(--lds-font-size-sm);
+}`,
+  });
+
+  /* component: lds-nav-group (draft) */
+  LDS.define({
+    tag: "lds-nav-group",
+    className: "LdsNavGroup",
+    observed: ["label", "open"],
+    defaults: {},
+    template: `<div class="group" part="group">
+  <button type="button" class="trigger" part="trigger" aria-expanded="false">
+    <span class="trigger__label" part="label"></span>
+    <span class="trigger__chevron" part="chevron" aria-hidden="true"></span>
+  </button>
+  <div class="items" part="items" role="group">
+    <slot></slot>
+  </div>
+</div>`,
+    styles: `/* Collapsible section inside <lds-nav>. Open state is the \`open\` attribute.
+ * A collapsed parent nav sets --lds-nav-group-* vars so the rail stays usable. */
+
+:host {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+}
+
+.trigger {
+  display: var(--lds-nav-group-trigger-display, flex);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lds-control-gap-md);
+
+  width: 100%;
+  min-height: var(--lds-control-height-sm);
+  padding-inline: var(--lds-control-padding-x-sm);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-2xs);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--lds-font-tracking-caps);
+  text-transform: uppercase;
+  color: var(--lds-color-fg-subtle);
+  text-align: start;
+
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+.trigger:hover {
+  color: var(--lds-color-fg-muted);
+  background: var(--lds-color-bg-muted);
+}
+
+.trigger:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.trigger__label {
+  display: var(--lds-nav-group-label-display, inline);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trigger__chevron {
+  display: var(--lds-nav-group-chevron-display, inline-flex);
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  rotate: -45deg;
+  translate: 0 -0.1em;
+  transition: rotate var(--lds-transition-control);
+}
+
+:host([open]) .trigger__chevron {
+  rotate: 45deg;
+  translate: 0 0.05em;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  padding-inline-start: var(--lds-space-2);
+}
+
+:host(:not([open])) .items {
+  display: var(--lds-nav-group-closed-display, none);
+  padding-inline-start: var(--lds-nav-group-closed-pad, var(--lds-space-2));
+}`,
+  });
+
+  /* component: lds-nav-item (draft) */
+  LDS.define({
+    tag: "lds-nav-item",
+    className: "LdsNavItem",
+    observed: ["href", "target", "active", "disabled", "label"],
+    defaults: {},
+    template: `<a class="item" part="item">
+  <span class="item__start" part="start"><slot name="start"></slot></span>
+  <span class="item__label" part="label"><slot></slot></span>
+  <span class="item__end" part="end"><slot name="end"></slot></span>
+</a>`,
+    styles: `/* Single sidebar destination. Label visibility follows --lds-nav-item-label-display
+ * inherited from a collapsed <lds-nav>. */
+
+:host {
+  --lds-nav-item-bg: transparent;
+  --lds-nav-item-bg-hover: var(--lds-color-bg-muted);
+  --lds-nav-item-fg: var(--lds-color-fg-muted);
+  --lds-nav-item-fg-active: var(--lds-color-accent-fg);
+  --lds-nav-item-bg-active: var(--lds-color-accent-subtle);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([active]) {
+  --lds-nav-item-bg: var(--lds-nav-item-bg-active);
+  --lds-nav-item-fg: var(--lds-nav-item-fg-active);
+  --lds-nav-item-bg-hover: var(--lds-color-accent-muted);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-control-gap-md);
+
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-control-padding-x-sm);
+
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-nav-item-fg);
+  text-decoration: none;
+
+  background: var(--lds-nav-item-bg);
+  border-radius: var(--lds-control-radius-md);
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+.item:hover {
+  background: var(--lds-nav-item-bg-hover);
+  color: var(--lds-color-fg-default);
+}
+
+:host([active]) .item:hover {
+  color: var(--lds-nav-item-fg-active);
+}
+
+.item:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.item__start,
+.item__end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+}
+
+.item__start[data-empty],
+.item__end[data-empty] {
+  display: none;
+}
+
+.item__label {
+  display: var(--lds-nav-item-label-display, inline);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item__label[data-empty] {
+  display: none;
+}
+
+:host([disabled]) .item {
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+::slotted([slot="start"]),
+::slotted([slot="end"]) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
 }`,
   });
 
