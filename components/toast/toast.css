@@ -1,0 +1,129 @@
+/* Transient notification card. Intents are custom properties on :host. */
+
+:host {
+  --lds-toast-bg: var(--lds-color-accent-subtle);
+  --lds-toast-fg: var(--lds-color-accent-fg);
+  --lds-toast-border: var(--lds-color-accent-border);
+  --lds-toast-width: 22rem;
+
+  display: none;
+  max-width: 100%;
+  color: var(--lds-toast-fg);
+}
+
+:host([open]) {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([intent="success"]) {
+  --lds-toast-bg: var(--lds-color-success-subtle);
+  --lds-toast-fg: var(--lds-color-success-fg);
+  --lds-toast-border: var(--lds-color-success-border);
+}
+
+:host([intent="warning"]) {
+  --lds-toast-bg: var(--lds-color-warning-subtle);
+  --lds-toast-fg: var(--lds-color-warning-fg);
+  --lds-toast-border: var(--lds-color-warning-border);
+}
+
+:host([intent="danger"]) {
+  --lds-toast-bg: var(--lds-color-danger-subtle);
+  --lds-toast-fg: var(--lds-color-danger-fg);
+  --lds-toast-border: var(--lds-color-danger-border);
+}
+
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lds-space-3);
+
+  box-sizing: border-box;
+  width: var(--lds-toast-width);
+  max-width: 100%;
+  padding: var(--lds-space-4);
+
+  background: var(--lds-toast-bg);
+  border: 1px solid var(--lds-toast-border);
+  border-radius: var(--lds-radius-md);
+  box-shadow: var(--lds-shadow-md);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.title[data-empty] {
+  display: none;
+}
+
+.body {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-regular);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.body[data-empty] {
+  display: none;
+}
+
+.action {
+  margin-block-start: var(--lds-space-2);
+}
+
+.action[data-empty] {
+  display: none;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: calc(var(--lds-space-1) * -1);
+  padding: 0;
+
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  opacity: 0.7;
+  transition:
+    background var(--lds-transition-control),
+    opacity var(--lds-transition-control);
+}
+
+.close:hover {
+  opacity: 1;
+  background: var(--lds-color-bg-muted);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.close[hidden] {
+  display: none;
+}

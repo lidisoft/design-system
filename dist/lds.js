@@ -949,6 +949,310 @@
     }
   })();
 
+  /* behaviour: lds-toast */
+  (function () {
+    /* Behaviour for <lds-toast>.
+     *
+     * open controls visibility. duration (ms, default 5000; 0 = sticky) auto-
+     * dismisses; the timer pauses while hovered or focus is inside. dismissible
+     * defaults to true when the attribute is omitted.
+     */
+
+    const state = new WeakMap();
+
+    LDS.behavior("lds-toast", {
+      connected(el) {
+        const close = el.$(".close");
+        const root = el.$(".root");
+
+        syncRole(el, root);
+        syncDismissible(el, close);
+        watchSlot(el, 'slot[name="title"]', ".title");
+        watchSlot(el, ".body > slot", ".body");
+        watchSlot(el, 'slot[name="action"]', ".action");
+
+        close.addEventListener("click", function () {
+          dismiss(el, "close");
+        });
+
+        el.addEventListener("mouseenter", function () {
+          pauseTimer(el);
+        });
+        el.addEventListener("mouseleave", function () {
+          resumeTimer(el);
+        });
+        el.addEventListener("focusin", function () {
+          pauseTimer(el);
+        });
+        el.addEventListener("focusout", function () {
+          requestAnimationFrame(function () {
+            if (!el.matches(":focus-within")) resumeTimer(el);
+          });
+        });
+
+        if (el.boolAttr("open")) startTimer(el);
+      },
+
+      disconnected(el) {
+        clearTimer(el);
+      },
+
+      attributeChanged(el, name) {
+        const close = el.$(".close");
+        const root = el.$(".root");
+        if (!root) return;
+
+        if (name === "intent") syncRole(el, root);
+        if (name === "dismissible" && close) syncDismissible(el, close);
+        if (name === "open") {
+          if (el.boolAttr("open")) startTimer(el);
+          else clearTimer(el);
+        }
+        if (name === "duration" && el.boolAttr("open")) {
+          clearTimer(el);
+          startTimer(el);
+        }
+      },
+    });
+
+    function isDismissible(el) {
+      if (!el.hasAttribute("dismissible")) return true;
+      return el.boolAttr("dismissible");
+    }
+
+    function syncDismissible(el, close) {
+      close.hidden = !isDismissible(el);
+    }
+
+    function syncRole(el, root) {
+      root.setAttribute(
+        "role",
+        el.getAttribute("intent") === "danger" ? "alert" : "status"
+      );
+    }
+
+    function durationMs(el) {
+      const raw = el.getAttribute("duration");
+      if (raw === null || raw === "") return 5000;
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) ? n : 5000;
+    }
+
+    function dismiss(el, reason) {
+      if (!el.boolAttr("open")) return;
+
+      const event = el.emit("lds-dismiss", { reason: reason });
+      if (event.defaultPrevented) return;
+
+      el.removeAttribute("open");
+      clearTimer(el);
+
+      if (el.hasAttribute("data-managed")) {
+        el.remove();
+      }
+    }
+
+    function clearTimer(el) {
+      const s = state.get(el);
+      if (!s) return;
+      if (s.timer) clearTimeout(s.timer);
+      s.timer = null;
+      state.set(el, s);
+    }
+
+    function startTimer(el) {
+      clearTimer(el);
+      const ms = durationMs(el);
+      if (ms <= 0) return;
+
+      const s = state.get(el) || {};
+      s.remaining = ms;
+      s.started = Date.now();
+      s.timer = setTimeout(function () {
+        dismiss(el, "timeout");
+      }, ms);
+      state.set(el, s);
+    }
+
+    function pauseTimer(el) {
+      const s = state.get(el);
+      if (!s || !s.timer) return;
+      clearTimeout(s.timer);
+      s.timer = null;
+      s.remaining = Math.max(0, s.remaining - (Date.now() - s.started));
+      state.set(el, s);
+    }
+
+    function resumeTimer(el) {
+      if (!el.boolAttr("open")) return;
+      const s = state.get(el);
+      if (!s || s.timer) return;
+      if (s.remaining <= 0) {
+        dismiss(el, "timeout");
+        return;
+      }
+      s.started = Date.now();
+      s.timer = setTimeout(function () {
+        dismiss(el, "timeout");
+      }, s.remaining);
+      state.set(el, s);
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = function () {
+        const empty = slot.assignedNodes({ flatten: true }).every(function (node) {
+          return node.nodeType === Node.TEXT_NODE && node.textContent.trim() === "";
+        });
+        wrap.toggleAttribute("data-empty", empty);
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+
+    /* Used by lds-toast-region Escape handling and LDS.toast callers. */
+    LDS._dismissToast = dismiss;
+  })();
+
+  /* behaviour: lds-toast-region */
+  (function () {
+    /* Behaviour for <lds-toast-region> and the LDS.toast() entry point.
+     *
+     * Escape dismisses the newest open toast. LDS.toast() ensures a region exists
+     * on document.body, builds a managed <lds-toast>, and opens it.
+     */
+
+    const regionState = new WeakMap();
+
+    LDS.behavior("lds-toast-region", {
+      connected(el) {
+        if (!el.hasAttribute("role")) el.setAttribute("role", "region");
+        if (!el.hasAttribute("aria-label")) {
+          el.setAttribute("aria-label", "Notifications");
+        }
+        el.setAttribute("aria-live", "polite");
+        el.setAttribute("aria-relevant", "additions text");
+
+        const onKeydown = function (event) {
+          if (event.key !== "Escape") return;
+          const open = openToasts(el);
+          if (!open.length) return;
+          const newest = open[open.length - 1];
+          if (typeof LDS._dismissToast === "function") {
+            LDS._dismissToast(newest, "escape");
+          }
+        };
+
+        const slot = el.$("slot");
+        const syncListener = function () {
+          const s = regionState.get(el);
+          if (!s) return;
+          const has = openToasts(el).length > 0 || toastsOf(el).length > 0;
+          if (has && !s.listening) {
+            document.addEventListener("keydown", onKeydown);
+            s.listening = true;
+          } else if (!has && s.listening) {
+            document.removeEventListener("keydown", onKeydown);
+            s.listening = false;
+          }
+        };
+
+        if (slot) slot.addEventListener("slotchange", syncListener);
+
+        const mo = new MutationObserver(syncListener);
+        mo.observe(el, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["open"],
+        });
+
+        regionState.set(el, { onKeydown: onKeydown, mo: mo, listening: false });
+        syncListener();
+      },
+
+      disconnected(el) {
+        const s = regionState.get(el);
+        if (!s) return;
+        document.removeEventListener("keydown", s.onKeydown);
+        s.mo.disconnect();
+        regionState.delete(el);
+      },
+    });
+
+    function toastsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll("lds-toast"));
+    }
+
+    function openToasts(el) {
+      return toastsOf(el).filter(function (toast) {
+        return toast.hasAttribute("open") && toast.getAttribute("open") !== "false";
+      });
+    }
+
+    /**
+     * Show a transient toast in the page toast region.
+     *
+     * @param {object} [opts]
+     * @param {"info"|"success"|"warning"|"danger"} [opts.intent]
+     * @param {string} [opts.title]
+     * @param {string} [opts.description]
+     * @param {number} [opts.duration] ms; 0 = sticky
+     * @param {boolean} [opts.dismissible] default true
+     * @param {"top-start"|"top-end"|"bottom-start"|"bottom-end"} [opts.placement]
+     * @returns {HTMLElement} the <lds-toast> element
+     */
+    LDS.toast = function (opts) {
+      opts = opts || {};
+
+      let region = null;
+      if (opts.placement) {
+        region = document.querySelector(
+          'lds-toast-region[placement="' + opts.placement + '"]'
+        );
+      }
+      if (!region) region = document.querySelector("lds-toast-region");
+      if (!region) {
+        region = document.createElement("lds-toast-region");
+        if (opts.placement) region.setAttribute("placement", opts.placement);
+        document.body.appendChild(region);
+      }
+
+      const toast = document.createElement("lds-toast");
+      toast.setAttribute("data-managed", "");
+
+      const intent = opts.intent || "info";
+      toast.setAttribute("intent", intent);
+
+      if (opts.duration != null) {
+        toast.setAttribute("duration", String(opts.duration));
+      }
+
+      if (opts.dismissible === false) {
+        toast.setAttribute("dismissible", "false");
+      }
+
+      if (opts.title) {
+        const title = document.createElement("span");
+        title.slot = "title";
+        title.textContent = String(opts.title);
+        toast.appendChild(title);
+      }
+
+      if (opts.description) {
+        toast.appendChild(document.createTextNode(String(opts.description)));
+      }
+
+      region.appendChild(toast);
+      toast.setAttribute("open", "");
+      return toast;
+    };
+  })();
+
   /* component: lds-button (stable) */
   LDS.define({
     tag: "lds-button",
@@ -2046,6 +2350,227 @@ a.link:hover {
   justify-content: flex-start;
   min-height: var(--lds-control-height-lg);
   padding-inline: var(--lds-control-padding-x-md);
+}`,
+  });
+
+  /* component: lds-toast (draft) */
+  LDS.define({
+    tag: "lds-toast",
+    className: "LdsToast",
+    observed: ["intent", "open", "dismissible", "duration"],
+    defaults: {"intent": "info", "duration": "5000"},
+    template: `<div class="root" part="root">
+  <div class="main">
+    <div class="title" part="title"><slot name="title"></slot></div>
+    <div class="body" part="body"><slot></slot></div>
+    <div class="action" part="action"><slot name="action"></slot></div>
+  </div>
+  <button type="button" class="close" part="close" aria-label="Dismiss" hidden>
+    <lds-icon name="x"></lds-icon>
+  </button>
+</div>`,
+    styles: `/* Transient notification card. Intents are custom properties on :host. */
+
+:host {
+  --lds-toast-bg: var(--lds-color-accent-subtle);
+  --lds-toast-fg: var(--lds-color-accent-fg);
+  --lds-toast-border: var(--lds-color-accent-border);
+  --lds-toast-width: 22rem;
+
+  display: none;
+  max-width: 100%;
+  color: var(--lds-toast-fg);
+}
+
+:host([open]) {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([intent="success"]) {
+  --lds-toast-bg: var(--lds-color-success-subtle);
+  --lds-toast-fg: var(--lds-color-success-fg);
+  --lds-toast-border: var(--lds-color-success-border);
+}
+
+:host([intent="warning"]) {
+  --lds-toast-bg: var(--lds-color-warning-subtle);
+  --lds-toast-fg: var(--lds-color-warning-fg);
+  --lds-toast-border: var(--lds-color-warning-border);
+}
+
+:host([intent="danger"]) {
+  --lds-toast-bg: var(--lds-color-danger-subtle);
+  --lds-toast-fg: var(--lds-color-danger-fg);
+  --lds-toast-border: var(--lds-color-danger-border);
+}
+
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lds-space-3);
+
+  box-sizing: border-box;
+  width: var(--lds-toast-width);
+  max-width: 100%;
+  padding: var(--lds-space-4);
+
+  background: var(--lds-toast-bg);
+  border: 1px solid var(--lds-toast-border);
+  border-radius: var(--lds-radius-md);
+  box-shadow: var(--lds-shadow-md);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.title[data-empty] {
+  display: none;
+}
+
+.body {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-regular);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.body[data-empty] {
+  display: none;
+}
+
+.action {
+  margin-block-start: var(--lds-space-2);
+}
+
+.action[data-empty] {
+  display: none;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: calc(var(--lds-space-1) * -1);
+  padding: 0;
+
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  opacity: 0.7;
+  transition:
+    background var(--lds-transition-control),
+    opacity var(--lds-transition-control);
+}
+
+.close:hover {
+  opacity: 1;
+  background: var(--lds-color-bg-muted);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.close[hidden] {
+  display: none;
+}`,
+  });
+
+  /* component: lds-toast-region (draft) */
+  LDS.define({
+    tag: "lds-toast-region",
+    className: "LdsToastRegion",
+    observed: ["placement"],
+    defaults: {"placement": "top-end"},
+    template: `<div class="stack" part="stack">
+  <slot></slot>
+</div>`,
+    styles: `/* Fixed toast stack. Placement is inset + alignment on :host. */
+
+:host {
+  --lds-toast-region-gap: var(--lds-space-3);
+  --lds-toast-region-inset: var(--lds-space-4);
+
+  position: fixed;
+  z-index: var(--lds-z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-toast-region-gap);
+  box-sizing: border-box;
+  max-width: calc(100vw - (var(--lds-toast-region-inset) * 2));
+  max-height: calc(100vh - (var(--lds-toast-region-inset) * 2));
+  overflow: auto;
+  pointer-events: none;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([placement="top-start"]) {
+  inset-block-start: var(--lds-toast-region-inset);
+  inset-inline-start: var(--lds-toast-region-inset);
+  align-items: flex-start;
+}
+
+:host([placement="top-end"]),
+:host(:not([placement])) {
+  inset-block-start: var(--lds-toast-region-inset);
+  inset-inline-end: var(--lds-toast-region-inset);
+  align-items: flex-end;
+}
+
+:host([placement="bottom-start"]) {
+  inset-block-end: var(--lds-toast-region-inset);
+  inset-inline-start: var(--lds-toast-region-inset);
+  align-items: flex-start;
+}
+
+:host([placement="bottom-end"]) {
+  inset-block-end: var(--lds-toast-region-inset);
+  inset-inline-end: var(--lds-toast-region-inset);
+  align-items: flex-end;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-toast-region-gap);
+  align-items: inherit;
+  min-width: 0;
+}
+
+::slotted(lds-toast) {
+  pointer-events: auto;
+}
+
+:host(:not(:has(lds-toast))) {
+  /* No children — stay out of the way. :has is in the support matrix. */
+  visibility: hidden;
 }`,
   });
 

@@ -1,0 +1,161 @@
+tag = "lds-toast"
+name = "Toast"
+category = "feedback"
+status = "draft"
+summary = "Transient notification card. Prefer LDS.toast() for imperative use."
+
+description = """
+Short-lived feedback that does not block the page. Compose inside
+lds-toast-region, or call LDS.toast() which creates a managed toast for you.
+
+Intents map to the semantic intent palette (info uses accent). Auto-dismiss
+after duration milliseconds (default 5000); set duration to 0 for sticky.
+This is not an inline alert — use a future lds-alert for persistent page
+messaging.
+"""
+
+a11y = """
+The card uses role=\"status\" (role=\"alert\" for danger). The dismiss control is a
+real button labelled Dismiss.
+
+- Auto-dismiss pauses while the toast is hovered or focused.
+- Escape is handled by lds-toast-region (newest toast first).
+- Callers own the title and body text; keep them concise.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "intent"
+type = "enum"
+values = ["info", "success", "warning", "danger"]
+default = "info"
+description = "Severity colour. info uses the accent intent roles."
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Whether the toast is visible."
+
+[[attributes]]
+name = "dismissible"
+type = "boolean"
+description = "Show a dismiss button. Defaults to true when the attribute is omitted; set dismissible=\"false\" to hide it."
+
+[[attributes]]
+name = "duration"
+type = "number"
+default = "5000"
+description = "Auto-dismiss delay in milliseconds. 0 disables auto-dismiss."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "title"
+description = "Short heading."
+
+[[slots]]
+name = ""
+description = "Body copy."
+
+[[slots]]
+name = "action"
+description = "Optional follow-up control, typically an lds-button."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-dismiss"
+detail = "{ reason: string }"
+description = "Fired before closing (close button, timeout, Escape). Cancel to keep it open. reason is close | timeout | escape."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "root"
+description = "The toast surface."
+
+[[parts]]
+name = "title"
+description = "Wrapper around the title slot."
+
+[[parts]]
+name = "body"
+description = "Wrapper around the default slot."
+
+[[parts]]
+name = "action"
+description = "Wrapper around the action slot."
+
+[[parts]]
+name = "close"
+description = "The dismiss button."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-toast-bg"
+default = "per intent"
+description = "Surface background."
+
+[[css_vars]]
+name = "--lds-toast-fg"
+default = "per intent"
+description = "Foreground."
+
+[[css_vars]]
+name = "--lds-toast-border"
+default = "per intent"
+description = "Border colour."
+
+[[css_vars]]
+name = "--lds-toast-width"
+default = "22rem"
+description = "Preferred width of the card."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Intents"
+description = "info uses accent; the rest map to their intent roles."
+html = """
+<div class="lds-stack" style="max-width: 24rem">
+  <lds-toast open intent="info" duration="0">
+    <span slot="title">Queued</span>
+    Deploy is waiting for approval.
+  </lds-toast>
+  <lds-toast open intent="success" duration="0">
+    <span slot="title">Saved</span>
+    Incident acknowledged.
+  </lds-toast>
+  <lds-toast open intent="warning" duration="0">
+    <span slot="title">Degraded</span>
+    Latency is above the SLO.
+  </lds-toast>
+  <lds-toast open intent="danger" duration="0">
+    <span slot="title">Failed</span>
+    Rollback did not complete.
+  </lds-toast>
+</div>
+"""
+
+[[stories]]
+name = "With action"
+description = "Action slot for a follow-up control."
+html = """
+<lds-toast open intent="success" duration="0" style="max-width: 24rem">
+  <span slot="title">Invitation sent</span>
+  alex@lidisoft.com can join the workspace.
+  <lds-button slot="action" size="sm" variant="ghost">Undo</lds-button>
+</lds-toast>
+"""
+
+[[stories]]
+name = "Not dismissible"
+description = "dismissible=\"false\" hides the close control (still auto-dismisses unless duration is 0)."
+html = """
+<lds-toast open intent="info" dismissible="false" duration="0" style="max-width: 24rem">
+  <span slot="title">Syncing</span>
+  Changes are uploading.
+</lds-toast>
+"""

@@ -1,0 +1,10 @@
+<div class="root" part="root">
+  <div class="main">
+    <div class="title" part="title"><slot name="title"></slot></div>
+    <div class="body" part="body"><slot></slot></div>
+    <div class="action" part="action"><slot name="action"></slot></div>
+  </div>
+  <button type="button" class="close" part="close" aria-label="Dismiss" hidden>
+    <lds-icon name="x"></lds-icon>
+  </button>
+</div>

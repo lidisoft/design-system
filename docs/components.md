@@ -20,6 +20,8 @@ every LiDiSoft service needs.
 | `lds-nav-group` | **draft** — collapsible sidebar section |
 | `lds-breadcrumb` | **draft** — hierarchy trail with middle collapse |
 | `lds-breadcrumb-item` | **draft** — breadcrumb step |
+| `lds-toast` | **draft** — transient notification card |
+| `lds-toast-region` | **draft** — toast stack + `LDS.toast()` |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -142,7 +144,8 @@ chrome and behaviour around it.
 | Tag | Purpose | Notes |
 |-----|---------|-------|
 | `lds-alert` | Inline, persistent messages | intent, dismissible, title/description/actions slots |
-| `lds-toast` | Transient notifications | Needs a host/queue singleton and a `LDS.toast()` entry point |
+| `lds-toast` | Transient notifications | intent, duration, dismissible; compose in `lds-toast-region` or call `LDS.toast()` |
+| `lds-toast-region` | Toast stack host | placement corners; auto-created by `LDS.toast()`; Escape dismisses newest |
 | `lds-progress` | Determinate progress | Linear and circular; `value`/`max`, indeterminate mode |
 | `lds-banner` | Page-level announcements | Full-bleed; maintenance windows, incidents |
 

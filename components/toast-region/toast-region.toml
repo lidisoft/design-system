@@ -1,0 +1,76 @@
+tag = "lds-toast-region"
+name = "Toast region"
+category = "feedback"
+status = "draft"
+summary = "Fixed stack for toasts. Created automatically by LDS.toast()."
+
+description = """
+Hosts a queue of lds-toast children in a fixed corner of the viewport.
+Callers rarely write this tag by hand — LDS.toast() appends one to document.body
+on first use if none exists.
+
+Escape dismisses the newest open toast. Placement chooses the corner.
+"""
+
+a11y = """
+role=\"region\" with aria-label Notifications and aria-live=\"polite\". Individual
+toasts carry status/alert roles. Escape is bound while the region has toast
+children.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "placement"
+type = "enum"
+values = ["top-start", "top-end", "bottom-start", "bottom-end"]
+default = "top-end"
+description = "Corner of the viewport for the stack."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "lds-toast children."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "stack"
+description = "Flex column wrapping the slot."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-toast-region-inset"
+default = "--lds-space-4"
+description = "Offset from the viewport edges."
+
+[[css_vars]]
+name = "--lds-toast-region-gap"
+default = "--lds-space-3"
+description = "Gap between stacked toasts."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Imperative"
+description = "LDS.toast() ensures a region and opens a managed toast. Try several in a row."
+html = """
+<div class="lds-cluster">
+  <lds-button size="sm" onclick="LDS.toast({ intent: 'success', title: 'Saved', description: 'Incident acknowledged.' })">Success</lds-button>
+  <lds-button size="sm" variant="secondary" onclick="LDS.toast({ intent: 'info', title: 'Queued', description: 'Deploy waiting for approval.' })">Info</lds-button>
+  <lds-button size="sm" variant="secondary" onclick="LDS.toast({ intent: 'warning', title: 'Degraded', description: 'Latency above SLO.' })">Warning</lds-button>
+  <lds-button size="sm" variant="danger" onclick="LDS.toast({ intent: 'danger', title: 'Failed', description: 'Rollback did not complete.', duration: 0 })">Danger (sticky)</lds-button>
+</div>
+"""
+
+[[stories]]
+name = "Placement"
+description = "Pass placement to LDS.toast() to target a corner (creates a region if needed)."
+html = """
+<div class="lds-cluster">
+  <lds-button size="sm" variant="secondary" onclick="LDS.toast({ placement: 'bottom-start', intent: 'info', title: 'Bottom start', description: 'Lower-left stack.' })">Bottom start</lds-button>
+  <lds-button size="sm" variant="secondary" onclick="LDS.toast({ placement: 'bottom-end', intent: 'success', title: 'Bottom end', description: 'Lower-right stack.' })">Bottom end</lds-button>
+</div>
+"""

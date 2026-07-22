@@ -137,6 +137,20 @@ if (stored) {
 Set the attribute in the server-rendered HTML when the preference is known —
 applying it from JS after paint causes a visible flash.
 
+## Toasts
+
+```js
+LDS.toast({
+  intent: "success",
+  title: "Saved",
+  description: "Incident acknowledged.",
+});
+```
+
+Creates an `lds-toast-region` on `document.body` if needed, appends a managed
+`lds-toast`, and returns the element. Pass `duration: 0` for sticky; pass
+`placement` to choose a corner. See the Toast and Toast region gallery pages.
+
 ## Customising
 
 Three sanctioned levers, in ascending order of coupling.

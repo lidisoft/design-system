@@ -65,7 +65,8 @@ components will.
       component, not the third. CSS anchor positioning is not yet safe across
       the support matrix, so this is manual.
 - [ ] `lds-modal`, `lds-drawer`, `lds-confirm` with `LDS.confirm()`
-- [ ] `lds-toast` with a host singleton and `LDS.toast()`
+- [ ] **`lds-toast` + `lds-toast-region` + `LDS.toast()`** — transient
+      notifications; no overlay helper required
 - [ ] `lds-menu`, `lds-tooltip`, `lds-popover`
 - [ ] **`lds-navbar`** — top bar with brand/links/actions and compact toggle
       (first nav deliverable; no drawer dependency)

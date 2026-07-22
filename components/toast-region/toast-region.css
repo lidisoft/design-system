@@ -1,0 +1,63 @@
+/* Fixed toast stack. Placement is inset + alignment on :host. */
+
+:host {
+  --lds-toast-region-gap: var(--lds-space-3);
+  --lds-toast-region-inset: var(--lds-space-4);
+
+  position: fixed;
+  z-index: var(--lds-z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-toast-region-gap);
+  box-sizing: border-box;
+  max-width: calc(100vw - (var(--lds-toast-region-inset) * 2));
+  max-height: calc(100vh - (var(--lds-toast-region-inset) * 2));
+  overflow: auto;
+  pointer-events: none;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([placement="top-start"]) {
+  inset-block-start: var(--lds-toast-region-inset);
+  inset-inline-start: var(--lds-toast-region-inset);
+  align-items: flex-start;
+}
+
+:host([placement="top-end"]),
+:host(:not([placement])) {
+  inset-block-start: var(--lds-toast-region-inset);
+  inset-inline-end: var(--lds-toast-region-inset);
+  align-items: flex-end;
+}
+
+:host([placement="bottom-start"]) {
+  inset-block-end: var(--lds-toast-region-inset);
+  inset-inline-start: var(--lds-toast-region-inset);
+  align-items: flex-start;
+}
+
+:host([placement="bottom-end"]) {
+  inset-block-end: var(--lds-toast-region-inset);
+  inset-inline-end: var(--lds-toast-region-inset);
+  align-items: flex-end;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-toast-region-gap);
+  align-items: inherit;
+  min-width: 0;
+}
+
+::slotted(lds-toast) {
+  pointer-events: auto;
+}
+
+:host(:not(:has(lds-toast))) {
+  /* No children — stay out of the way. :has is in the support matrix. */
+  visibility: hidden;
+}
