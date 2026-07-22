@@ -50,7 +50,7 @@ components will.
       before `lds-select` and `lds-checkbox`.**
 - [ ] `lds-textarea`, `lds-select`, `lds-checkbox`, `lds-radio-group`,
       `lds-switch`
-- [ ] `lds-table` — light-DOM `<table>`, sorting, sticky header, density
+- [x] `lds-table` — light-DOM `<table>`, sorting, sticky header, density
 - [ ] `lds-tabs` + `lds-tab-panel`
 - [ ] `lds-empty-state`, `lds-stat`, `lds-skeleton`
 - [x] **`lds-avatar` + `lds-avatar-group`** — image / initials / icon; stack + max

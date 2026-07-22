@@ -26,6 +26,7 @@ every LiDiSoft service needs.
 | `lds-avatar-group` | **draft** — overlapping stack + max overflow |
 | `lds-menu` | **draft** — action menu from a trigger |
 | `lds-menu-item` | **draft** — menu action or link |
+| `lds-table` | **draft** — light-DOM table, density, sticky, sort |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -41,6 +42,7 @@ Shipped in `dist/lds.css`, no custom element involved.
 | Layout utilities | `runtime/utilities.css` | `lds-container`, `lds-stack`, `lds-cluster`, `lds-split`, `lds-grid`, `lds-prose` |
 | Typography helpers | `runtime/utilities.css` | `lds-display`, `lds-title`, `lds-eyebrow`, `lds-lead`, `lds-muted`, `lds-subtle` |
 | A11y helpers | `runtime/utilities.css` | `lds-visually-hidden`, `lds-skip-link` |
+| Table (light DOM) | `runtime/table.css` | Cell/header styles for `<lds-table>` descendants |
 
 Layout stays in the light DOM deliberately: a component cannot arrange elements
 the page created. Resist any urge to add `<lds-stack>`.
@@ -130,7 +132,7 @@ matrix.
 
 | Tag | Purpose | Notes |
 |-----|---------|-------|
-| `lds-table` | Tabular data | Wraps a real `<table>` in light DOM so it stays copyable and accessible; sorting, sticky header, density |
+| `lds-table` | Tabular data | **Done (draft).** Light-DOM `<table>`; density, sticky header, striped, sortable columns |
 | `lds-pagination` | Paging | Page size, total count, keyboard support |
 | `lds-empty-state` | Nothing to show | Icon, title, description, action slots |
 | `lds-stat` | Single metric | Value, label, delta with direction |

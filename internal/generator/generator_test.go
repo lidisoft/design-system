@@ -63,6 +63,7 @@ func TestCSSContainsTokensAndThemes(t *testing.T) {
 		`[data-lds-theme="dark"] {`,
 		".lds-stack",
 		"@font-face",
+		"lds-table table",
 	} {
 		if !strings.Contains(res.CSS, want) {
 			t.Errorf("CSS missing %q", want)

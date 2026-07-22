@@ -633,3 +633,112 @@ hr {
 .lds-skip-link:focus-visible {
   transform: translateY(0);
 }
+
+
+/* ------------------------------------------------------------------
+ * Light-DOM styles for <lds-table>.
+ *
+ * Nested table cells cannot be reached from the component's shadow
+ * stylesheet (::slotted only matches top-level assigned nodes). Custom
+ * properties set on the host inherit into the light DOM; this file applies
+ * them to table / th / td.
+ * ------------------------------------------------------------------ */
+
+lds-table table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-table-font-size, var(--lds-font-size-sm));
+  line-height: var(--lds-font-leading-normal);
+  color: var(--lds-table-fg, var(--lds-color-fg-default));
+  background: var(--lds-table-bg, var(--lds-color-bg-canvas));
+}
+
+lds-table caption {
+  caption-side: top;
+  padding-block: var(--lds-space-3);
+  color: var(--lds-color-fg-muted);
+  text-align: start;
+  font-size: var(--lds-font-size-sm);
+}
+
+lds-table th,
+lds-table td {
+  box-sizing: border-box;
+  padding: var(--lds-table-cell-padding-y, var(--lds-space-3))
+    var(--lds-table-cell-padding-x, var(--lds-space-4));
+  border-bottom: var(--lds-control-border-width-default) solid
+    var(--lds-table-border, var(--lds-color-border-default));
+  text-align: start;
+  vertical-align: middle;
+}
+
+lds-table th {
+  font-weight: var(--lds-font-weight-semibold);
+  color: var(--lds-table-header-fg, var(--lds-color-fg-muted));
+  background: var(--lds-table-header-bg, var(--lds-color-bg-muted));
+  white-space: nowrap;
+}
+
+lds-table tbody tr:last-child > th,
+lds-table tbody tr:last-child > td {
+  border-bottom: 0;
+}
+
+lds-table tbody tr:hover > th,
+lds-table tbody tr:hover > td {
+  background: var(--lds-table-row-hover-bg, var(--lds-color-bg-muted));
+}
+
+lds-table[striped] tbody tr:nth-child(even) > th,
+lds-table[striped] tbody tr:nth-child(even) > td {
+  background: var(--lds-table-row-stripe-bg, var(--lds-color-bg-subtle));
+}
+
+lds-table[striped] tbody tr:nth-child(even):hover > th,
+lds-table[striped] tbody tr:nth-child(even):hover > td {
+  background: var(--lds-table-row-hover-bg, var(--lds-color-bg-muted));
+}
+
+/* Sticky header — requires overflow on the shadow frame and a max-height. */
+lds-table[sticky] thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--lds-z-raised);
+  box-shadow: 0 var(--lds-space-px) 0 var(--lds-table-border, var(--lds-color-border-default));
+}
+
+/* Sortable columns */
+lds-table[sortable] th[data-sortable] {
+  cursor: pointer;
+  user-select: none;
+}
+
+lds-table[sortable] th[data-sortable]:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: calc(var(--lds-focus-offset) * -1);
+}
+
+lds-table[sortable] th[data-sortable]::after {
+  content: "";
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin-inline-start: var(--lds-space-2);
+  vertical-align: 0.15em;
+  border-inline-end: var(--lds-control-border-width-default) solid currentColor;
+  border-block-end: var(--lds-control-border-width-default) solid currentColor;
+  opacity: 0.35;
+  transform: rotate(45deg);
+}
+
+lds-table[sortable] th[data-sortable][aria-sort="ascending"]::after {
+  opacity: 1;
+  transform: translateY(0.15em) rotate(-135deg);
+}
+
+lds-table[sortable] th[data-sortable][aria-sort="descending"]::after {
+  opacity: 1;
+  transform: translateY(-0.05em) rotate(45deg);
+}

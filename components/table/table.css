@@ -1,0 +1,43 @@
+/* Scroll frame and density tokens. Cell geometry lives in runtime/table.css
+ * because ::slotted() cannot reach nested th/td. */
+
+:host {
+  --lds-table-font-size: var(--lds-font-size-sm);
+  --lds-table-cell-padding-y: var(--lds-space-3);
+  --lds-table-cell-padding-x: var(--lds-space-4);
+  --lds-table-fg: var(--lds-color-fg-default);
+  --lds-table-bg: var(--lds-color-bg-canvas);
+  --lds-table-border: var(--lds-color-border-default);
+  --lds-table-header-fg: var(--lds-color-fg-muted);
+  --lds-table-header-bg: var(--lds-color-bg-muted);
+  --lds-table-row-hover-bg: var(--lds-color-bg-muted);
+  --lds-table-row-stripe-bg: var(--lds-color-bg-subtle);
+  --lds-table-max-height: none;
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([density="compact"]) {
+  --lds-table-cell-padding-y: var(--lds-space-2);
+  --lds-table-cell-padding-x: var(--lds-space-3);
+  --lds-table-font-size: var(--lds-font-size-xs);
+}
+
+.frame {
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: var(--lds-table-max-height);
+  overflow: auto;
+  border: var(--lds-control-border-width-default) solid var(--lds-table-border);
+  border-radius: var(--lds-radius-md);
+  background: var(--lds-table-bg);
+}
+
+::slotted(table) {
+  margin: 0;
+}

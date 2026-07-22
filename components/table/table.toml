@@ -1,0 +1,245 @@
+tag = "lds-table"
+name = "Table"
+category = "data"
+status = "draft"
+summary = "Styled light-DOM table with density, sticky header, and optional sorting."
+
+description = """
+Wraps a real <table> kept in the light DOM so text selection, find-in-page and
+screen-reader table semantics stay intact. The host supplies a scroll frame,
+density tokens and optional client-side column sorting.
+
+Cell styles live in runtime/table.css (bundled into lds.css) because shadow
+::slotted() cannot reach nested th/td. Host custom properties inherit into
+those rules.
+
+Mark sortable columns with data-sortable on th. Optional data-type=\"number\"
+or \"date\", and data-value on cells for sort keys that differ from visible text.
+"""
+
+a11y = """
+The slotted table keeps native table semantics. When sortable, data-sortable
+headers are keyboard-activatable (tabindex=0) and expose aria-sort while
+active. Prefer a <caption> or aria-label on the table for an accessible name.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "density"
+type = "enum"
+values = ["comfortable", "compact"]
+default = "comfortable"
+description = "Cell padding and type size."
+
+[[attributes]]
+name = "sticky"
+type = "boolean"
+description = "Pin thead th while scrolling. Set --lds-table-max-height on the host."
+
+[[attributes]]
+name = "sortable"
+type = "boolean"
+description = "Enable sorting on th[data-sortable]. Cycles asc → desc → none."
+
+[[attributes]]
+name = "striped"
+type = "boolean"
+description = "Zebra-stripe body rows."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "A single light-DOM <table>."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-sort"
+detail = "{ column: HTMLTableCellElement, direction: \"asc\"|\"desc\"|null, key?: string }"
+description = "Fired before rows are reordered. Cancel to skip client-side sort (e.g. server sort)."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "frame"
+description = "Scroll container around the slotted table."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-table-max-height"
+default = "none"
+description = "Cap the frame height so sticky headers and overflow scrolling engage."
+
+[[css_vars]]
+name = "--lds-table-cell-padding-y"
+default = "per density"
+description = "Vertical cell padding. Inherited into light-DOM cell rules."
+
+[[css_vars]]
+name = "--lds-table-header-bg"
+default = "--lds-color-bg-muted"
+description = "Header cell background."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Basic"
+description = "A plain incident table. The <table> is authored in light DOM."
+html = """
+<lds-table>
+  <table>
+    <caption>Open incidents</caption>
+    <thead>
+      <tr>
+        <th scope="col">Incident</th>
+        <th scope="col">Severity</th>
+        <th scope="col">Owner</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>API latency above SLO</td>
+        <td>SEV-2</td>
+        <td>Ada Lovelace</td>
+      </tr>
+      <tr>
+        <td>Disk pressure on db-03</td>
+        <td>SEV-1</td>
+        <td>Grace Hopper</td>
+      </tr>
+      <tr>
+        <td>Certificate expires in 7d</td>
+        <td>SEV-3</td>
+        <td>Alan Turing</td>
+      </tr>
+    </tbody>
+  </table>
+</lds-table>
+"""
+
+[[stories]]
+name = "Compact and striped"
+description = "Denser padding and zebra rows for long lists."
+html = """
+<lds-table density="compact" striped>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Service</th>
+        <th scope="col">Region</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>tocsin-api</td><td>eu-west-1</td><td>Healthy</td></tr>
+      <tr><td>tocsin-worker</td><td>eu-west-1</td><td>Degraded</td></tr>
+      <tr><td>tocsin-api</td><td>us-east-1</td><td>Healthy</td></tr>
+      <tr><td>notify-gateway</td><td>us-east-1</td><td>Healthy</td></tr>
+    </tbody>
+  </table>
+</lds-table>
+"""
+
+[[stories]]
+name = "Sticky header"
+description = "Set --lds-table-max-height so the frame scrolls and thead sticks."
+html = """
+<lds-table sticky style="--lds-table-max-height: 12rem">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Runbook</th>
+        <th scope="col">Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Page on-call for SEV-1</td><td>2026-01-12</td></tr>
+      <tr><td>Failover primary database</td><td>2026-02-03</td></tr>
+      <tr><td>Rotate TLS certificates</td><td>2026-03-18</td></tr>
+      <tr><td>Drain canary pool</td><td>2026-04-01</td></tr>
+      <tr><td>Replay failed webhooks</td><td>2026-05-22</td></tr>
+      <tr><td>Scale notification workers</td><td>2026-06-09</td></tr>
+      <tr><td>Silence flapping checks</td><td>2026-07-14</td></tr>
+    </tbody>
+  </table>
+</lds-table>
+"""
+
+[[stories]]
+name = "Sortable"
+description = "Click column headers marked data-sortable. Cycles ascending, descending, then original order."
+html = """
+<lds-table sortable striped>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" data-sortable data-key="name">Name</th>
+        <th scope="col" data-sortable data-key="age" data-type="number">Age (min)</th>
+        <th scope="col" data-sortable data-key="when" data-type="date">Opened</th>
+        <th scope="col">Owner</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Disk pressure</td>
+        <td>12</td>
+        <td>2026-07-20</td>
+        <td>Grace Hopper</td>
+      </tr>
+      <tr>
+        <td>API latency</td>
+        <td>45</td>
+        <td>2026-07-18</td>
+        <td>Ada Lovelace</td>
+      </tr>
+      <tr>
+        <td>Cert expiry</td>
+        <td>3</td>
+        <td>2026-07-21</td>
+        <td>Alan Turing</td>
+      </tr>
+      <tr>
+        <td>Queue backlog</td>
+        <td>28</td>
+        <td>2026-07-19</td>
+        <td>Katherine Johnson</td>
+      </tr>
+    </tbody>
+  </table>
+</lds-table>
+"""
+
+[[stories]]
+name = "Overflow"
+description = "Wide content scrolls horizontally inside the frame."
+html = """
+<lds-table density="compact" style="max-width: 24rem">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Summary</th>
+        <th scope="col">Fingerprint</th>
+        <th scope="col">Endpoint</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>inc_01HZX</td>
+        <td>Upstream timeout while acknowledging alert group</td>
+        <td>a3f9c2e8b1d04765</td>
+        <td>https://tocsin.example/api/v1/incidents/acknowledge</td>
+      </tr>
+      <tr>
+        <td>inc_01HYA</td>
+        <td>Webhook delivery exhausted retries</td>
+        <td>91bb0e44c7aa12fd</td>
+        <td>https://hooks.example/lidisoft/tocsin</td>
+      </tr>
+    </tbody>
+  </table>
+</lds-table>
+"""

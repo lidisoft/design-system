@@ -9,7 +9,8 @@ tokens/*.toml ─────┐
 tokens/themes/*.toml ├──► internal/tokens ──► resolved token set ──┐
                    │                                              │
 runtime/reset.css ─┤                                              ├──► dist/lds.css
-runtime/utilities.css ────────────────────────────────────────────┘
+runtime/utilities.css ┤                                             │
+runtime/table.css ────┘                                             │
 
 runtime/base.js ───┐
 runtime/overlay.js ┤
@@ -44,6 +45,12 @@ reset styles elements the consuming page owns. Layout utilities arrange elements
 the page created, which a component can never reach. And crucially, custom
 properties **inherit through shadow boundaries** — so `:root { --lds-* }` in
 this file is what themes every component from outside.
+
+Some components also need **descendant selectors against light-DOM children**
+that `::slotted()` cannot reach (it only matches top-level assigned nodes).
+`<lds-table>` is the case: nested `th`/`td` are styled from
+`runtime/table.css`, while the host's shadow sheet only sets `--lds-table-*`
+variables that inherit into those rules.
 
 **`icons.svg` is also a light-DOM artefact.** The symbol sprite is fetched once
 and injected into the document. Each `<lds-icon>` then clones the matching

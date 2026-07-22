@@ -39,6 +39,7 @@ go run ./cmd/lds tokens     # dump resolved tokens
 | `runtime/position.js` | `LDS.position` — anchored floating layout |
 | `runtime/reset.css` | `@font-face`, reset, theme wiring |
 | `runtime/utilities.css` | Layout, typography and a11y classes |
+| `runtime/table.css` | Light-DOM cell styles for `lds-table` (shadow cannot reach `td`/`th`) |
 | `assets/icons/` | Vendored Lucide SVGs → `dist/icons.svg` |
 | `components/<name>/` | `<name>.toml`, `.html`, `.css`, optional `.js` |
 | `internal/tokens/` | TOML loading, alias resolution, cycle detection |

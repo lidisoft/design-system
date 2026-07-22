@@ -47,6 +47,7 @@ type Sources struct {
 	Components []catalog.Component
 	Reset      string
 	Utilities  string
+	Table      string // light-DOM styles for lds-table (cannot live in shadow)
 	Runtime    string
 }
 
@@ -76,6 +77,10 @@ func LoadSources(root string) (*Sources, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generator: %w", err)
 	}
+	table, err := os.ReadFile(filepath.Join(root, "runtime", "table.css"))
+	if err != nil {
+		return nil, fmt.Errorf("generator: %w", err)
+	}
 	runtime, err := loadRuntimeJS(filepath.Join(root, "runtime"))
 	if err != nil {
 		return nil, err
@@ -85,6 +90,7 @@ func LoadSources(root string) (*Sources, error) {
 		Components: components,
 		Reset:      string(reset),
 		Utilities:  string(utilities),
+		Table:      string(table),
 		Runtime:    runtime,
 	}, nil
 }
@@ -239,6 +245,8 @@ func buildCSS(src *Sources, version string) string {
 
 	b.WriteString("\n")
 	b.WriteString(src.Utilities)
+	b.WriteString("\n\n")
+	b.WriteString(src.Table)
 	return b.String()
 }
 
