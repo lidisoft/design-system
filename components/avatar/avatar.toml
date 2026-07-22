@@ -1,0 +1,127 @@
+tag = "lds-avatar"
+name = "Avatar"
+category = "primitives"
+status = "draft"
+summary = "User or team identity mark with image, initials, or icon fallback."
+
+description = """
+Shows a face or monogram next to chrome that refers to a person or team.
+Pass src for a photo; name derives initials (first + last word). On image
+error the component falls back to initials, then to a decorative user icon.
+
+Compose stacks with lds-avatar-group. Pair with lds-button in account menus.
+"""
+
+a11y = """
+Always exposed as role=\"img\" with an accessible name from label or name
+(falls back to \"User\" when neither is set). The fallback icon is decorative.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "src"
+type = "string"
+description = "Image URL. On error, falls back to initials or the user icon."
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Display name. Derives initials and the default accessible name."
+
+[[attributes]]
+name = "initials"
+type = "string"
+description = "Explicit initials override (up to three characters shown)."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Box size from avatar.size.* tokens (aligned with control heights)."
+
+[[attributes]]
+name = "shape"
+type = "enum"
+values = ["circle", "square"]
+default = "circle"
+description = "circle is the default; square uses control radius."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name override when name is absent or unsuitable."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "image"
+description = "The photo <img>, hidden until loaded."
+
+[[parts]]
+name = "initials"
+description = "Initials fallback text."
+
+[[parts]]
+name = "fallback"
+description = "Decorative user icon when there is no name or image."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-avatar-box"
+default = "--lds-avatar-size-md"
+description = "Width and height. Avatar group sets this for children."
+
+[[css_vars]]
+name = "--lds-avatar-bg"
+default = "--lds-color-bg-muted"
+description = "Background behind initials and the icon fallback."
+
+[[css_vars]]
+name = "--lds-avatar-fg"
+default = "--lds-color-fg-muted"
+description = "Initials and icon colour."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Sizes"
+description = "sm / md / lg from avatar.size tokens."
+html = """
+<div class="lds-cluster" style="align-items: center">
+  <lds-avatar size="sm" name="Ada Lovelace"></lds-avatar>
+  <lds-avatar size="md" name="Ada Lovelace"></lds-avatar>
+  <lds-avatar size="lg" name="Ada Lovelace"></lds-avatar>
+</div>
+"""
+
+[[stories]]
+name = "Shapes"
+description = "Circle (default) and square."
+html = """
+<div class="lds-cluster" style="align-items: center">
+  <lds-avatar name="Grace Hopper"></lds-avatar>
+  <lds-avatar name="Grace Hopper" shape="square"></lds-avatar>
+</div>
+"""
+
+[[stories]]
+name = "Image initials and icon"
+description = "Photo, initials from name, and the icon fallback when neither is set."
+html = """
+<div class="lds-cluster" style="align-items: center">
+  <lds-avatar src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" name="Photo User" label="Photo user"></lds-avatar>
+  <lds-avatar name="Ada Lovelace"></lds-avatar>
+  <lds-avatar initials="AL" label="Ada Lovelace"></lds-avatar>
+  <lds-avatar label="Unknown user"></lds-avatar>
+</div>
+"""
+
+[[stories]]
+name = "Broken image"
+description = "A failing src falls back to initials from name."
+html = """
+<lds-avatar src="/does-not-exist.png" name="Broken Image"></lds-avatar>
+"""

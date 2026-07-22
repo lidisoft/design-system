@@ -1,0 +1,127 @@
+tag = "lds-menu"
+name = "Menu"
+category = "navigation"
+status = "draft"
+summary = "Action list opened from a trigger — enough for account menus, not a menubar."
+
+description = """
+Dropdown of actions anchored to a slotted trigger. Uses the shared
+LDS.overlay and LDS.position helpers. Supports links and buttons via
+lds-menu-item, light-DOM <hr> separators, and keyboard arrow navigation.
+
+Not a menubar and not a context menu. Submenus are out of scope for this
+pass — reach for those later if a product needs them.
+"""
+
+a11y = """
+The panel is role=\"menu\". The trigger gets aria-haspopup and aria-expanded.
+Arrow keys, Home and End move among lds-menu-item controls; Escape and
+outside click dismiss and restore focus to the trigger.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Whether the menu panel is shown."
+
+[[attributes]]
+name = "placement"
+type = "enum"
+values = ["bottom-start", "bottom-end", "top-start", "top-end"]
+default = "bottom-end"
+description = "Preferred panel placement relative to the trigger; flips on collision."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "trigger"
+description = "Focusable control that opens the menu (typically lds-button)."
+
+[[slots]]
+name = ""
+description = "lds-menu-item children and optional <hr> separators."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-open"
+detail = "{}"
+description = "Fired before the menu opens. Cancel to keep it closed."
+
+[[events]]
+name = "lds-close"
+detail = "{ reason: string }"
+description = "Fired before the menu closes. Cancel to keep it open."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "root"
+description = "Wrapper around trigger and panel."
+
+[[parts]]
+name = "trigger"
+description = "Wrapper around the trigger slot."
+
+[[parts]]
+name = "panel"
+description = "The floating menu surface."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-menu-min-width"
+default = "12rem"
+description = "Minimum panel width; also grows to match the trigger via positioning."
+
+[[css_vars]]
+name = "--lds-menu-bg"
+default = "--lds-color-bg-raised"
+description = "Panel background."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Button trigger"
+description = "Plain button opens a short action list."
+html = """
+<lds-menu>
+  <lds-button slot="trigger" variant="secondary" size="sm">Actions</lds-button>
+  <lds-menu-item>
+    <lds-icon slot="start" name="copy"></lds-icon>
+    Duplicate
+  </lds-menu-item>
+  <lds-menu-item>
+    <lds-icon slot="start" name="trash-2"></lds-icon>
+    Delete
+  </lds-menu-item>
+</lds-menu>
+"""
+
+[[stories]]
+name = "Account menu"
+description = "Avatar-in-button trigger with profile links and sign out — the composition this component is for."
+html = """
+<div style="display: flex; justify-content: flex-end">
+  <lds-menu placement="bottom-end">
+    <lds-button slot="trigger" variant="ghost" label="Account menu">
+      <lds-avatar slot="start" name="Ada Lovelace" size="sm"></lds-avatar>
+    </lds-button>
+    <lds-menu-item href="/profile">
+      <lds-icon slot="start" name="user"></lds-icon>
+      Profile
+    </lds-menu-item>
+    <lds-menu-item href="/settings">
+      <lds-icon slot="start" name="settings"></lds-icon>
+      Settings
+    </lds-menu-item>
+    <hr />
+    <lds-menu-item>
+      <lds-icon slot="start" name="x"></lds-icon>
+      Sign out
+    </lds-menu-item>
+  </lds-menu>
+</div>
+"""

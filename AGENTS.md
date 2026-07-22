@@ -35,6 +35,8 @@ go run ./cmd/lds tokens     # dump resolved tokens
 | `tokens/10-semantic.toml` | Semantic roles — **the only layer components reference** |
 | `tokens/themes/*.toml` | Theme overrides of the semantic layer |
 | `runtime/base.js` | The `LDS` runtime: `define`, `behavior`, icon helpers |
+| `runtime/overlay.js` | `LDS.overlay.bind` — dismiss, focus trap, restore focus |
+| `runtime/position.js` | `LDS.position` — anchored floating layout |
 | `runtime/reset.css` | `@font-face`, reset, theme wiring |
 | `runtime/utilities.css` | Layout, typography and a11y classes |
 | `assets/icons/` | Vendored Lucide SVGs → `dist/icons.svg` |

@@ -1,0 +1,62 @@
+/* Overlapping avatar stack with an optional +N overflow chip. */
+
+:host {
+  --lds-avatar-box: var(--lds-avatar-size-md);
+  --lds-avatar-group-overlap: var(--lds-space-2);
+  --lds-avatar-group-overflow-bg: var(--lds-color-bg-subtle);
+  --lds-avatar-group-overflow-fg: var(--lds-color-fg-muted);
+  --lds-avatar-group-overflow-border: var(--lds-color-border-default);
+
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-avatar-box: var(--lds-avatar-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-avatar-box: var(--lds-avatar-size-lg);
+}
+
+.stack {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+::slotted(lds-avatar) {
+  position: relative;
+  box-shadow: 0 0 0 var(--lds-space-px) var(--lds-color-bg-canvas);
+}
+
+::slotted(lds-avatar:not(:first-child)) {
+  margin-inline-start: calc(var(--lds-avatar-group-overlap) * -1);
+}
+
+.overflow {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-avatar-box);
+  height: var(--lds-avatar-box);
+  margin-inline-start: calc(var(--lds-avatar-group-overlap) * -1);
+  border-radius: var(--lds-radius-full);
+  border: var(--lds-control-border-width-default) solid var(--lds-avatar-group-overflow-border);
+  background: var(--lds-avatar-group-overflow-bg);
+  color: var(--lds-avatar-group-overflow-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-avatar-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: 1;
+  box-shadow: 0 0 0 var(--lds-space-px) var(--lds-color-bg-canvas);
+}
+
+.overflow[hidden] {
+  display: none;
+}

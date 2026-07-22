@@ -258,7 +258,408 @@
     },
   };
 
+  /* ------------------------------------------------------------------------
+   * Overlay helpers — non-modal dismiss plumbing for menus and future popovers.
+   *
+   * Menus do not lock scroll. Callers own open/close state; this only wires
+   * Escape, outside click, optional focus trap, and focus restoration.
+   * ---------------------------------------------------------------------- */
+
+  /**
+   * Bind dismiss and focus behaviour to an open overlay root.
+   *
+   * @param {Element} root floating surface (panel)
+   * @param {object} [opts]
+   * @param {(reason: "escape"|"outside") => void} [opts.onDismiss]
+   * @param {Element} [opts.restoreFocus] element to focus on disconnect
+   * @param {boolean} [opts.trapFocus=true] cycle Tab within root
+   * @param {Element|Element[]} [opts.ignoreOutside] clicks here are not "outside"
+   * @returns {{ disconnect(): void }}
+   */
+  LDS.overlay = {
+    bind(root, opts) {
+      opts = opts || {};
+      const onDismiss = typeof opts.onDismiss === "function" ? opts.onDismiss : function () {};
+      const trapFocus = opts.trapFocus !== false;
+      const restoreFocus = opts.restoreFocus || null;
+
+      let ignore = opts.ignoreOutside || [];
+      if (!Array.isArray(ignore)) ignore = [ignore];
+      ignore = ignore.filter(Boolean);
+
+      const composedContains = function (container, target) {
+        let node = target;
+        while (node) {
+          if (node === container) return true;
+          if (node.nodeType === 11 && node.host) {
+            node = node.host;
+          } else {
+            node = node.parentNode;
+          }
+        }
+        return false;
+      };
+
+      const isInside = function (target) {
+        if (!target || !target.nodeType) return false;
+        if (composedContains(root, target)) return true;
+        for (let i = 0; i < ignore.length; i++) {
+          if (composedContains(ignore[i], target)) return true;
+        }
+        return false;
+      };
+
+      const deepestActive = function () {
+        let el = document.activeElement;
+        while (el && el.shadowRoot && el.shadowRoot.activeElement) {
+          el = el.shadowRoot.activeElement;
+        }
+        return el;
+      };
+
+      const focusSelector =
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+      const isVisible = function (el) {
+        if (el.closest("[hidden]")) return false;
+        if (el.getAttribute("aria-hidden") === "true") return false;
+        const style = window.getComputedStyle(el);
+        return style.visibility !== "hidden" && style.display !== "none";
+      };
+
+      /* Walk light DOM, slots and shadow roots — menu items live in slotted
+       * custom elements whose real controls sit in their own shadows. */
+      const focusables = function () {
+        const out = [];
+        const visit = function (node) {
+          if (!node) return;
+          if (node.nodeType === 1) {
+            if (node.matches(focusSelector) && isVisible(node)) out.push(node);
+            if (node.tagName === "SLOT") {
+              node.assignedElements({ flatten: true }).forEach(visit);
+              return;
+            }
+            if (node.shadowRoot) visit(node.shadowRoot);
+            Array.prototype.forEach.call(node.children, visit);
+            return;
+          }
+          if (node.nodeType === 11) {
+            Array.prototype.forEach.call(node.children, visit);
+          }
+        };
+        visit(root);
+        return out;
+      };
+
+      /* Defer outside-pointer binding so the opening click does not dismiss. */
+      let pointerReady = false;
+      const armPointer = function () {
+        pointerReady = true;
+      };
+      window.setTimeout(armPointer, 0);
+
+      const onPointerDown = function (event) {
+        if (!pointerReady) return;
+        if (isInside(event.target)) return;
+        onDismiss("outside");
+      };
+
+      const onKeydown = function (event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onDismiss("escape");
+          return;
+        }
+        if (!trapFocus || event.key !== "Tab") return;
+
+        const list = focusables();
+        if (!list.length) {
+          event.preventDefault();
+          if (typeof root.focus === "function") root.focus();
+          return;
+        }
+
+        const first = list[0];
+        const last = list[list.length - 1];
+        const active = deepestActive();
+
+        if (event.shiftKey && active === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        } else if (!composedContains(root, active) && ignore.every(function (node) {
+          return !composedContains(node, active);
+        })) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        }
+      };
+
+      document.addEventListener("pointerdown", onPointerDown, true);
+      document.addEventListener("keydown", onKeydown, true);
+
+      return {
+        disconnect: function () {
+          document.removeEventListener("pointerdown", onPointerDown, true);
+          document.removeEventListener("keydown", onKeydown, true);
+          if (restoreFocus && typeof restoreFocus.focus === "function") {
+            try {
+              restoreFocus.focus();
+            } catch (_) {
+              /* ignore */
+            }
+          }
+        },
+      };
+    },
+  };
+
+  /* ------------------------------------------------------------------------
+   * Anchored positioning — manual layout until CSS anchor positioning is safe.
+   *
+   * Places a floating element relative to an anchor with flip + viewport clamp.
+   * Call again on resize/scroll while open; the consumer owns that loop.
+   * ---------------------------------------------------------------------- */
+
+  /**
+   * Position `floating` next to `anchor`.
+   *
+   * @param {HTMLElement} floating
+   * @param {Element} anchor
+   * @param {object} [opts]
+   * @param {"bottom-start"|"bottom-end"|"top-start"|"top-end"} [opts.placement]
+   * @param {number} [opts.offset] gap in CSS pixels; default = control.gap.md
+   * @param {boolean} [opts.matchWidth] min-width matches anchor width
+   */
+  LDS.position = function (floating, anchor, opts) {
+    opts = opts || {};
+    if (!floating || !anchor) return;
+
+    const placement = opts.placement || "bottom-end";
+    let offset = opts.offset;
+    if (offset == null) {
+      const raw = LDS.token("control.gap.md", anchor);
+      offset = raw ? parseFloat(raw) : 8;
+      if (Number.isNaN(offset)) offset = 8;
+    }
+
+    const anchorRect = anchor.getBoundingClientRect();
+    const prevVisibility = floating.style.visibility;
+    const prevDisplay = floating.style.display;
+    floating.style.visibility = "hidden";
+    floating.style.display = "block";
+    floating.style.position = "fixed";
+    floating.style.top = "0";
+    floating.style.left = "0";
+    if (opts.matchWidth) {
+      floating.style.minWidth = Math.ceil(anchorRect.width) + "px";
+    }
+
+    const floatRect = floating.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const parts = placement.split("-");
+    let side = parts[0]; /* top | bottom */
+    let align = parts[1] || "start"; /* start | end */
+
+    let top;
+    let left;
+
+    if (side === "bottom") {
+      top = anchorRect.bottom + offset;
+      if (top + floatRect.height > vh && anchorRect.top - offset - floatRect.height >= 0) {
+        side = "top";
+        top = anchorRect.top - offset - floatRect.height;
+      }
+    } else {
+      top = anchorRect.top - offset - floatRect.height;
+      if (top < 0 && anchorRect.bottom + offset + floatRect.height <= vh) {
+        side = "bottom";
+        top = anchorRect.bottom + offset;
+      }
+    }
+
+    if (align === "end") {
+      left = anchorRect.right - floatRect.width;
+    } else {
+      left = anchorRect.left;
+    }
+
+    /* Clamp into the viewport with a small inset. */
+    const inset = 8;
+    left = Math.min(Math.max(left, inset), Math.max(inset, vw - floatRect.width - inset));
+    top = Math.min(Math.max(top, inset), Math.max(inset, vh - floatRect.height - inset));
+
+    floating.style.top = Math.round(top) + "px";
+    floating.style.left = Math.round(left) + "px";
+    floating.style.visibility = prevVisibility || "";
+    if (prevDisplay) {
+      floating.style.display = prevDisplay;
+    } else {
+      floating.style.removeProperty("display");
+    }
+  };
+
   LDS.icons = ["alert-circle", "alert-triangle", "bell", "check", "chevron-down", "chevron-left", "chevron-right", "chevron-up", "circle-check", "copy", "external-link", "info", "loader-circle", "menu", "minus", "more-horizontal", "plus", "search", "settings", "trash-2", "user", "x"];
+
+  /* behaviour: lds-avatar */
+  (function () {
+    /* Behaviour for <lds-avatar>.
+     *
+     * Derives initials from name, loads src with error fallback, and always
+     * exposes an accessible name via label or name.
+     */
+
+    LDS.behavior("lds-avatar", {
+      connected(el) {
+        const img = el.$(".img");
+
+        img.addEventListener("load", () => {
+          el._lds.imageFailed = false;
+          syncFace(el);
+        });
+        img.addEventListener("error", () => {
+          el._lds.imageFailed = true;
+          syncFace(el);
+        });
+
+        syncAll(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "src") el._lds.imageFailed = false;
+        syncAll(el);
+      },
+    });
+
+    function syncAll(el) {
+      syncName(el);
+      syncImage(el);
+      syncFace(el);
+    }
+
+    function syncName(el) {
+      const label = el.getAttribute("label") || el.getAttribute("name");
+      if (label) {
+        el.setAttribute("role", "img");
+        el.setAttribute("aria-label", label);
+      } else {
+        el.setAttribute("role", "img");
+        el.setAttribute("aria-label", "User");
+      }
+    }
+
+    function syncImage(el) {
+      const img = el.$(".img");
+      const src = el.getAttribute("src");
+      if (src) {
+        if (img.getAttribute("src") !== src) img.setAttribute("src", src);
+      } else {
+        img.removeAttribute("src");
+        el._lds.imageFailed = false;
+      }
+    }
+
+    function syncFace(el) {
+      const img = el.$(".img");
+      const initialsEl = el.$(".initials");
+      const fallback = el.$(".fallback");
+
+      const src = el.getAttribute("src");
+      const failed = !!el._lds.imageFailed;
+      const showImage = !!(src && !failed && img.complete && img.naturalWidth > 0);
+      const initials = resolveInitials(el);
+
+      img.hidden = !showImage;
+      initialsEl.hidden = !initials || showImage;
+      fallback.hidden = !!(initials || showImage);
+
+      initialsEl.textContent = initials || "";
+    }
+
+    function resolveInitials(el) {
+      const explicit = (el.getAttribute("initials") || "").trim();
+      if (explicit) return explicit.slice(0, 3);
+
+      const name = (el.getAttribute("name") || "").trim();
+      if (!name) return "";
+
+      const parts = name.split(/\s+/).filter(Boolean);
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+  })();
+
+  /* behaviour: lds-avatar-group */
+  (function () {
+    /* Behaviour for <lds-avatar-group>.
+     *
+     * Caps visible lds-avatar children via max and shows a +N overflow chip.
+     */
+
+    LDS.behavior("lds-avatar-group", {
+      connected(el) {
+        const slot = el.$("slot");
+        if (slot) slot.addEventListener("slotchange", () => syncOverflow(el));
+
+        const mo = new MutationObserver(() => syncOverflow(el));
+        mo.observe(el, { childList: true });
+        el._lds.avatarGroupMo = mo;
+
+        syncOverflow(el);
+      },
+
+      disconnected(el) {
+        if (el._lds.avatarGroupMo) {
+          el._lds.avatarGroupMo.disconnect();
+          el._lds.avatarGroupMo = null;
+        }
+      },
+
+      attributeChanged(el, name) {
+        if (name === "max" || name === "size") syncOverflow(el);
+      },
+    });
+
+    function avatarsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll(":scope > lds-avatar"));
+    }
+
+    function syncOverflow(el) {
+      const chip = el.$(".overflow");
+      if (!chip) return;
+
+      const avatars = avatarsOf(el);
+      const maxAttr = el.getAttribute("max");
+      const max = maxAttr != null && maxAttr !== "" ? parseInt(maxAttr, 10) : NaN;
+
+      if (!Number.isFinite(max) || max < 1 || avatars.length <= max) {
+        avatars.forEach((avatar) => {
+          avatar.hidden = false;
+        });
+        chip.hidden = true;
+        chip.textContent = "";
+        chip.removeAttribute("aria-label");
+        return;
+      }
+
+      const visible = Math.max(max - 1, 0);
+      const hiddenCount = avatars.length - visible;
+
+      avatars.forEach((avatar, index) => {
+        avatar.hidden = index >= visible;
+      });
+
+      chip.hidden = false;
+      chip.textContent = "+" + hiddenCount;
+      chip.setAttribute("aria-label", hiddenCount + " more");
+      chip.removeAttribute("aria-hidden");
+    }
+  })();
 
   /* behaviour: lds-button */
   (function () {
@@ -635,6 +1036,383 @@
           link.removeAttribute("rel");
         }
       }
+    }
+  })();
+
+  /* behaviour: lds-menu */
+  (function () {
+    /* Behaviour for <lds-menu>.
+     *
+     * Opens a positioned action list from a slotted trigger. Uses LDS.overlay for
+     * dismiss / focus restore and LDS.position for anchored layout. Not a menubar
+     * and not a submenu host.
+     */
+
+    const menuState = new WeakMap();
+
+    LDS.behavior("lds-menu", {
+      connected(el) {
+        const panel = el.$(".panel");
+        const triggerSlot = el.$('.trigger slot[name="trigger"]');
+
+        const onTriggerClick = (event) => {
+          event.preventDefault();
+          toggle(el);
+        };
+
+        const onTriggerKeydown = (event) => {
+          if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+            if (el.boolAttr("open")) return;
+            event.preventDefault();
+            openMenu(el, { focus: "first" });
+          } else if (event.key === "ArrowUp") {
+            if (el.boolAttr("open")) return;
+            event.preventDefault();
+            openMenu(el, { focus: "last" });
+          }
+        };
+
+        const onPanelKeydown = (event) => {
+          if (!el.boolAttr("open")) return;
+          const items = enabledItems(el);
+          if (!items.length) return;
+
+          const current = focusedItemIndex(items);
+          let next = current;
+
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            next = current < 0 ? 0 : (current + 1) % items.length;
+            focusItem(items[next]);
+          } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            next = current < 0 ? items.length - 1 : (current - 1 + items.length) % items.length;
+            focusItem(items[next]);
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            focusItem(items[0]);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            focusItem(items[items.length - 1]);
+          }
+        };
+
+        const onSelect = () => {
+          closeMenu(el, "select");
+        };
+
+        el.addEventListener("lds-select", onSelect);
+        panel.addEventListener("keydown", onPanelKeydown);
+
+        menuState.set(el, {
+          onTriggerClick,
+          onTriggerKeydown,
+          onPanelKeydown,
+          onSelect,
+          overlay: null,
+          reposition: null,
+          trigger: null,
+        });
+
+        if (triggerSlot) {
+          triggerSlot.addEventListener("slotchange", () => wireTrigger(el, onTriggerClick, onTriggerKeydown));
+        }
+        wireTrigger(el, onTriggerClick, onTriggerKeydown);
+
+        syncOpen(el);
+      },
+
+      disconnected(el) {
+        teardownOpen(el);
+        const s = menuState.get(el);
+        if (!s) return;
+        el.removeEventListener("lds-select", s.onSelect);
+        const panel = el.$(".panel");
+        if (panel) panel.removeEventListener("keydown", s.onPanelKeydown);
+        unwireTrigger(el, s.onTriggerClick, s.onTriggerKeydown);
+        menuState.delete(el);
+      },
+
+      attributeChanged(el, name) {
+        if (name === "open") syncOpen(el);
+        if (name === "placement" && el.boolAttr("open")) positionPanel(el);
+      },
+    });
+
+    function wireTrigger(el, onClick, onKeydown) {
+      const trigger = triggerOf(el);
+      const s = menuState.get(el);
+      if (s && s.trigger) {
+        s.trigger.removeEventListener("click", s.onTriggerClick);
+        s.trigger.removeEventListener("keydown", s.onTriggerKeydown);
+      }
+      if (!trigger) return;
+      trigger.addEventListener("click", onClick);
+      trigger.addEventListener("keydown", onKeydown);
+      if (s) s.trigger = trigger;
+      syncTriggerA11y(el, trigger);
+    }
+
+    function unwireTrigger(el, onClick, onKeydown) {
+      const trigger = triggerOf(el);
+      if (!trigger) return;
+      trigger.removeEventListener("click", onClick);
+      trigger.removeEventListener("keydown", onKeydown);
+    }
+
+    function triggerOf(el) {
+      const slot = el.$('.trigger slot[name="trigger"]');
+      if (!slot) return null;
+      const assigned = slot.assignedElements({ flatten: true });
+      return assigned[0] || null;
+    }
+
+    function syncTriggerA11y(el, trigger) {
+      if (!trigger) trigger = triggerOf(el);
+      if (!trigger) return;
+      trigger.setAttribute("aria-haspopup", "menu");
+      trigger.setAttribute("aria-expanded", el.boolAttr("open") ? "true" : "false");
+      const panel = el.$(".panel");
+      if (panel.id) trigger.setAttribute("aria-controls", panel.id);
+    }
+
+    function toggle(el) {
+      if (el.boolAttr("open")) closeMenu(el, "toggle");
+      else openMenu(el, { focus: "first" });
+    }
+
+    function openMenu(el, opts) {
+      opts = opts || {};
+      if (el.boolAttr("open")) return;
+      const ev = el.emit("lds-open");
+      if (ev.defaultPrevented) return;
+      el.setAttribute("open", "");
+      if (opts.focus) {
+        requestAnimationFrame(() => {
+          const items = enabledItems(el);
+          if (!items.length) return;
+          focusItem(opts.focus === "last" ? items[items.length - 1] : items[0]);
+        });
+      }
+    }
+
+    function closeMenu(el, reason) {
+      if (!el.boolAttr("open")) return;
+      const ev = el.emit("lds-close", { reason: reason || "dismiss" });
+      if (ev.defaultPrevented) return;
+      el.removeAttribute("open");
+    }
+
+    function syncOpen(el) {
+      const panel = el.$(".panel");
+      const open = el.boolAttr("open");
+      panel.hidden = !open;
+      syncTriggerA11y(el);
+
+      if (open) {
+        setupOpen(el);
+      } else {
+        teardownOpen(el);
+      }
+    }
+
+    function setupOpen(el) {
+      const s = menuState.get(el);
+      const panel = el.$(".panel");
+      const trigger = triggerOf(el);
+      if (!s || !panel) return;
+
+      teardownOpen(el);
+
+      positionPanel(el);
+
+      const reposition = () => positionPanel(el);
+      window.addEventListener("resize", reposition);
+      window.addEventListener("scroll", reposition, true);
+      s.reposition = reposition;
+
+      const focusTarget = focusableIn(trigger) || trigger;
+      s.overlay = LDS.overlay.bind(panel, {
+        restoreFocus: focusTarget,
+        ignoreOutside: trigger ? [trigger, el] : [el],
+        onDismiss: (reason) => closeMenu(el, reason),
+      });
+    }
+
+    function teardownOpen(el) {
+      const s = menuState.get(el);
+      if (!s) return;
+      if (s.overlay) {
+        s.overlay.disconnect();
+        s.overlay = null;
+      }
+      if (s.reposition) {
+        window.removeEventListener("resize", s.reposition);
+        window.removeEventListener("scroll", s.reposition, true);
+        s.reposition = null;
+      }
+    }
+
+    function positionPanel(el) {
+      const panel = el.$(".panel");
+      const trigger = triggerOf(el);
+      if (!panel || !trigger) return;
+      const placement = el.getAttribute("placement") || "bottom-end";
+      LDS.position(panel, trigger, { placement: placement, matchWidth: true });
+    }
+
+    function itemsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll(":scope > lds-menu-item"));
+    }
+
+    function enabledItems(el) {
+      return itemsOf(el).filter((item) => !item.boolAttr("disabled") && !item.hidden);
+    }
+
+    function focusableIn(host) {
+      if (!host) return null;
+      if (host.shadowRoot) {
+        const inner = host.shadowRoot.querySelector(
+          'button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])'
+        );
+        if (inner) return inner;
+      }
+      return host;
+    }
+
+    function focusItem(item) {
+      if (!item) return;
+      const control = item.$ ? item.$(".item") : null;
+      if (control && typeof control.focus === "function") control.focus();
+      else if (typeof item.focus === "function") item.focus();
+    }
+
+    function focusedItemIndex(items) {
+      let active = document.activeElement;
+      while (active && active.shadowRoot && active.shadowRoot.activeElement) {
+        active = active.shadowRoot.activeElement;
+      }
+      for (let i = 0; i < items.length; i++) {
+        const control = items[i].$ ? items[i].$(".item") : null;
+        if (items[i] === active || control === active) return i;
+        if (control && control.contains && control.contains(active)) return i;
+      }
+      return -1;
+    }
+  })();
+
+  /* behaviour: lds-menu-item */
+  (function () {
+    /* Behaviour for <lds-menu-item>.
+     *
+     * Renders an inner <a> when href is set, otherwise a <button>. Activation
+     * emits lds-select; the parent lds-menu closes on that event.
+     */
+
+    LDS.behavior("lds-menu-item", {
+      connected(el) {
+        ensureControl(el);
+        watchSlot(el, ".item__start slot", ".item__start");
+        watchSlot(el, ".item__end slot", ".item__end");
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              return;
+            }
+            activate(el, event);
+          },
+          true
+        );
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "href" || name === "disabled" || name === "value" || name === "target") {
+          ensureControl(el);
+        }
+      },
+    });
+
+    function ensureControl(el) {
+      const wantsLink = !!el.getAttribute("href");
+      let item = el.$(".item");
+      const tag = wantsLink ? "a" : "button";
+
+      if (!item || item.tagName.toLowerCase() !== tag) {
+        const next = document.createElement(tag);
+        next.className = "item";
+        next.setAttribute("part", "item");
+        next.setAttribute("role", "menuitem");
+        if (tag === "button") next.type = "button";
+
+        if (item) {
+          while (item.firstChild) next.appendChild(item.firstChild);
+          item.replaceWith(next);
+        } else {
+          el.shadowRoot.appendChild(next);
+        }
+        item = next;
+      }
+
+      syncControl(el, item);
+    }
+
+    function syncControl(el, item) {
+      const disabled = el.boolAttr("disabled");
+
+      if (item.tagName.toLowerCase() === "a") {
+        const href = el.getAttribute("href") || "#";
+        item.setAttribute("href", href);
+        const target = el.getAttribute("target");
+        if (target) {
+          item.setAttribute("target", target);
+          if (target === "_blank" && !item.hasAttribute("rel")) {
+            item.setAttribute("rel", "noopener noreferrer");
+          }
+        } else {
+          item.removeAttribute("target");
+        }
+        if (disabled) {
+          item.setAttribute("aria-disabled", "true");
+          item.setAttribute("tabindex", "-1");
+        } else {
+          item.removeAttribute("aria-disabled");
+          item.removeAttribute("tabindex");
+        }
+      } else {
+        item.disabled = disabled;
+        item.removeAttribute("aria-disabled");
+      }
+    }
+
+    function activate(el, originalEvent) {
+      if (el.boolAttr("disabled")) return;
+
+      const detail = { originalEvent: originalEvent };
+      const value = el.getAttribute("value");
+      if (value != null) detail.value = value;
+
+      el.emit("lds-select", detail);
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() === ""
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
     }
   })();
 
@@ -1114,7 +1892,7 @@
       update();
     }
 
-    /* Used by lds-toast-region Escape handling and LDS.toast callers. */
+    /* Used by lds-toast-region Escape handling. */
     LDS._dismissToast = dismiss;
   })();
 
@@ -1147,11 +1925,10 @@
           }
         };
 
-        const slot = el.$("slot");
         const syncListener = function () {
           const s = regionState.get(el);
           if (!s) return;
-          const has = openToasts(el).length > 0 || toastsOf(el).length > 0;
+          const has = toastsOf(el).length > 0;
           if (has && !s.listening) {
             document.addEventListener("keydown", onKeydown);
             s.listening = true;
@@ -1161,15 +1938,11 @@
           }
         };
 
+        const slot = el.$("slot");
         if (slot) slot.addEventListener("slotchange", syncListener);
 
         const mo = new MutationObserver(syncListener);
-        mo.observe(el, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ["open"],
-        });
+        mo.observe(el, { childList: true });
 
         regionState.set(el, { onKeydown: onKeydown, mo: mo, listening: false });
         syncListener();
@@ -1224,9 +1997,7 @@
 
       const toast = document.createElement("lds-toast");
       toast.setAttribute("data-managed", "");
-
-      const intent = opts.intent || "info";
-      toast.setAttribute("intent", intent);
+      toast.setAttribute("intent", opts.intent || "info");
 
       if (opts.duration != null) {
         toast.setAttribute("duration", String(opts.duration));
@@ -1252,6 +2023,167 @@
       return toast;
     };
   })();
+
+  /* component: lds-avatar (draft) */
+  LDS.define({
+    tag: "lds-avatar",
+    className: "LdsAvatar",
+    observed: ["src", "name", "initials", "size", "shape", "label"],
+    defaults: {"size": "md", "shape": "circle"},
+    template: `<img class="img" part="image" alt="" hidden>
+<span class="initials" part="initials" aria-hidden="true"></span>
+<span class="fallback" part="fallback" aria-hidden="true" hidden>
+  <lds-icon name="user" size="sm"></lds-icon>
+</span>`,
+    styles: `/* Identity mark — image, initials, or decorative user icon. */
+
+:host {
+  --lds-avatar-box: var(--lds-avatar-size-md);
+  --lds-avatar-font: var(--lds-avatar-font-size-md);
+  --lds-avatar-radius: var(--lds-radius-full);
+  --lds-avatar-bg: var(--lds-color-bg-muted);
+  --lds-avatar-fg: var(--lds-color-fg-muted);
+  --lds-avatar-border: var(--lds-color-border-default);
+
+  display: inline-flex;
+  vertical-align: middle;
+  box-sizing: border-box;
+  width: var(--lds-avatar-box);
+  height: var(--lds-avatar-box);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--lds-avatar-radius);
+  border: var(--lds-control-border-width-default) solid var(--lds-avatar-border);
+  background: var(--lds-avatar-bg);
+  color: var(--lds-avatar-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-avatar-font);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: 1;
+  user-select: none;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-avatar-box: var(--lds-avatar-size-sm);
+  --lds-avatar-font: var(--lds-avatar-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-avatar-box: var(--lds-avatar-size-lg);
+  --lds-avatar-font: var(--lds-avatar-font-size-lg);
+}
+
+:host([shape="square"]) {
+  --lds-avatar-radius: var(--lds-control-radius-md);
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img[hidden],
+.initials[hidden],
+.fallback[hidden] {
+  display: none;
+}
+
+.initials,
+.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-transform: uppercase;
+}
+
+.fallback lds-icon {
+  color: inherit;
+}`,
+  });
+
+  /* component: lds-avatar-group (draft) */
+  LDS.define({
+    tag: "lds-avatar-group",
+    className: "LdsAvatarGroup",
+    observed: ["max", "size"],
+    defaults: {"size": "md"},
+    template: `<div class="stack" part="stack">
+  <slot></slot>
+  <span class="overflow" part="overflow" hidden aria-hidden="true"></span>
+</div>`,
+    styles: `/* Overlapping avatar stack with an optional +N overflow chip. */
+
+:host {
+  --lds-avatar-box: var(--lds-avatar-size-md);
+  --lds-avatar-group-overlap: var(--lds-space-2);
+  --lds-avatar-group-overflow-bg: var(--lds-color-bg-subtle);
+  --lds-avatar-group-overflow-fg: var(--lds-color-fg-muted);
+  --lds-avatar-group-overflow-border: var(--lds-color-border-default);
+
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-avatar-box: var(--lds-avatar-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-avatar-box: var(--lds-avatar-size-lg);
+}
+
+.stack {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+::slotted(lds-avatar) {
+  position: relative;
+  box-shadow: 0 0 0 var(--lds-space-px) var(--lds-color-bg-canvas);
+}
+
+::slotted(lds-avatar:not(:first-child)) {
+  margin-inline-start: calc(var(--lds-avatar-group-overlap) * -1);
+}
+
+.overflow {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-avatar-box);
+  height: var(--lds-avatar-box);
+  margin-inline-start: calc(var(--lds-avatar-group-overlap) * -1);
+  border-radius: var(--lds-radius-full);
+  border: var(--lds-control-border-width-default) solid var(--lds-avatar-group-overflow-border);
+  background: var(--lds-avatar-group-overflow-bg);
+  color: var(--lds-avatar-group-overflow-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-avatar-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: 1;
+  box-shadow: 0 0 0 var(--lds-space-px) var(--lds-color-bg-canvas);
+}
+
+.overflow[hidden] {
+  display: none;
+}`,
+  });
 
   /* component: lds-button (stable) */
   LDS.define({
@@ -1774,6 +2706,170 @@ a.link:hover {
   font-weight: var(--lds-font-weight-semibold);
   text-decoration: none;
   pointer-events: none;
+}`,
+  });
+
+  /* component: lds-menu (draft) */
+  LDS.define({
+    tag: "lds-menu",
+    className: "LdsMenu",
+    observed: ["open", "placement"],
+    defaults: {"placement": "bottom-end"},
+    template: `<div class="root" part="root">
+  <div class="trigger" part="trigger">
+    <slot name="trigger"></slot>
+  </div>
+  <div class="panel" part="panel" role="menu" hidden tabindex="-1">
+    <slot></slot>
+  </div>
+</div>`,
+    styles: `/* Action menu — trigger in flow, panel positioned with LDS.position. */
+
+:host {
+  --lds-menu-bg: var(--lds-color-bg-raised);
+  --lds-menu-fg: var(--lds-color-fg-default);
+  --lds-menu-border: var(--lds-color-border-default);
+  --lds-menu-radius: var(--lds-overlay-radius);
+  --lds-menu-shadow: var(--lds-overlay-shadow);
+  --lds-menu-padding: var(--lds-space-1);
+  --lds-menu-min-width: 12rem;
+
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.trigger {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.panel {
+  box-sizing: border-box;
+  z-index: var(--lds-z-popover);
+  display: none;
+  flex-direction: column;
+  gap: var(--lds-space-px);
+  min-width: var(--lds-menu-min-width);
+  padding: var(--lds-menu-padding);
+  border: var(--lds-control-border-width-default) solid var(--lds-menu-border);
+  border-radius: var(--lds-menu-radius);
+  background: var(--lds-menu-bg);
+  color: var(--lds-menu-fg);
+  box-shadow: var(--lds-menu-shadow);
+}
+
+:host([open]) .panel {
+  display: flex;
+}
+
+.panel[hidden] {
+  display: none !important;
+}
+
+::slotted(hr) {
+  display: block;
+  height: 0;
+  margin: var(--lds-space-1) 0;
+  border: 0;
+  border-block-start: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}`,
+  });
+
+  /* component: lds-menu-item (draft) */
+  LDS.define({
+    tag: "lds-menu-item",
+    className: "LdsMenuItem",
+    observed: ["href", "target", "disabled", "value"],
+    defaults: {},
+    template: `<button class="item" part="item" type="button" role="menuitem">
+  <span class="item__start" part="start"><slot name="start"></slot></span>
+  <span class="item__label" part="label"><slot></slot></span>
+  <span class="item__end" part="end"><slot name="end"></slot></span>
+</button>`,
+    styles: `/* Single action inside lds-menu. */
+
+:host {
+  --lds-menu-item-bg: transparent;
+  --lds-menu-item-bg-hover: var(--lds-color-bg-subtle);
+  --lds-menu-item-fg: var(--lds-color-fg-default);
+  --lds-menu-item-radius: var(--lds-control-radius-sm);
+  --lds-menu-item-padding-x: var(--lds-control-padding-x-sm);
+  --lds-menu-item-padding-y: var(--lds-space-2);
+  --lds-menu-item-gap: var(--lds-control-gap-sm);
+  --lds-menu-item-font-size: var(--lds-font-size-sm);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.item {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-menu-item-gap);
+  width: 100%;
+  margin: 0;
+  padding: var(--lds-menu-item-padding-y) var(--lds-menu-item-padding-x);
+  border: 0;
+  border-radius: var(--lds-menu-item-radius);
+  background: var(--lds-menu-item-bg);
+  color: var(--lds-menu-item-fg);
+  font: inherit;
+  font-size: var(--lds-menu-item-font-size);
+  line-height: var(--lds-font-leading-normal);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--lds-menu-item-bg-hover);
+}
+
+.item:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([disabled]) .item {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+:host([disabled]) .item:hover {
+  background: var(--lds-menu-item-bg);
+}
+
+.item__start,
+.item__end {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.item__start[data-empty],
+.item__end[data-empty] {
+  display: none;
+}
+
+.item__label {
+  flex: 1 1 auto;
+  min-width: 0;
 }`,
   });
 
@@ -2569,7 +3665,6 @@ a.link:hover {
 }
 
 :host(:not(:has(lds-toast))) {
-  /* No children — stay out of the way. :has is in the support matrix. */
   visibility: hidden;
 }`,
   });

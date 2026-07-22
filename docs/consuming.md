@@ -151,6 +151,30 @@ Creates an `lds-toast-region` on `document.body` if needed, appends a managed
 `lds-toast`, and returns the element. Pass `duration: 0` for sticky; pass
 `placement` to choose a corner. See the Toast and Toast region gallery pages.
 
+## Overlay helpers
+
+Menus (and later tooltips / popovers) share two runtime helpers:
+
+```js
+const handle = LDS.overlay.bind(panel, {
+  restoreFocus: trigger,
+  ignoreOutside: trigger,
+  onDismiss(reason) {
+    /* reason is "escape" or "outside" */
+  },
+});
+handle.disconnect();
+
+LDS.position(panel, trigger, {
+  placement: "bottom-end",
+  matchWidth: true,
+});
+```
+
+`LDS.position` is manual (no CSS anchor API yet). Re-call it on scroll/resize
+while open. Prefer the components (`lds-menu`) over calling these directly
+unless you are building a one-off floating surface.
+
 ## Customising
 
 Three sanctioned levers, in ascending order of coupling.

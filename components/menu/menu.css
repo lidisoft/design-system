@@ -1,0 +1,60 @@
+/* Action menu — trigger in flow, panel positioned with LDS.position. */
+
+:host {
+  --lds-menu-bg: var(--lds-color-bg-raised);
+  --lds-menu-fg: var(--lds-color-fg-default);
+  --lds-menu-border: var(--lds-color-border-default);
+  --lds-menu-radius: var(--lds-overlay-radius);
+  --lds-menu-shadow: var(--lds-overlay-shadow);
+  --lds-menu-padding: var(--lds-space-1);
+  --lds-menu-min-width: 12rem;
+
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.trigger {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.panel {
+  box-sizing: border-box;
+  z-index: var(--lds-z-popover);
+  display: none;
+  flex-direction: column;
+  gap: var(--lds-space-px);
+  min-width: var(--lds-menu-min-width);
+  padding: var(--lds-menu-padding);
+  border: var(--lds-control-border-width-default) solid var(--lds-menu-border);
+  border-radius: var(--lds-menu-radius);
+  background: var(--lds-menu-bg);
+  color: var(--lds-menu-fg);
+  box-shadow: var(--lds-menu-shadow);
+}
+
+:host([open]) .panel {
+  display: flex;
+}
+
+.panel[hidden] {
+  display: none !important;
+}
+
+::slotted(hr) {
+  display: block;
+  height: 0;
+  margin: var(--lds-space-1) 0;
+  border: 0;
+  border-block-start: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}

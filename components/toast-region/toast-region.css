@@ -58,6 +58,5 @@
 }
 
 :host(:not(:has(lds-toast))) {
-  /* No children — stay out of the way. :has is in the support matrix. */
   visibility: hidden;
 }

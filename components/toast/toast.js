@@ -161,5 +161,5 @@ function watchSlot(el, slotSel, wrapSel) {
   update();
 }
 
-/* Used by lds-toast-region Escape handling and LDS.toast callers. */
+/* Used by lds-toast-region Escape handling. */
 LDS._dismissToast = dismiss;

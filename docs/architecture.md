@@ -12,6 +12,8 @@ runtime/reset.css ─┤                                              ├──�
 runtime/utilities.css ────────────────────────────────────────────┘
 
 runtime/base.js ───┐
+runtime/overlay.js ┤
+runtime/position.js┤
                    ├──► internal/generator ──────────────────────────► dist/lds.js
 components/*/ ─────┴──► internal/catalog ──► component descriptors ──┘
 
@@ -90,9 +92,11 @@ rather than regenerated into every component.
 
 1. Banner
 2. `runtime/base.js` — the `LDS` object, `LDS.define`, `LDS.behavior`, helpers
-3. Every component's behaviour, **each wrapped in its own closure**
-4. Every component's `LDS.define({...})` call
-5. `LDS.version`, then `global.LDS = LDS`
+3. `runtime/overlay.js` — `LDS.overlay.bind` (non-modal dismiss / focus trap)
+4. `runtime/position.js` — `LDS.position` (anchored floating layout)
+5. Every component's behaviour, **each wrapped in its own closure**
+6. Every component's `LDS.define({...})` call
+7. `LDS.version`, then `global.LDS = LDS`
 
 Behaviours must precede definitions: `customElements.define()` upgrades matching
 elements synchronously, so a `connectedCallback` can fire before the next line

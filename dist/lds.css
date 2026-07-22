@@ -172,6 +172,14 @@ hr {
  * Design tokens — generated from tokens/*.toml. Do not edit by hand.
  * ------------------------------------------------------------------ */
 :root {
+  /* avatar */
+  --lds-avatar-font-size-lg: 0.875rem;
+  --lds-avatar-font-size-md: 0.75rem;
+  --lds-avatar-font-size-sm: 0.6875rem;
+  --lds-avatar-size-lg: 48px;
+  --lds-avatar-size-md: 40px;
+  --lds-avatar-size-sm: 32px;
+
   /* breakpoint */
   --lds-breakpoint-2xl: 1536px;
   --lds-breakpoint-lg: 1024px;

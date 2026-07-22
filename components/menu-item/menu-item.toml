@@ -1,0 +1,92 @@
+tag = "lds-menu-item"
+name = "Menu item"
+category = "navigation"
+status = "draft"
+summary = "One action or link inside an lds-menu."
+
+description = """
+Renders an inner link when href is set, otherwise a button. Start and end
+slots take icons or other adornments. Activating the item emits lds-select
+and closes the parent menu.
+"""
+
+a11y = """
+role=\"menuitem\" on the inner control. disabled removes it from activation
+(and from the menu's arrow-key list). Prefer a clear text label in the
+default slot.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "href"
+type = "string"
+description = "When set, the item renders as a link."
+
+[[attributes]]
+name = "target"
+type = "string"
+description = "Link target when href is set."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks activation and skips the item in keyboard navigation."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Optional value included in the lds-select event detail."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "Item label."
+
+[[slots]]
+name = "start"
+description = "Leading adornment, typically an icon."
+
+[[slots]]
+name = "end"
+description = "Trailing adornment."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-select"
+detail = "{ value?: string, originalEvent: Event }"
+description = "Fired on activation. The parent menu closes when it hears this."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "item"
+description = "The inner button or anchor."
+
+[[parts]]
+name = "start"
+description = "Wrapper around the start slot."
+
+[[parts]]
+name = "label"
+description = "Wrapper around the default slot."
+
+[[parts]]
+name = "end"
+description = "Wrapper around the end slot."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "In a menu"
+description = "Items are meant to live inside lds-menu; see that page for full compositions."
+html = """
+<lds-menu>
+  <lds-button slot="trigger" variant="secondary" size="sm">Open</lds-button>
+  <lds-menu-item value="edit">Edit</lds-menu-item>
+  <lds-menu-item href="#share">Share</lds-menu-item>
+  <lds-menu-item disabled>Archived</lds-menu-item>
+</lds-menu>
+"""

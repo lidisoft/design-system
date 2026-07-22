@@ -25,11 +25,10 @@ LDS.behavior("lds-toast-region", {
       }
     };
 
-    const slot = el.$("slot");
     const syncListener = function () {
       const s = regionState.get(el);
       if (!s) return;
-      const has = openToasts(el).length > 0 || toastsOf(el).length > 0;
+      const has = toastsOf(el).length > 0;
       if (has && !s.listening) {
         document.addEventListener("keydown", onKeydown);
         s.listening = true;
@@ -39,15 +38,11 @@ LDS.behavior("lds-toast-region", {
       }
     };
 
+    const slot = el.$("slot");
     if (slot) slot.addEventListener("slotchange", syncListener);
 
     const mo = new MutationObserver(syncListener);
-    mo.observe(el, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["open"],
-    });
+    mo.observe(el, { childList: true });
 
     regionState.set(el, { onKeydown: onKeydown, mo: mo, listening: false });
     syncListener();
@@ -102,9 +97,7 @@ LDS.toast = function (opts) {
 
   const toast = document.createElement("lds-toast");
   toast.setAttribute("data-managed", "");
-
-  const intent = opts.intent || "info";
-  toast.setAttribute("intent", intent);
+  toast.setAttribute("intent", opts.intent || "info");
 
   if (opts.duration != null) {
     toast.setAttribute("duration", String(opts.duration));

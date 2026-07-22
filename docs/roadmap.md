@@ -53,21 +53,21 @@ components will.
 - [ ] `lds-table` — light-DOM `<table>`, sorting, sticky header, density
 - [ ] `lds-tabs` + `lds-tab-panel`
 - [ ] `lds-empty-state`, `lds-stat`, `lds-skeleton`
-- [ ] `lds-avatar` + `lds-avatar-group`, `lds-tag`, `lds-divider`
+- [x] **`lds-avatar` + `lds-avatar-group`** — image / initials / icon; stack + max
+- [ ] `lds-tag`, `lds-divider`
 
 ## Phase 3 — Overlays and navigation
 
-- [ ] **Shared overlay helper in the runtime** — focus trap, scroll lock,
-      `Escape`, focus restoration. Write it once; `lds-modal`, `lds-drawer`,
-      `lds-popover` and `lds-menu` all need exactly this.
-- [ ] **Shared anchored-positioning helper** — `lds-menu`, `lds-tooltip`,
-      `lds-select` and `lds-combobox` all need it. Extract on the first
-      component, not the third. CSS anchor positioning is not yet safe across
-      the support matrix, so this is manual.
+- [x] **Shared overlay helper in the runtime** — `LDS.overlay.bind` (Escape,
+      outside click, light focus trap, focus restoration). Scroll lock still
+      deferred for modal overlays (`lds-modal` / `lds-drawer`).
+- [x] **Shared anchored-positioning helper** — `LDS.position` (placement, flip,
+      clamp, matchWidth). Used by `lds-menu`; tooltip/popover/select next.
 - [ ] `lds-modal`, `lds-drawer`, `lds-confirm` with `LDS.confirm()`
-- [ ] **`lds-toast` + `lds-toast-region` + `LDS.toast()`** — transient
+- [x] **`lds-toast` + `lds-toast-region` + `LDS.toast()`** — transient
       notifications; no overlay helper required
-- [ ] `lds-menu`, `lds-tooltip`, `lds-popover`
+- [x] **`lds-menu`** — action list + `lds-menu-item`; account-menu composition
+- [ ] `lds-tooltip`, `lds-popover`
 - [ ] **`lds-navbar`** — top bar with brand/links/actions and compact toggle
       (first nav deliverable; no drawer dependency)
 - [ ] **`lds-nav` + `lds-nav-item` + `lds-nav-group`** — sidebar with active

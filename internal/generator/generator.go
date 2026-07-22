@@ -76,17 +76,38 @@ func LoadSources(root string) (*Sources, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generator: %w", err)
 	}
-	runtime, err := os.ReadFile(filepath.Join(root, "runtime", "base.js"))
+	runtime, err := loadRuntimeJS(filepath.Join(root, "runtime"))
 	if err != nil {
-		return nil, fmt.Errorf("generator: %w", err)
+		return nil, err
 	}
 	return &Sources{
 		Tokens:     set,
 		Components: components,
 		Reset:      string(reset),
 		Utilities:  string(utilities),
-		Runtime:    string(runtime),
+		Runtime:    runtime,
 	}, nil
+}
+
+// loadRuntimeJS concatenates the shared JS runtime files in emission order.
+// Behaviours and definitions are appended later by buildJS.
+func loadRuntimeJS(dir string) (string, error) {
+	files := []string{"base.js", "overlay.js", "position.js"}
+	var b strings.Builder
+	for i, name := range files {
+		raw, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			return "", fmt.Errorf("generator: %w", err)
+		}
+		if i > 0 {
+			b.WriteByte('\n')
+		}
+		b.Write(raw)
+		if !strings.HasSuffix(string(raw), "\n") {
+			b.WriteByte('\n')
+		}
+	}
+	return b.String(), nil
 }
 
 // Generate produces the CSS and JS bundles (and the icon sprite) without

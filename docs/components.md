@@ -22,6 +22,10 @@ every LiDiSoft service needs.
 | `lds-breadcrumb-item` | **draft** — breadcrumb step |
 | `lds-toast` | **draft** — transient notification card |
 | `lds-toast-region` | **draft** — toast stack + `LDS.toast()` |
+| `lds-avatar` | **draft** — image / initials / icon identity |
+| `lds-avatar-group` | **draft** — overlapping stack + max overflow |
+| `lds-menu` | **draft** — action menu from a trigger |
+| `lds-menu-item` | **draft** — menu action or link |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -49,7 +53,7 @@ the page created. Resist any urge to add `<lds-stack>`.
 | `lds-icon` | Inline iconography | **Done.** `name`, `size`, `label`; sprite from `assets/icons/` |
 | `lds-badge` | Short status labels | intent, variant (solid/subtle/outline), size |
 | `lds-tag` | Removable chips, filters | Badge plus a dismiss affordance and `lds-remove` |
-| `lds-avatar` | User/team identity | image, initials fallback, size, shape; `lds-avatar-group` for stacks |
+| `lds-avatar` | User/team identity | **Done (draft).** image, initials, icon fallback, size, shape; `lds-avatar-group` for stacks |
 | `lds-spinner` | Indeterminate progress | size, label; `aria-busy` on the region, not the spinner |
 | `lds-divider` | Visual separation | orientation, optional inline label |
 | `lds-kbd` | Keyboard shortcuts | Trivial, but recurring in help and command surfaces |
@@ -113,14 +117,14 @@ wiring into every control.
 | `lds-nav-group` | Collapsible section | `label`, `open`; trigger hides in a collapsed parent nav |
 | `lds-breadcrumb` | Hierarchy trail | Collapses middle steps behind an ellipsis when narrow; `expanded`, `max-items` |
 | `lds-breadcrumb-item` | Breadcrumb step | `href`, `current`; leading separator hides on the first item |
-| `lds-menu` | Dropdown actions | `lds-menu-item`, separators; keyboard menu pattern |
+| `lds-menu` | Dropdown actions | **Done (draft).** `lds-menu-item`, `<hr>` separators; keyboard arrows; account-menu composition |
 | `lds-tooltip` | Supplementary hints | Never the only source of information |
 | `lds-command` | Command palette | Depends on `lds-combobox`; high value, build late |
 
-`lds-menu`, `lds-tooltip`, `lds-select` and `lds-combobox` all need the same
-anchored-floating-layer logic. Extract it into a shared runtime helper the first
-time, not the third — there is no floating-ui equivalent here, and the CSS
-anchor positioning API is not yet safe to rely on across the support matrix.
+`lds-menu`, `lds-tooltip`, `lds-select` and `lds-combobox` share anchored
+floating-layer logic via `LDS.position` / `LDS.overlay` in the runtime (started
+with `lds-menu`). CSS anchor positioning is not yet safe across the support
+matrix.
 
 ## Data display
 

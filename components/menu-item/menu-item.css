@@ -1,0 +1,75 @@
+/* Single action inside lds-menu. */
+
+:host {
+  --lds-menu-item-bg: transparent;
+  --lds-menu-item-bg-hover: var(--lds-color-bg-subtle);
+  --lds-menu-item-fg: var(--lds-color-fg-default);
+  --lds-menu-item-radius: var(--lds-control-radius-sm);
+  --lds-menu-item-padding-x: var(--lds-control-padding-x-sm);
+  --lds-menu-item-padding-y: var(--lds-space-2);
+  --lds-menu-item-gap: var(--lds-control-gap-sm);
+  --lds-menu-item-font-size: var(--lds-font-size-sm);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.item {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-menu-item-gap);
+  width: 100%;
+  margin: 0;
+  padding: var(--lds-menu-item-padding-y) var(--lds-menu-item-padding-x);
+  border: 0;
+  border-radius: var(--lds-menu-item-radius);
+  background: var(--lds-menu-item-bg);
+  color: var(--lds-menu-item-fg);
+  font: inherit;
+  font-size: var(--lds-menu-item-font-size);
+  line-height: var(--lds-font-leading-normal);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--lds-menu-item-bg-hover);
+}
+
+.item:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([disabled]) .item {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+:host([disabled]) .item:hover {
+  background: var(--lds-menu-item-bg);
+}
+
+.item__start,
+.item__end {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.item__start[data-empty],
+.item__end[data-empty] {
+  display: none;
+}
+
+.item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+}

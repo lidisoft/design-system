@@ -153,6 +153,21 @@ md = "20px"
 lg = "24px"
 
 # ---------------------------------------------------------------------------
+# Avatars — shared box sizes so avatar and avatar-group stay aligned with
+# control geometry where they sit next to buttons.
+# ---------------------------------------------------------------------------
+
+[avatar.size]
+sm = "{control.height.sm}"
+md = "{control.height.md}"
+lg = "{control.height.lg}"
+
+[avatar.font-size]
+sm = "{font.size.2xs}"
+md = "{font.size.xs}"
+lg = "{font.size.sm}"
+
+# ---------------------------------------------------------------------------
 # Surfaces built on top of the primitives
 # ---------------------------------------------------------------------------
 

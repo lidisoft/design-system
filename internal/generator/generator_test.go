@@ -136,6 +136,31 @@ func TestBannerMarksFilesGenerated(t *testing.T) {
 	}
 }
 
+func TestRuntimeHelpersEmitted(t *testing.T) {
+	res := generate(t)
+	for _, want := range []string{
+		"LDS.overlay",
+		"LDS.position",
+	} {
+		if !strings.Contains(res.JS, want) {
+			t.Errorf("JS missing %q", want)
+		}
+	}
+	base := strings.Index(res.JS, "const LDS = {")
+	overlay := strings.Index(res.JS, "LDS.overlay = {")
+	position := strings.Index(res.JS, "LDS.position = function")
+	firstBehavior := strings.Index(res.JS, "/* behaviour: ")
+	if base < 0 || overlay < 0 || position < 0 {
+		t.Fatal("runtime markers missing")
+	}
+	if !(base < overlay && overlay < position) {
+		t.Error("expected base.js before overlay.js before position.js")
+	}
+	if firstBehavior >= 0 && position > firstBehavior {
+		t.Error("position helper must precede component behaviours")
+	}
+}
+
 func TestIconSpriteAndNames(t *testing.T) {
 	res := generate(t)
 

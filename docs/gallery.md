@@ -54,7 +54,7 @@ class of staleness bug.
 |-------------|-------------|
 | `components/**/*.toml`, `.html`, `.css`, `.js` | Refresh the browser |
 | `tokens/**/*.toml` | Refresh the browser |
-| `runtime/*.css`, `runtime/base.js` | Refresh the browser |
+| `runtime/*.css`, `runtime/*.js` | Refresh the browser |
 | `internal/**/*.go` | Air restarts (`make up`), or restart `make dev` |
 | `internal/gallery/templates/*.html` | Restart — templates are embedded at compile time |
 

@@ -1,0 +1,79 @@
+tag = "lds-avatar-group"
+name = "Avatar group"
+category = "primitives"
+status = "draft"
+summary = "Overlapping stack of avatars with an optional +N overflow chip."
+
+description = """
+Lay out sibling lds-avatar children with a negative margin so they read as a
+single stack. Pass max to hide overflow behind a +N chip. size sets
+--lds-avatar-box on the host so children inherit a shared box size.
+"""
+
+a11y = """
+Individual avatars keep their own accessible names. The overflow chip is
+labelled \"N more\" when present.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "max"
+type = "number"
+description = "Maximum faces to show. When exceeded, shows max-1 avatars plus a +N chip."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Shared box size inherited by child avatars via --lds-avatar-box."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "lds-avatar children."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "stack"
+description = "Flex row wrapping the slot and overflow chip."
+
+[[parts]]
+name = "overflow"
+description = "The +N count chip when max is exceeded."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-avatar-group-overlap"
+default = "--lds-space-2"
+description = "How far each avatar pulls over the previous one."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Stack"
+description = "Default overlap with no max."
+html = """
+<lds-avatar-group>
+  <lds-avatar name="Ada Lovelace"></lds-avatar>
+  <lds-avatar name="Grace Hopper"></lds-avatar>
+  <lds-avatar name="Alan Turing"></lds-avatar>
+</lds-avatar-group>
+"""
+
+[[stories]]
+name = "With max"
+description = "max=3 shows two faces and a +N chip when there are more."
+html = """
+<lds-avatar-group max="3" size="sm">
+  <lds-avatar name="Ada Lovelace"></lds-avatar>
+  <lds-avatar name="Grace Hopper"></lds-avatar>
+  <lds-avatar name="Alan Turing"></lds-avatar>
+  <lds-avatar name="Katherine Johnson"></lds-avatar>
+  <lds-avatar name="Margaret Hamilton"></lds-avatar>
+</lds-avatar-group>
+"""
