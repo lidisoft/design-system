@@ -823,6 +823,45 @@
     }
   })();
 
+  /* behaviour: lds-divider */
+  (function () {
+    /* Behaviour for <lds-divider> — separator role and label emptiness. */
+
+    LDS.behavior("lds-divider", {
+      connected(el) {
+        sync(el);
+        watchSlot(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+    });
+
+    function sync(el) {
+      const orientation = el.getAttribute("orientation") || "horizontal";
+      el.setAttribute("role", "separator");
+      el.setAttribute("aria-orientation", orientation);
+    }
+
+    function watchSlot(el) {
+      const slot = el.$("slot");
+      const label = el.$(".label");
+      if (!slot || !label) return;
+
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        label.toggleAttribute("data-empty", empty);
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-icon */
   (function () {
     /* Behaviour for <lds-icon>.
@@ -4545,6 +4584,98 @@
   flex: none;
   align-items: center;
   line-height: 1;
+}`,
+  });
+
+  /* component: lds-divider (draft) */
+  LDS.define({
+    tag: "lds-divider",
+    className: "LdsDivider",
+    formAssociated: false,
+    observed: ["orientation"],
+    defaults: {"orientation": "horizontal"},
+    template: `<div class="root" part="root">
+  <span class="line line--start" part="line"></span>
+  <span class="label" part="label"><slot></slot></span>
+  <span class="line line--end" part="line"></span>
+</div>`,
+    styles: `/* Visual separator. Optional label sits between two line segments. */
+
+:host {
+  --lds-divider-color: var(--lds-color-border-default);
+  --lds-divider-thickness: var(--lds-control-border-width-default);
+  --lds-divider-gap: var(--lds-space-3);
+  --lds-divider-label-fg: var(--lds-color-fg-muted);
+
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([orientation="vertical"]) {
+  display: inline-flex;
+  flex-direction: column;
+  align-self: stretch;
+  width: auto;
+  max-width: none;
+  min-height: 1em;
+  vertical-align: middle;
+}
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-divider-gap);
+  width: 100%;
+}
+
+:host([orientation="vertical"]) .root {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-self: stretch;
+  align-items: center;
+  width: auto;
+  min-height: 0;
+}
+
+.line {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--lds-divider-color);
+}
+
+:host(:not([orientation="vertical"])) .line {
+  height: var(--lds-divider-thickness);
+}
+
+:host([orientation="vertical"]) .line {
+  flex: 1 1 auto;
+  align-self: center;
+  width: var(--lds-divider-thickness);
+  min-height: 1em;
+}
+
+.label {
+  flex: none;
+  color: var(--lds-divider-label-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+  white-space: nowrap;
+}
+
+.label[data-empty] {
+  display: none;
+}
+
+.label[data-empty] + .line--end {
+  display: none;
 }`,
   });
 

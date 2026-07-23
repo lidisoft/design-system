@@ -31,6 +31,7 @@ every LiDiSoft service needs.
 | `lds-badge` | **draft** — intent status label |
 | `lds-tag` | **draft** — dismissible chip |
 | `lds-spinner` | **draft** — indeterminate progress |
+| `lds-divider` | **draft** — visual separator |
 | `lds-card` | **draft** — grouped content surface |
 | `lds-code` | **draft** — code block with copy |
 | `lds-tabs` | **draft** — tablist + panels |
@@ -78,7 +79,7 @@ the page created. Resist any urge to add `<lds-stack>`.
 | `lds-tag` | Removable chips, filters | **Done (draft).** Badge-shaped; dismissible + `lds-remove` |
 | `lds-avatar` | User/team identity | **Done (draft).** image, initials, icon fallback, size, shape; `lds-avatar-group` for stacks |
 | `lds-spinner` | Indeterminate progress | **Done (draft).** size, label; `aria-busy` on the region, not the spinner |
-| `lds-divider` | Visual separation | orientation, optional inline label |
+| `lds-divider` | Visual separation | **Done (draft).** orientation; optional inline label slot |
 | `lds-kbd` | Keyboard shortcuts | Trivial, but recurring in help and command surfaces |
 
 ### Icons

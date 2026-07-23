@@ -52,7 +52,7 @@ components will.
 - [ ] `lds-empty-state`, `lds-stat`, `lds-skeleton`
 - [x] **`lds-avatar` + `lds-avatar-group`** — image / initials / icon; stack + max
 - [x] **`lds-tag`** — dismissible chip + `lds-remove`
-- [ ] `lds-divider`
+- [x] `lds-divider`
 
 ## Phase 3 — Overlays and navigation
 

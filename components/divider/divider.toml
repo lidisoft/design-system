@@ -1,0 +1,76 @@
+tag = "lds-divider"
+name = "Divider"
+category = "primitives"
+status = "draft"
+summary = "Visual separation, optionally labelled."
+
+description = """
+Horizontal or vertical rule for grouping content. Pass text in the default slot
+for a centred label (e.g. \"or\" between auth options). Prefer this over a raw
+<hr> when you need theme tokens or an inline label.
+"""
+
+a11y = """
+Exposes role=\"separator\" with aria-orientation. Label text is visible only —
+it is not an accessible name for the separator (separators are typically
+unlabelled landmarks).
+"""
+
+[[attributes]]
+name = "orientation"
+type = "enum"
+values = ["horizontal", "vertical"]
+default = "horizontal"
+description = "Line direction. Vertical stretches with the flex/grid parent."
+
+[[slots]]
+name = ""
+description = "Optional inline label between line segments."
+
+[[parts]]
+name = "root"
+description = "Flex wrapper around the lines and label."
+
+[[parts]]
+name = "line"
+description = "A line segment."
+
+[[parts]]
+name = "label"
+description = "Label wrapper."
+
+[[css_vars]]
+name = "--lds-divider-color"
+default = "--lds-color-border-default"
+description = "Line colour."
+
+[[css_vars]]
+name = "--lds-divider-gap"
+default = "--lds-space-3"
+description = "Space between line and label."
+
+[[stories]]
+name = "Horizontal"
+description = "Plain rule and labelled rule."
+html = """
+<div class="lds-stack" style="max-width: 24rem">
+  <p class="lds-muted">Above</p>
+  <lds-divider></lds-divider>
+  <p class="lds-muted">Below</p>
+  <lds-divider>or</lds-divider>
+  <p class="lds-muted">After a labelled break</p>
+</div>
+"""
+
+[[stories]]
+name = "Vertical"
+description = "Sits in a horizontal cluster; stretches to the text line height."
+html = """
+<div class="lds-cluster">
+  <span class="lds-muted">Inbox</span>
+  <lds-divider orientation="vertical"></lds-divider>
+  <span class="lds-muted">Archive</span>
+  <lds-divider orientation="vertical"></lds-divider>
+  <span class="lds-muted">Trash</span>
+</div>
+"""

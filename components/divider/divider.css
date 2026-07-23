@@ -1,0 +1,78 @@
+/* Visual separator. Optional label sits between two line segments. */
+
+:host {
+  --lds-divider-color: var(--lds-color-border-default);
+  --lds-divider-thickness: var(--lds-control-border-width-default);
+  --lds-divider-gap: var(--lds-space-3);
+  --lds-divider-label-fg: var(--lds-color-fg-muted);
+
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([orientation="vertical"]) {
+  display: inline-flex;
+  flex-direction: column;
+  align-self: stretch;
+  width: auto;
+  max-width: none;
+  min-height: 1em;
+  vertical-align: middle;
+}
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-divider-gap);
+  width: 100%;
+}
+
+:host([orientation="vertical"]) .root {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-self: stretch;
+  align-items: center;
+  width: auto;
+  min-height: 0;
+}
+
+.line {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--lds-divider-color);
+}
+
+:host(:not([orientation="vertical"])) .line {
+  height: var(--lds-divider-thickness);
+}
+
+:host([orientation="vertical"]) .line {
+  flex: 1 1 auto;
+  align-self: center;
+  width: var(--lds-divider-thickness);
+  min-height: 1em;
+}
+
+.label {
+  flex: none;
+  color: var(--lds-divider-label-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+  white-space: nowrap;
+}
+
+.label[data-empty] {
+  display: none;
+}
+
+.label[data-empty] + .line--end {
+  display: none;
+}
