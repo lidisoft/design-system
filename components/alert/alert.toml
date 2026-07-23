@@ -1,0 +1,140 @@
+tag = "lds-alert"
+name = "Alert"
+category = "feedback"
+status = "draft"
+summary = "Inline persistent message for in-flow feedback."
+
+description = """
+Stays in the page layout until dismissed or removed — validation summaries,
+partial failures, recovery hints. Prefer lds-toast for transient feedback and
+lds-banner for full-bleed page announcements.
+"""
+
+a11y = """
+role=\"status\" by default; role=\"alert\" when intent is danger. Dismiss is a real
+button labelled Dismiss. Callers own the title and body copy.
+"""
+
+[[attributes]]
+name = "intent"
+type = "enum"
+values = ["info", "success", "warning", "danger"]
+default = "info"
+description = "Severity colour and default icon. info uses the accent roles."
+
+[[attributes]]
+name = "dismissible"
+type = "boolean"
+description = "Show a dismiss control. Dismissal sets hidden and fires lds-dismiss."
+
+[[slots]]
+name = "icon"
+description = "Optional leading icon; defaults to an intent-matched system icon."
+
+[[slots]]
+name = "title"
+description = "Short heading."
+
+[[slots]]
+name = "description"
+description = "Body copy. The default slot is accepted as an alias."
+
+[[slots]]
+name = ""
+description = "Body copy alias for the description slot."
+
+[[slots]]
+name = "actions"
+description = "Follow-up controls, typically lds-button elements."
+
+[[events]]
+name = "lds-dismiss"
+detail = "{ reason: string }"
+description = "Fired before hiding. Cancel to keep the alert visible. reason is close."
+
+[[parts]]
+name = "root"
+description = "Alert surface."
+
+[[parts]]
+name = "icon"
+description = "Leading icon region."
+
+[[parts]]
+name = "title"
+description = "Title slot wrapper."
+
+[[parts]]
+name = "description"
+description = "Description slot wrapper."
+
+[[parts]]
+name = "actions"
+description = "Actions slot wrapper."
+
+[[parts]]
+name = "close"
+description = "Dismiss button."
+
+[[css_vars]]
+name = "--lds-alert-bg"
+default = "per intent"
+description = "Background."
+
+[[css_vars]]
+name = "--lds-alert-fg"
+default = "per intent"
+description = "Text colour."
+
+[[css_vars]]
+name = "--lds-alert-radius"
+default = "--lds-radius-md"
+description = "Corner radius."
+
+[[stories]]
+name = "Intents"
+description = "Severity colour and matching icons."
+html = """
+<div class="lds-stack" style="max-width: 32rem">
+  <lds-alert intent="info">
+    <span slot="title">Deploy queued</span>
+    <span slot="description">Changes land after the current canary finishes.</span>
+  </lds-alert>
+  <lds-alert intent="success">
+    <span slot="title">Incident acknowledged</span>
+    <span slot="description">On-call has been notified.</span>
+  </lds-alert>
+  <lds-alert intent="warning">
+    <span slot="title">Rate limit approaching</span>
+    <span slot="description">80% of the hourly quota is used.</span>
+  </lds-alert>
+  <lds-alert intent="danger">
+    <span slot="title">Webhook delivery failing</span>
+    <span slot="description">Three consecutive timeouts to the configured endpoint.</span>
+  </lds-alert>
+</div>
+"""
+
+[[stories]]
+name = "Dismissible with actions"
+description = "Optional dismiss and follow-up controls."
+html = """
+<lds-alert intent="warning" dismissible style="max-width: 32rem">
+  <span slot="title">Integration disconnected</span>
+  <span slot="description">Slack stopped accepting events from this workspace.</span>
+  <div slot="actions" class="lds-cluster">
+    <lds-button size="sm">Reconnect</lds-button>
+    <lds-button size="sm" variant="ghost">Dismiss for now</lds-button>
+  </div>
+</lds-alert>
+"""
+
+[[stories]]
+name = "Default slot body"
+description = "Body can be the default slot instead of description."
+html = """
+<lds-alert intent="info" style="max-width: 32rem">
+  <span slot="title">Audit log retention</span>
+  Events older than 90 days are archived automatically.
+</lds-alert>
+"""

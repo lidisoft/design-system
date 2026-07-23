@@ -33,7 +33,7 @@ Enough to build a real screen. Everything here is unblocked today.
 - [x] **`lds-input`** — the second-most-used component after button.
 - [x] **`lds-card`** — header/media/footer slots.
 - [x] **`lds-badge`** — exercises the intent-role pattern end to end.
-- [ ] **`lds-alert`** — inline messaging.
+- [x] **`lds-alert`** — inline messaging.
 - [x] **`lds-spinner`** — extract from the button's inline spinner.
 
 At the end of this phase, rebuild one `tocsin` screen with LDS. That is the

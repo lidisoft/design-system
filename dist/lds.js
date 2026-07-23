@@ -3335,6 +3335,121 @@
     }
   })();
 
+  /* behaviour: lds-alert */
+  (function () {
+    /* Behaviour for <lds-alert> — inline persistent message. */
+
+    LDS.behavior("lds-alert", {
+      connected(el) {
+        const close = el.$(".close");
+        const root = el.$(".root");
+
+        syncRole(el, root);
+        syncDismissible(el, close);
+        syncFallbackIcon(el);
+        watchSlot(el, 'slot[name="title"]', ".title");
+        watchDescription(el);
+        watchSlot(el, 'slot[name="actions"]', ".actions");
+        watchIconSlot(el);
+
+        close.addEventListener("click", () => dismiss(el, "close"));
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        const close = el.$(".close");
+        const root = el.$(".root");
+        if (name === "intent") {
+          syncRole(el, root);
+          syncFallbackIcon(el);
+        }
+        if (name === "dismissible" && close) syncDismissible(el, close);
+      },
+    });
+
+    function isDismissible(el) {
+      return el.boolAttr("dismissible");
+    }
+
+    function syncDismissible(el, close) {
+      close.hidden = !isDismissible(el);
+    }
+
+    function syncRole(el, root) {
+      root.setAttribute(
+        "role",
+        el.getAttribute("intent") === "danger" ? "alert" : "status"
+      );
+    }
+
+    function syncFallbackIcon(el) {
+      const intent = el.getAttribute("intent") || "info";
+      el.$$(".icon__fallback").forEach((icon) => {
+        icon.hidden = icon.getAttribute("data-intent") !== intent;
+      });
+    }
+
+    function dismiss(el, reason) {
+      if (el.hasAttribute("hidden")) return;
+
+      const event = el.emit("lds-dismiss", { reason: reason });
+      if (event.defaultPrevented) return;
+
+      el.setAttribute("hidden", "");
+    }
+
+    function slotEmpty(slot) {
+      return slot.assignedNodes({ flatten: true }).every(
+        (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+      );
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = () => wrap.toggleAttribute("data-empty", slotEmpty(slot));
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+
+    function watchDescription(el) {
+      const named = el.$('slot[name="description"]');
+      const def = el.$(".description > slot:not([name])");
+      const wrap = el.$(".description");
+      if (!wrap) return;
+
+      const update = () => {
+        const empty =
+          (!named || slotEmpty(named)) && (!def || slotEmpty(def));
+        wrap.toggleAttribute("data-empty", empty);
+      };
+
+      if (named) named.addEventListener("slotchange", update);
+      if (def) def.addEventListener("slotchange", update);
+      update();
+    }
+
+    function watchIconSlot(el) {
+      const slot = el.$('slot[name="icon"]');
+      const wrap = el.$(".icon");
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        const empty = slotEmpty(slot);
+        wrap.toggleAttribute("data-empty-slot", empty);
+        el.$$(".icon__fallback").forEach((icon) => {
+          if (!empty) icon.hidden = true;
+          else icon.hidden = icon.getAttribute("data-intent") !== (el.getAttribute("intent") || "info");
+        });
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-banner */
   (function () {
     /* Behaviour for <lds-banner> — page-level announcement strip. */
@@ -7073,6 +7188,172 @@ a.link:hover {
   color: var(--lds-color-fg-muted);
   font-size: var(--lds-font-size-sm);
   line-height: var(--lds-font-leading-normal);
+}`,
+  });
+
+  /* component: lds-alert (draft) */
+  LDS.define({
+    tag: "lds-alert",
+    className: "LdsAlert",
+    formAssociated: false,
+    observed: ["intent", "dismissible"],
+    defaults: {"intent": "info"},
+    template: `<div class="root" part="root">
+  <span class="icon" part="icon" aria-hidden="true">
+    <slot name="icon"></slot>
+    <lds-icon class="icon__fallback" data-intent="info" name="info"></lds-icon>
+    <lds-icon class="icon__fallback" data-intent="success" name="circle-check" hidden></lds-icon>
+    <lds-icon class="icon__fallback" data-intent="warning" name="alert-triangle" hidden></lds-icon>
+    <lds-icon class="icon__fallback" data-intent="danger" name="alert-circle" hidden></lds-icon>
+  </span>
+  <div class="main">
+    <div class="title" part="title"><slot name="title"></slot></div>
+    <div class="description" part="description"><slot name="description"></slot><slot></slot></div>
+    <div class="actions" part="actions"><slot name="actions"></slot></div>
+  </div>
+  <button type="button" class="close" part="close" aria-label="Dismiss" hidden>
+    <lds-icon name="x"></lds-icon>
+  </button>
+</div>`,
+    styles: `/* Inline persistent message. Distinct from toast (transient) and banner (page-level). */
+
+:host {
+  --lds-alert-bg: var(--lds-color-accent-subtle);
+  --lds-alert-fg: var(--lds-color-accent-fg);
+  --lds-alert-border: var(--lds-color-accent-border);
+  --lds-alert-icon: var(--lds-color-accent-default);
+  --lds-alert-radius: var(--lds-radius-md);
+
+  display: block;
+  max-width: 100%;
+  color: var(--lds-alert-fg);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([intent="success"]) {
+  --lds-alert-bg: var(--lds-color-success-subtle);
+  --lds-alert-fg: var(--lds-color-success-fg);
+  --lds-alert-border: var(--lds-color-success-border);
+  --lds-alert-icon: var(--lds-color-success-default);
+}
+
+:host([intent="warning"]) {
+  --lds-alert-bg: var(--lds-color-warning-subtle);
+  --lds-alert-fg: var(--lds-color-warning-fg);
+  --lds-alert-border: var(--lds-color-warning-border);
+  --lds-alert-icon: var(--lds-color-warning-default);
+}
+
+:host([intent="danger"]) {
+  --lds-alert-bg: var(--lds-color-danger-subtle);
+  --lds-alert-fg: var(--lds-color-danger-fg);
+  --lds-alert-border: var(--lds-color-danger-border);
+  --lds-alert-icon: var(--lds-color-danger-default);
+}
+
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lds-space-3);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--lds-space-4);
+  background: var(--lds-alert-bg);
+  border: var(--lds-control-border-width-default) solid var(--lds-alert-border);
+  border-radius: var(--lds-alert-radius);
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  margin-block-start: 0.1em;
+  color: var(--lds-alert-icon);
+}
+
+.icon__fallback[hidden] {
+  display: none;
+}
+
+.main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.title[data-empty] {
+  display: none;
+}
+
+.description {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-regular);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.description[data-empty] {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lds-space-2);
+  margin-block-start: var(--lds-space-2);
+}
+
+.actions[data-empty] {
+  display: none;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: calc(var(--lds-space-1) * -1);
+  padding: 0;
+
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  opacity: 0.7;
+  transition:
+    background var(--lds-transition-control),
+    opacity var(--lds-transition-control);
+}
+
+.close:hover {
+  opacity: 1;
+  background: var(--lds-color-bg-muted);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.close[hidden] {
+  display: none;
 }`,
   });
 

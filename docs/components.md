@@ -40,6 +40,7 @@ every LiDiSoft service needs.
 | `lds-modal` | **draft** — blocking dialog |
 | `lds-progress` | **draft** — linear / circular progress |
 | `lds-banner` | **draft** — full-bleed page announcement |
+| `lds-alert` | **draft** — inline persistent message |
 | `lds-field` | **draft** — label, help, error wrapper |
 | `lds-input` | **draft** — form-associated text |
 | `lds-textarea` | **draft** — form-associated multi-line |
@@ -170,7 +171,7 @@ chrome and behaviour around it.
 
 | Tag | Purpose | Notes |
 |-----|---------|-------|
-| `lds-alert` | Inline, persistent messages | intent, dismissible, title/description/actions slots |
+| `lds-alert` | Inline, persistent messages | **Done (draft).** intent, dismissible; title/description/actions/icon slots |
 | `lds-toast` | Transient notifications | intent, duration, dismissible; compose in `lds-toast-region` or call `LDS.toast()` |
 | `lds-toast-region` | Toast stack host | placement corners; auto-created by `LDS.toast()`; Escape dismisses newest |
 | `lds-progress` | Determinate progress | **Done (draft).** Linear and circular; `value`/`max`, indeterminate mode |
