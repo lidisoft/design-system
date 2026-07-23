@@ -1132,6 +1132,122 @@
     }
   })();
 
+  /* behaviour: lds-date-picker */
+  (function () {
+    /* Behaviour for <lds-date-picker> — form-associated native date/time input. */
+
+    const TYPES = {
+      date: true,
+      time: true,
+      "datetime-local": true,
+      month: true,
+      week: true,
+    };
+
+    LDS.behavior("lds-date-picker", {
+      connected(el) {
+        const input = el.$(".input");
+        watchSlot(el, 'slot[name="prefix"]', ".prefix");
+        watchSlot(el, 'slot[name="suffix"]', ".suffix");
+        sync(el, input);
+
+        input.addEventListener("input", () => {
+          el.setAttribute("value", input.value);
+          setValue(el, input.value);
+          el.emit("lds-input", { value: input.value });
+        });
+        input.addEventListener("change", () => {
+          el.emit("lds-change", { value: input.value });
+        });
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el, el.$(".input"));
+      },
+
+      formReset(el) {
+        const initial = el.getAttribute("value") || "";
+        const input = el.$(".input");
+        if (input) input.value = initial;
+        setValue(el, initial);
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        const input = el.$(".input");
+        if (input) input.disabled = disabled;
+      },
+
+      formStateRestore(el, state) {
+        if (state == null) return;
+        const value = String(state);
+        el.setAttribute("value", value);
+        const input = el.$(".input");
+        if (input) input.value = value;
+        setValue(el, value);
+      },
+    });
+
+    function sync(el, input) {
+      if (!input) return;
+
+      let type = el.getAttribute("type") || "date";
+      if (!TYPES[type]) type = "date";
+      input.type = type;
+
+      input.disabled = el.boolAttr("disabled");
+      input.readOnly = el.boolAttr("readonly");
+      input.required = el.boolAttr("required");
+      input.name = el.getAttribute("name") || "";
+
+      if (el.hasAttribute("value") && input.value !== el.getAttribute("value")) {
+        input.value = el.getAttribute("value") || "";
+      }
+      if (el.hasAttribute("min")) input.min = el.getAttribute("min");
+      else input.removeAttribute("min");
+      if (el.hasAttribute("max")) input.max = el.getAttribute("max");
+      else input.removeAttribute("max");
+      if (el.hasAttribute("step")) input.step = el.getAttribute("step");
+      else input.removeAttribute("step");
+
+      const invalid = el.boolAttr("invalid") || el.getAttribute("aria-invalid") === "true";
+      if (invalid) input.setAttribute("aria-invalid", "true");
+      else input.removeAttribute("aria-invalid");
+
+      setValue(el, input.value);
+    }
+
+    function setValue(el, value) {
+      if (el.internals) el.internals.setFormValue(value == null ? "" : String(value));
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-field */
   (function () {
     /* Behaviour for <lds-field> — label / describedby wiring for the control. */
@@ -1217,7 +1333,7 @@
       const assigned = slot.assignedElements({ flatten: true });
       for (let i = 0; i < assigned.length; i++) {
         const node = assigned[i];
-        if (node.matches && node.matches("lds-input,lds-textarea,lds-select,lds-checkbox,lds-switch,lds-radio-group,input,textarea,select")) {
+        if (node.matches && node.matches("lds-input,lds-textarea,lds-select,lds-checkbox,lds-switch,lds-radio-group,lds-date-picker,input,textarea,select")) {
           return node;
         }
       }
@@ -5504,6 +5620,132 @@
 
 :host([disabled]) .root {
   cursor: not-allowed;
+}`,
+  });
+
+  /* component: lds-date-picker (draft) */
+  LDS.define({
+    tag: "lds-date-picker",
+    className: "LdsDatePicker",
+    formAssociated: true,
+    observed: ["type", "name", "value", "min", "max", "step", "size", "disabled", "readonly", "required", "invalid"],
+    defaults: {"type": "date", "size": "md"},
+    template: `<div class="wrap" part="wrap">
+  <span class="prefix" part="prefix"><slot name="prefix"></slot></span>
+  <input class="input" part="input" type="date" />
+  <span class="suffix" part="suffix"><slot name="suffix"></slot></span>
+</div>`,
+    styles: `/* Native date/time control styled to match lds-input. */
+
+:host {
+  --lds-date-picker-height: var(--lds-control-height-md);
+  --lds-date-picker-padding-x: var(--lds-control-padding-x-md);
+  --lds-date-picker-radius: var(--lds-control-radius-md);
+  --lds-date-picker-font-size: var(--lds-control-font-size-md);
+  --lds-date-picker-bg: var(--lds-color-bg-canvas);
+  --lds-date-picker-fg: var(--lds-color-fg-default);
+  --lds-date-picker-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-date-picker-height: var(--lds-control-height-sm);
+  --lds-date-picker-padding-x: var(--lds-control-padding-x-sm);
+  --lds-date-picker-radius: var(--lds-control-radius-sm);
+  --lds-date-picker-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-date-picker-height: var(--lds-control-height-lg);
+  --lds-date-picker-padding-x: var(--lds-control-padding-x-lg);
+  --lds-date-picker-radius: var(--lds-control-radius-lg);
+  --lds-date-picker-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-date-picker-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-date-picker-height);
+  padding-inline: var(--lds-date-picker-padding-x);
+  gap: var(--lds-control-gap-md);
+  border: var(--lds-control-border-width-default) solid var(--lds-date-picker-border);
+  border-radius: var(--lds-date-picker-radius);
+  background: var(--lds-date-picker-bg);
+  color: var(--lds-date-picker-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.prefix,
+.suffix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.prefix[data-empty],
+.suffix[data-empty] {
+  display: none;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-date-picker-font-size);
+  line-height: 1;
+  color-scheme: inherit;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}
+
+:host([disabled]) .input::-webkit-calendar-picker-indicator {
+  cursor: not-allowed;
+  opacity: 0.4;
 }`,
   });
 

@@ -1,0 +1,143 @@
+tag = "lds-date-picker"
+name = "Date picker"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Date and time control backed by the native platform picker."
+
+description = """
+Form-associated wrapper around <input type=\"date\"> (and time / datetime-local /
+month / week). Uses the browser’s picker UI — no custom calendar grid. That keeps
+localisation, keyboard behaviour and mobile chrome with the platform.
+
+Compose inside lds-field for label, help and error wiring. Reach for a custom
+calendar only if a product needs multi-month ranges or unavailable-day grids the
+native control cannot express.
+"""
+
+a11y = """
+delegatesFocus into the native input. min / max / required are mirrored onto the
+platform control. invalid / aria-invalid style the chrome; lds-field sets
+aria-invalid when an error slot is present.
+"""
+
+[[attributes]]
+name = "type"
+type = "enum"
+values = ["date", "time", "datetime-local", "month", "week"]
+default = "date"
+description = "Native temporal input type."
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Current value in the format the native type expects (e.g. YYYY-MM-DD)."
+
+[[attributes]]
+name = "min"
+type = "string"
+description = "Earliest allowed value."
+
+[[attributes]]
+name = "max"
+type = "string"
+description = "Latest allowed value."
+
+[[attributes]]
+name = "step"
+type = "string"
+description = "Native step (seconds for time types; days for date)."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Control height from shared control.* tokens."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks editing."
+
+[[attributes]]
+name = "readonly"
+type = "boolean"
+description = "Value is visible but not editable."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling."
+
+[[slots]]
+name = "prefix"
+description = "Leading adornment."
+
+[[slots]]
+name = "suffix"
+description = "Trailing adornment."
+
+[[events]]
+name = "lds-input"
+detail = "{ value: string }"
+description = "Fired as the value changes."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired when the value commits."
+
+[[parts]]
+name = "wrap"
+description = "Bordered control chrome."
+
+[[parts]]
+name = "input"
+description = "The native temporal input."
+
+[[stories]]
+name = "Date"
+description = "Default date picker inside a field."
+html = """
+<lds-field label="Incident started" required style="max-width: 20rem">
+  <lds-date-picker name="started" value="2026-07-23"></lds-date-picker>
+</lds-field>
+"""
+
+[[stories]]
+name = "Bounds"
+description = "min and max constrain the native picker."
+html = """
+<lds-field label="Maintenance window" style="max-width: 20rem">
+  <lds-date-picker name="window" min="2026-07-01" max="2026-07-31"></lds-date-picker>
+  <span slot="help">July 2026 only.</span>
+</lds-field>
+"""
+
+[[stories]]
+name = "Time and datetime"
+description = "Other temporal types."
+html = """
+<div class="lds-stack" style="max-width: 24rem">
+  <lds-field label="Quiet hours start">
+    <lds-date-picker name="quiet" type="time" value="22:00"></lds-date-picker>
+  </lds-field>
+  <lds-field label="Scheduled for">
+    <lds-date-picker name="when" type="datetime-local" value="2026-07-23T14:30"></lds-date-picker>
+  </lds-field>
+  <lds-field label="Billing month">
+    <lds-date-picker name="month" type="month" value="2026-07"></lds-date-picker>
+  </lds-field>
+</div>
+"""

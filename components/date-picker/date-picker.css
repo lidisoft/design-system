@@ -1,0 +1,112 @@
+/* Native date/time control styled to match lds-input. */
+
+:host {
+  --lds-date-picker-height: var(--lds-control-height-md);
+  --lds-date-picker-padding-x: var(--lds-control-padding-x-md);
+  --lds-date-picker-radius: var(--lds-control-radius-md);
+  --lds-date-picker-font-size: var(--lds-control-font-size-md);
+  --lds-date-picker-bg: var(--lds-color-bg-canvas);
+  --lds-date-picker-fg: var(--lds-color-fg-default);
+  --lds-date-picker-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-date-picker-height: var(--lds-control-height-sm);
+  --lds-date-picker-padding-x: var(--lds-control-padding-x-sm);
+  --lds-date-picker-radius: var(--lds-control-radius-sm);
+  --lds-date-picker-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-date-picker-height: var(--lds-control-height-lg);
+  --lds-date-picker-padding-x: var(--lds-control-padding-x-lg);
+  --lds-date-picker-radius: var(--lds-control-radius-lg);
+  --lds-date-picker-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-date-picker-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-date-picker-height);
+  padding-inline: var(--lds-date-picker-padding-x);
+  gap: var(--lds-control-gap-md);
+  border: var(--lds-control-border-width-default) solid var(--lds-date-picker-border);
+  border-radius: var(--lds-date-picker-radius);
+  background: var(--lds-date-picker-bg);
+  color: var(--lds-date-picker-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.prefix,
+.suffix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.prefix[data-empty],
+.suffix[data-empty] {
+  display: none;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-date-picker-font-size);
+  line-height: 1;
+  color-scheme: inherit;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}
+
+:host([disabled]) .input::-webkit-calendar-picker-indicator {
+  cursor: not-allowed;
+  opacity: 0.4;
+}

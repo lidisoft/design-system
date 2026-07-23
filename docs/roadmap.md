@@ -91,8 +91,9 @@ Genuinely optional; none of it blocks shipping.
 - [x] **`lds-command` + `lds-command-item` + `lds-command-group`** — global
       search palette (dedicated surface; general `lds-combobox` still later)
 - [ ] `lds-combobox` — form filterable select (hardest remaining form control)
-- [ ] `lds-date-picker`, after checking whether native `<input type="date">` is
-      sufficient
+- [x] **`lds-date-picker`** — native `<input type="date">` (plus time /
+      datetime-local / month / week); sufficient until a product needs a custom
+      calendar grid
 - [ ] Static export of the gallery as a public design-system site
 - [ ] Additional themes (high contrast; a marketing/inverse theme)
 

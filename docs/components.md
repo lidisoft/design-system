@@ -52,6 +52,7 @@ every LiDiSoft service needs.
 | `lds-checkbox` | **draft** — form-associated boolean |
 | `lds-radio-group` | **draft** — form-associated one-of-many |
 | `lds-switch` | **draft** — form-associated immediate toggle |
+| `lds-date-picker` | **draft** — native date/time control |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -119,7 +120,7 @@ forms — see the form-association note in
 | `lds-radio-group` | One of several | **Done (draft).** FACE; roving tabindex + arrows |
 | `lds-switch` | Immediate toggle | **Done (draft).** FACE; distinct from checkbox |
 | `lds-combobox` | Filterable choice | Hardest in the set; needs `lds-listbox` and full `aria-activedescendant` |
-| `lds-date-picker` | Dates | Consider native `<input type="date">` first |
+| `lds-date-picker` | Dates | **Done (draft).** FACE; native `date` / `time` / `datetime-local` / `month` / `week` |
 
 **Build `lds-field` first.** Doing it last means retrofitting label and error
 wiring into every control. Form controls use `form_associated = true` in TOML

@@ -81,7 +81,7 @@ function controlOf(el) {
   const assigned = slot.assignedElements({ flatten: true });
   for (let i = 0; i < assigned.length; i++) {
     const node = assigned[i];
-    if (node.matches && node.matches("lds-input,lds-textarea,lds-select,lds-checkbox,lds-switch,lds-radio-group,input,textarea,select")) {
+    if (node.matches && node.matches("lds-input,lds-textarea,lds-select,lds-checkbox,lds-switch,lds-radio-group,lds-date-picker,input,textarea,select")) {
       return node;
     }
   }
