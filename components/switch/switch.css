@@ -1,0 +1,92 @@
+:host {
+  --lds-switch-width: 2.75rem;
+  --lds-switch-height: 1.5rem;
+  --lds-switch-pad: 0.125rem;
+  --lds-switch-track: var(--lds-color-bg-muted);
+  --lds-switch-thumb: var(--lds-color-bg-canvas);
+
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([checked]) {
+  --lds-switch-track: var(--lds-color-accent-default);
+  --lds-switch-thumb: var(--lds-color-fg-on-accent);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-switch-track: var(--lds-color-danger-muted);
+}
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lds-space-2);
+  cursor: pointer;
+  color: var(--lds-color-fg-default);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.track {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: var(--lds-switch-width);
+  height: var(--lds-switch-height);
+  padding: var(--lds-switch-pad);
+  border-radius: var(--lds-control-radius-pill);
+  background: var(--lds-switch-track);
+  transition: background-color 120ms ease;
+}
+
+.thumb {
+  width: calc(var(--lds-switch-height) - (var(--lds-switch-pad) * 2));
+  height: calc(var(--lds-switch-height) - (var(--lds-switch-pad) * 2));
+  border-radius: var(--lds-control-radius-pill);
+  background: var(--lds-switch-thumb);
+  box-shadow: var(--lds-shadow-sm);
+  transition: transform 120ms ease;
+}
+
+:host([checked]) .thumb {
+  transform: translateX(calc(var(--lds-switch-width) - var(--lds-switch-height)));
+}
+
+.input:focus-visible + .track {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.label[hidden] {
+  display: none;
+}
+
+:host([disabled]) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:host([disabled]) .root {
+  cursor: not-allowed;
+}

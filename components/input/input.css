@@ -1,0 +1,98 @@
+:host {
+  --lds-input-height: var(--lds-control-height-md);
+  --lds-input-padding-x: var(--lds-control-padding-x-md);
+  --lds-input-radius: var(--lds-control-radius-md);
+  --lds-input-font-size: var(--lds-control-font-size-md);
+  --lds-input-bg: var(--lds-color-bg-canvas);
+  --lds-input-fg: var(--lds-color-fg-default);
+  --lds-input-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-input-height: var(--lds-control-height-sm);
+  --lds-input-padding-x: var(--lds-control-padding-x-sm);
+  --lds-input-radius: var(--lds-control-radius-sm);
+  --lds-input-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-input-height: var(--lds-control-height-lg);
+  --lds-input-padding-x: var(--lds-control-padding-x-lg);
+  --lds-input-radius: var(--lds-control-radius-lg);
+  --lds-input-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-input-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-input-height);
+  padding-inline: var(--lds-input-padding-x);
+  gap: var(--lds-control-gap-md);
+  border: var(--lds-control-border-width-default) solid var(--lds-input-border);
+  border-radius: var(--lds-input-radius);
+  background: var(--lds-input-bg);
+  color: var(--lds-input-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.prefix,
+.suffix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.prefix[data-empty],
+.suffix[data-empty] {
+  display: none;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-input-font-size);
+  line-height: 1;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.input:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}

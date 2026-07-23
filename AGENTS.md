@@ -98,12 +98,9 @@ All three are solved in `components/button/button.js`.
 
 ## Where to pick up work
 
-[docs/roadmap.md](docs/roadmap.md). Two items there are ordering-critical and
-expensive to retrofit:
-
-- **`lds-field` before any other form component.**
-- **Form-associated custom elements in the runtime before `lds-select`,
-  `lds-checkbox` and the rest of Phase 2.**
+[docs/roadmap.md](docs/roadmap.md). Form association and the first form controls
+(`lds-field`, inputs, select, checkbox, radio-group, switch) are in place — next
+high-value gaps are `lds-alert`, overlays (`drawer` / `tooltip`), and nav.
 
 ## Honest limitations
 
@@ -113,7 +110,9 @@ Do not paper over these when reporting on work:
   is no type checking and no component test suite.
 - Colour contrast is **not** automated; it must be checked by eye in both
   themes.
-- Form components cannot yet participate in real forms.
+- Form participation requires `form_associated = true` and
+  `el.internals.setFormValue` in the behaviour; there is still no Constraint
+  Validation API surface beyond what authors set on the host.
 
 ## Documentation map
 

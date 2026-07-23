@@ -25,13 +25,12 @@ each component are in [components.md](components.md); how to build one is in
 
 Enough to build a real screen. Everything here is unblocked today.
 
-- [ ] **`lds-field`** — label, help text, error, required marker, and the
-      `aria-describedby` wiring the whole form group depends on. **Do this
-      first**; retrofitting it later means touching every control.
+- [x] **`lds-field`** — label, help text, error, required marker, and the
+      `aria-describedby` wiring the whole form group depends on.
 - [x] **Icon strategy** — build-time Lucide SVG sprite (`assets/icons/` →
       `dist/icons.svg` + `LDS.icons`) and `<lds-icon>`. Unblocks anything that
       wants an icon.
-- [ ] **`lds-input`** — the second-most-used component after button.
+- [x] **`lds-input`** — the second-most-used component after button.
 - [x] **`lds-card`** — header/media/footer slots.
 - [x] **`lds-badge`** — exercises the intent-role pattern end to end.
 - [ ] **`lds-alert`** — inline messaging.
@@ -43,12 +42,10 @@ components will.
 
 ## Phase 2 — Forms and structure
 
-- [ ] **Form-associated custom elements in the runtime** —
-      `static formAssociated = true` and `ElementInternals`, so inputs
-      participate in real form submission and validation. Every form component
-      after this point depends on it, and retrofitting is expensive. **Do this
-      before `lds-select` and `lds-checkbox`.**
-- [ ] `lds-textarea`, `lds-select`, `lds-checkbox`, `lds-radio-group`,
+- [x] **Form-associated custom elements in the runtime** —
+      `form_associated` in component TOML → `static formAssociated` /
+      `ElementInternals` / `delegatesFocus` in `LDS.define`.
+- [x] `lds-textarea`, `lds-select`, `lds-checkbox`, `lds-radio-group`,
       `lds-switch`
 - [x] `lds-table` — light-DOM `<table>`, sorting, sticky header, density
 - [x] `lds-tabs` + `lds-tab-panel`
@@ -76,7 +73,7 @@ components will.
 - [ ] **`lds-breadcrumb` + `lds-breadcrumb-item`** — hierarchy trail; collapses
       middle steps when narrow
 - [x] **`lds-timeline`** — `lds-timeline-item` event rail
-- [ ] `lds-progress`, `lds-banner`
+- [x] **`lds-progress`**, [ ] `lds-banner`
 - [x] **`lds-code`** — monospace block with copy
 - [x] **`lds-pagination`** — summary, page-size select, ellipsis page buttons
 
@@ -129,6 +126,6 @@ Recorded honestly rather than discovered later.
 | No JS type checking | Reference and type errors surface at runtime | Keep behaviours small; exercise them in stories |
 | No component tests | Behaviour regressions are caught by eye | Browser tests, if the dependency is judged worthwhile |
 | No contrast automation | A token change can quietly break AA | Automate — first item under toolchain work |
-| No form association yet | Form controls cannot participate in real forms | Phase 2, before any input component |
+| Form association is opt-in per control | Non-FACE elements still cannot submit | Set `form_associated = true` in the component TOML |
 | `dist/` is committed | Merge conflicts in generated files | Regenerate on conflict; never hand-edit |
 | Inline stories | Gallery page styles are visible to stories | Avoid context-dependent stories |

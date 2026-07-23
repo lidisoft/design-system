@@ -1,0 +1,88 @@
+tag = "lds-radio-group"
+name = "Radio group"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "One-of-many choice with arrow-key navigation."
+
+description = """
+Form-associated radiogroup. Light-DOM children with a value attribute become
+radios (buttons recommended). Owns roving tabindex and arrow keys; the selected
+value is submitted under name.
+"""
+
+a11y = """
+role=\"radiogroup\" on the options container; each option gets role=\"radio\",
+aria-checked and tabindex. Arrow keys move and select; Space/Enter select the
+focused option. Pass label for the group accessible name (or wrap in lds-field).
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Selected option value."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Visible and accessible group label."
+
+[[attributes]]
+name = "orientation"
+type = "enum"
+values = ["vertical", "horizontal"]
+default = "vertical"
+description = "Layout and which arrow keys navigate."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Disables the whole group."
+
+[[slots]]
+name = ""
+description = "Options — elements with a value attribute (prefer <button type=\"button\">)."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired when the selection changes."
+
+[[parts]]
+name = "root"
+description = "Outer wrapper."
+
+[[parts]]
+name = "label"
+description = "Group label."
+
+[[parts]]
+name = "options"
+description = "Radiogroup container."
+
+[[stories]]
+name = "Vertical"
+description = "Default stack with arrow-key navigation."
+html = """
+<lds-radio-group name="severity" label="Severity" value="sev2" style="max-width: 16rem">
+  <button type="button" value="sev1">SEV-1 — critical</button>
+  <button type="button" value="sev2">SEV-2 — major</button>
+  <button type="button" value="sev3">SEV-3 — minor</button>
+</lds-radio-group>
+"""
+
+[[stories]]
+name = "Horizontal"
+description = "Compact row."
+html = """
+<lds-radio-group name="ack" label="Acknowledge" orientation="horizontal" value="now">
+  <button type="button" value="now">Now</button>
+  <button type="button" value="snooze">Snooze</button>
+  <button type="button" value="never" disabled>Never</button>
+</lds-radio-group>
+"""

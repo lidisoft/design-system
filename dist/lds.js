@@ -91,6 +91,10 @@
      *   connected(el)
      *   disconnected(el)
      *   attributeChanged(el, name, prev, next)
+     *   formAssociated(el)
+     *   formReset(el)
+     *   formDisabled(el, disabled)
+     *   formStateRestore(el, state, mode)
      */
     behavior(tag, hooks) {
       LDS.behaviors.set(tag, hooks || {});
@@ -98,7 +102,7 @@
 
     /**
      * Build and register a custom element from a generated descriptor:
-     * { tag, className, observed, defaults, template, styles }
+     * { tag, className, observed, defaults, template, styles, formAssociated }
      */
     define(spec) {
       const existing = customElements.get(spec.tag);
@@ -106,8 +110,13 @@
 
       const observed = spec.observed || [];
       const defaults = spec.defaults || {};
+      const formAssociated = !!spec.formAssociated;
 
       class LdsElement extends HTMLElement {
+        static get formAssociated() {
+          return formAssociated;
+        }
+
         static get observedAttributes() {
           return observed;
         }
@@ -115,7 +124,13 @@
         constructor() {
           super();
           this._lds = { ready: false, hooks: LDS.behaviors.get(spec.tag) || {} };
-          this.attachShadow({ mode: "open" });
+          if (formAssociated && typeof this.attachInternals === "function") {
+            this._lds.internals = this.attachInternals();
+          }
+          this.attachShadow({
+            mode: "open",
+            delegatesFocus: formAssociated,
+          });
         }
 
         connectedCallback() {
@@ -144,6 +159,31 @@
           if (this._lds.hooks.attributeChanged) {
             this._lds.hooks.attributeChanged(this, name, prev, next);
           }
+        }
+
+        formAssociatedCallback() {
+          if (this._lds.hooks.formAssociated) this._lds.hooks.formAssociated(this);
+        }
+
+        formResetCallback() {
+          if (this._lds.hooks.formReset) this._lds.hooks.formReset(this);
+        }
+
+        formDisabledCallback(disabled) {
+          if (this._lds.hooks.formDisabled) {
+            this._lds.hooks.formDisabled(this, disabled);
+          }
+        }
+
+        formStateRestoreCallback(state, mode) {
+          if (this._lds.hooks.formStateRestore) {
+            this._lds.hooks.formStateRestore(this, state, mode);
+          }
+        }
+
+        /** ElementInternals when formAssociated, else null. */
+        get internals() {
+          return this._lds.internals || null;
         }
 
         /** Query the shadow root. */
@@ -946,6 +986,814 @@
       };
       slot.addEventListener("slotchange", update);
       update();
+    }
+  })();
+
+  /* behaviour: lds-checkbox */
+  (function () {
+    /* Behaviour for <lds-checkbox> — form-associated boolean with indeterminate. */
+
+    LDS.behavior("lds-checkbox", {
+      connected(el) {
+        const input = el.$(".input");
+        watchLabel(el);
+        sync(el, input);
+
+        input.addEventListener("change", () => {
+          el.toggleAttribute("checked", input.checked);
+          if (input.checked) el.removeAttribute("indeterminate");
+          setValue(el);
+          el.emit("lds-change", {
+            checked: input.checked,
+            indeterminate: false,
+            value: el.getAttribute("value") || "on",
+          });
+        });
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "indeterminate" || name === "checked" || name === "disabled" || name === "required" || name === "name" || name === "value") {
+          sync(el, el.$(".input"));
+        }
+      },
+
+      formReset(el) {
+        if (el._lds.defaultChecked == null) el._lds.defaultChecked = false;
+        el.toggleAttribute("checked", el._lds.defaultChecked);
+        el.removeAttribute("indeterminate");
+        sync(el, el.$(".input"));
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        const input = el.$(".input");
+        if (input) input.disabled = disabled;
+      },
+
+      formStateRestore(el, state) {
+        const checked = state != null && state !== "";
+        el.toggleAttribute("checked", checked);
+        el.removeAttribute("indeterminate");
+        sync(el, el.$(".input"));
+      },
+    });
+
+    function sync(el, input) {
+      if (!input) return;
+      if (el._lds.defaultChecked == null) el._lds.defaultChecked = el.boolAttr("checked");
+
+      input.disabled = el.boolAttr("disabled");
+      input.required = el.boolAttr("required");
+      input.name = el.getAttribute("name") || "";
+      input.value = el.getAttribute("value") || "on";
+
+      const indeterminate = el.boolAttr("indeterminate");
+      input.indeterminate = indeterminate;
+      input.checked = !indeterminate && el.boolAttr("checked");
+      if (indeterminate) el.setAttribute("aria-checked", "mixed");
+      else el.setAttribute("aria-checked", input.checked ? "true" : "false");
+
+      setValue(el);
+    }
+
+    function setValue(el) {
+      if (!el.internals) return;
+      const input = el.$(".input");
+      if (!input || input.indeterminate || !input.checked) {
+        el.internals.setFormValue(null);
+        return;
+      }
+      el.internals.setFormValue(el.getAttribute("value") || "on");
+    }
+
+    function watchLabel(el) {
+      const slot = el.$("slot");
+      const label = el.$(".label");
+      if (!slot || !label) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        label.hidden = empty;
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-field */
+  (function () {
+    /* Behaviour for <lds-field> — label / describedby wiring for the control. */
+
+    let fieldSeq = 0;
+
+    LDS.behavior("lds-field", {
+      connected(el) {
+        if (!el._lds.fieldId) {
+          fieldSeq += 1;
+          el._lds.fieldId = "lds-field-" + fieldSeq;
+        }
+
+        watchSlot(el, 'slot[name="help"]', ".help");
+        watchSlot(el, 'slot[name="error"]', ".error", () => sync(el));
+
+        const slot = el.$(".control slot");
+        if (slot) slot.addEventListener("slotchange", () => sync(el));
+
+        sync(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+    });
+
+    function sync(el) {
+      const id = el._lds.fieldId;
+      const labelEl = el.$(".label");
+      const requiredMark = el.$(".required");
+      const help = el.$(".help");
+      const error = el.$(".error");
+      const control = controlOf(el);
+
+      const label = el.getAttribute("label") || "";
+      labelEl.textContent = label;
+
+      const required = el.boolAttr("required");
+      requiredMark.hidden = !required;
+
+      help.id = id + "-help";
+      error.id = id + "-error";
+
+      const hasError = !error.hasAttribute("data-empty");
+      const hasHelp = !help.hasAttribute("data-empty");
+      el.toggleAttribute("invalid", hasError);
+
+      if (!control) return;
+
+      const controlId = id + "-control";
+      if (!control.id) control.id = controlId;
+      labelEl.setAttribute("for", control.id);
+
+      const described = [];
+      if (hasHelp) described.push(help.id);
+      if (hasError) described.push(error.id);
+      if (described.length) control.setAttribute("aria-describedby", described.join(" "));
+      else control.removeAttribute("aria-describedby");
+
+      if (hasError) {
+        control.setAttribute("aria-invalid", "true");
+        if (control.setAttribute) control.setAttribute("invalid", "");
+      } else {
+        control.removeAttribute("aria-invalid");
+        if (control.removeAttribute) control.removeAttribute("invalid");
+      }
+
+      if (required) {
+        if (control.setAttribute) control.setAttribute("required", "");
+        if ("required" in control) control.required = true;
+      }
+
+      if (label && control.getAttribute && !control.getAttribute("aria-label") && !control.getAttribute("aria-labelledby")) {
+        /* label[for] covers native labelling when the control is the labelled target */
+      }
+    }
+
+    function controlOf(el) {
+      const slot = el.$(".control slot");
+      if (!slot) return null;
+      const assigned = slot.assignedElements({ flatten: true });
+      for (let i = 0; i < assigned.length; i++) {
+        const node = assigned[i];
+        if (node.matches && node.matches("lds-input,lds-textarea,lds-select,lds-checkbox,lds-switch,lds-radio-group,input,textarea,select")) {
+          return node;
+        }
+      }
+      return assigned[0] || null;
+    }
+
+    function watchSlot(el, slotSel, wrapSel, onChange) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+        if (onChange) onChange();
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-input */
+  (function () {
+    /* Behaviour for <lds-input> — form-associated text control. */
+
+    LDS.behavior("lds-input", {
+      connected(el) {
+        const input = el.$(".input");
+        watchSlot(el, 'slot[name="prefix"]', ".prefix");
+        watchSlot(el, 'slot[name="suffix"]', ".suffix");
+        sync(el, input);
+
+        input.addEventListener("input", () => {
+          el.setAttribute("value", input.value);
+          setValue(el, input.value);
+          el.emit("lds-input", { value: input.value });
+        });
+        input.addEventListener("change", () => {
+          el.emit("lds-change", { value: input.value });
+        });
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el, el.$(".input"));
+      },
+
+      formReset(el) {
+        const initial = el.getAttribute("value") || "";
+        const input = el.$(".input");
+        if (input) input.value = initial;
+        setValue(el, initial);
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        const input = el.$(".input");
+        if (input) input.disabled = disabled;
+      },
+
+      formStateRestore(el, state) {
+        if (state == null) return;
+        const value = String(state);
+        el.setAttribute("value", value);
+        const input = el.$(".input");
+        if (input) input.value = value;
+        setValue(el, value);
+      },
+    });
+
+    function sync(el, input) {
+      if (!input) return;
+      const type = el.getAttribute("type") || "text";
+      input.type = type;
+      input.placeholder = el.getAttribute("placeholder") || "";
+      input.disabled = el.boolAttr("disabled");
+      input.readOnly = el.boolAttr("readonly");
+      input.required = el.boolAttr("required");
+      input.name = el.getAttribute("name") || "";
+
+      if (el.hasAttribute("value") && input.value !== el.getAttribute("value")) {
+        input.value = el.getAttribute("value") || "";
+      }
+      if (el.hasAttribute("min")) input.min = el.getAttribute("min");
+      else input.removeAttribute("min");
+      if (el.hasAttribute("max")) input.max = el.getAttribute("max");
+      else input.removeAttribute("max");
+      if (el.hasAttribute("step")) input.step = el.getAttribute("step");
+      else input.removeAttribute("step");
+      if (el.hasAttribute("maxlength")) input.maxLength = Number(el.getAttribute("maxlength"));
+      else input.removeAttribute("maxlength");
+
+      const invalid = el.boolAttr("invalid") || el.getAttribute("aria-invalid") === "true";
+      input.setAttribute("aria-invalid", invalid ? "true" : "false");
+      if (!invalid) input.removeAttribute("aria-invalid");
+
+      setValue(el, input.value);
+    }
+
+    function setValue(el, value) {
+      if (el.internals) el.internals.setFormValue(value == null ? "" : String(value));
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-radio-group */
+  (function () {
+    /* Behaviour for <lds-radio-group> — FACE group with roving tabindex. */
+
+    LDS.behavior("lds-radio-group", {
+      connected(el) {
+        const group = el.$(".options");
+        sync(el);
+
+        group.addEventListener("click", (event) => {
+          if (el.boolAttr("disabled")) return;
+          const option = optionFromEvent(el, event.target);
+          if (!option || optionDisabled(option)) return;
+          select(el, valueOf(option), { focus: false });
+        });
+
+        group.addEventListener("keydown", (event) => {
+          if (el.boolAttr("disabled")) return;
+          const options = enabledOptions(el);
+          if (!options.length) return;
+          const current = options.indexOf(document.activeElement);
+          if (current < 0 && !isOption(document.activeElement)) return;
+
+          const horizontal = el.getAttribute("orientation") === "horizontal";
+          let next = current < 0 ? 0 : current;
+          if (event.key === "ArrowDown" || (horizontal && event.key === "ArrowRight")) {
+            next = (Math.max(current, 0) + 1) % options.length;
+          } else if (event.key === "ArrowUp" || (horizontal && event.key === "ArrowLeft")) {
+            next = (Math.max(current, 0) - 1 + options.length) % options.length;
+          } else if (event.key === "Home") next = 0;
+          else if (event.key === "End") next = options.length - 1;
+          else if (event.key === " " || event.key === "Enter") {
+            const active = document.activeElement;
+            if (isOption(active) && el.contains(active)) {
+              event.preventDefault();
+              select(el, valueOf(active), { focus: true });
+            }
+            return;
+          } else return;
+
+          event.preventDefault();
+          select(el, valueOf(options[next]), { focus: true });
+        });
+
+        const slot = el.$("slot");
+        if (slot) slot.addEventListener("slotchange", () => sync(el));
+
+        const mo = new MutationObserver(() => {
+          if (el._lds.radioSyncing) return;
+          sync(el);
+        });
+        mo.observe(el, { childList: true });
+        el._lds.radioMo = mo;
+      },
+
+      disconnected(el) {
+        if (el._lds.radioMo) {
+          el._lds.radioMo.disconnect();
+          el._lds.radioMo = null;
+        }
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+
+      formReset(el) {
+        const initial = el._lds.defaultValue;
+        if (initial == null) return;
+        el.setAttribute("value", initial);
+        sync(el);
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        sync(el);
+      },
+
+      formStateRestore(el, state) {
+        if (state == null) return;
+        el.setAttribute("value", String(state));
+        sync(el);
+      },
+    });
+
+    function sync(el) {
+      el._lds.radioSyncing = true;
+      const group = el.$(".options");
+      const labelEl = el.$(".label");
+      const label = el.getAttribute("label") || "";
+      labelEl.textContent = label;
+      labelEl.hidden = !label;
+
+      if (el._lds.defaultValue == null) {
+        el._lds.defaultValue = el.getAttribute("value") || "";
+      }
+
+      const options = allOptions(el);
+      let value = el.getAttribute("value");
+      if (value == null || value === "") {
+        const checked = options.find((o) => o.getAttribute("aria-checked") === "true");
+        value = checked ? valueOf(checked) : options[0] ? valueOf(options[0]) : "";
+        if (value) el.setAttribute("value", value);
+      }
+
+      group.setAttribute("role", "radiogroup");
+      if (label) group.setAttribute("aria-label", label);
+      else group.removeAttribute("aria-label");
+      if (el.boolAttr("disabled")) group.setAttribute("aria-disabled", "true");
+      else group.removeAttribute("aria-disabled");
+
+      options.forEach((option, index) => {
+        const v = valueOf(option);
+        const selected = v === value;
+        option.setAttribute("role", "radio");
+        option.setAttribute("aria-checked", selected ? "true" : "false");
+        option.tabIndex = selected ? 0 : -1;
+        if (option.tagName === "BUTTON" && !option.getAttribute("type")) {
+          option.setAttribute("type", "button");
+        }
+        if (el.boolAttr("disabled") || optionDisabled(option)) {
+          option.setAttribute("aria-disabled", "true");
+          option.tabIndex = -1;
+        } else {
+          option.removeAttribute("aria-disabled");
+        }
+      });
+
+      setValue(el, value);
+      el._lds.radioSyncing = false;
+    }
+
+    function select(el, value, opts) {
+      if (value == null) return;
+      el.setAttribute("value", value);
+      sync(el);
+      if (opts && opts.focus) {
+        const option = allOptions(el).find((o) => valueOf(o) === value);
+        if (option) option.focus();
+      }
+      el.emit("lds-change", { value: value });
+    }
+
+    function setValue(el, value) {
+      if (el.internals) el.internals.setFormValue(value == null ? "" : String(value));
+    }
+
+    function allOptions(el) {
+      const slot = el.$("slot");
+      if (!slot) return [];
+      return slot
+        .assignedElements({ flatten: true })
+        .filter((node) => node.hasAttribute("value") || node.tagName === "BUTTON");
+    }
+
+    function enabledOptions(el) {
+      return allOptions(el).filter((o) => !optionDisabled(o) && !el.boolAttr("disabled"));
+    }
+
+    function optionFromEvent(el, target) {
+      const options = allOptions(el);
+      let node = target;
+      while (node && node !== el) {
+        if (options.indexOf(node) >= 0) return node;
+        node = node.parentElement;
+      }
+      return null;
+    }
+
+    function isOption(node) {
+      return node && node.getAttribute && node.getAttribute("role") === "radio";
+    }
+
+    function valueOf(option) {
+      return option.getAttribute("value") || option.value || option.textContent.trim();
+    }
+
+    function optionDisabled(option) {
+      return option.hasAttribute("disabled") || option.getAttribute("aria-disabled") === "true";
+    }
+  })();
+
+  /* behaviour: lds-select */
+  (function () {
+    /* Behaviour for <lds-select> — native <select> with cloned light-DOM options. */
+
+    LDS.behavior("lds-select", {
+      connected(el) {
+        const select = el.$(".select");
+        const slot = el.$("slot");
+
+        syncOptions(el, select);
+        sync(el, select);
+
+        select.addEventListener("change", () => {
+          el.setAttribute("value", select.value);
+          setValue(el, select.value);
+          el.emit("lds-change", { value: select.value });
+        });
+
+        if (slot) {
+          slot.addEventListener("slotchange", () => {
+            syncOptions(el, select);
+            sync(el, select);
+          });
+        }
+
+        const mo = new MutationObserver(() => {
+          syncOptions(el, select);
+          sync(el, select);
+        });
+        mo.observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
+        el._lds.selectMo = mo;
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      disconnected(el) {
+        if (el._lds.selectMo) {
+          el._lds.selectMo.disconnect();
+          el._lds.selectMo = null;
+        }
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el, el.$(".select"));
+      },
+
+      formReset(el) {
+        const select = el.$(".select");
+        const initial = el.getAttribute("value");
+        if (select) {
+          if (initial != null) select.value = initial;
+          else select.selectedIndex = 0;
+          setValue(el, select.value);
+        }
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        const select = el.$(".select");
+        if (select) select.disabled = disabled;
+      },
+
+      formStateRestore(el, state) {
+        if (state == null) return;
+        const value = String(state);
+        el.setAttribute("value", value);
+        const select = el.$(".select");
+        if (select) select.value = value;
+        setValue(el, value);
+      },
+    });
+
+    function syncOptions(el, select) {
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = "";
+      Array.prototype.forEach.call(el.querySelectorAll(":scope > option, :scope > optgroup"), (node) => {
+        select.appendChild(node.cloneNode(true));
+      });
+      if (current) select.value = current;
+    }
+
+    function sync(el, select) {
+      if (!select) return;
+      select.disabled = el.boolAttr("disabled");
+      select.required = el.boolAttr("required");
+      select.name = el.getAttribute("name") || "";
+
+      if (el.hasAttribute("value")) {
+        select.value = el.getAttribute("value") || "";
+      }
+      setValue(el, select.value);
+    }
+
+    function setValue(el, value) {
+      if (el.internals) el.internals.setFormValue(value == null ? "" : String(value));
+    }
+  })();
+
+  /* behaviour: lds-switch */
+  (function () {
+    /* Behaviour for <lds-switch> — immediate toggle, form-associated. */
+
+    LDS.behavior("lds-switch", {
+      connected(el) {
+        const input = el.$(".input");
+        watchLabel(el);
+        sync(el, input);
+
+        input.addEventListener("change", () => {
+          el.toggleAttribute("checked", input.checked);
+          setValue(el);
+          el.emit("lds-change", {
+            checked: input.checked,
+            value: el.getAttribute("value") || "on",
+          });
+        });
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el, el.$(".input"));
+      },
+
+      formReset(el) {
+        if (el._lds.defaultChecked == null) el._lds.defaultChecked = false;
+        el.toggleAttribute("checked", el._lds.defaultChecked);
+        sync(el, el.$(".input"));
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        const input = el.$(".input");
+        if (input) input.disabled = disabled;
+      },
+
+      formStateRestore(el, state) {
+        el.toggleAttribute("checked", state != null && state !== "");
+        sync(el, el.$(".input"));
+      },
+    });
+
+    function sync(el, input) {
+      if (!input) return;
+      if (el._lds.defaultChecked == null) el._lds.defaultChecked = el.boolAttr("checked");
+
+      input.disabled = el.boolAttr("disabled");
+      input.required = el.boolAttr("required");
+      input.name = el.getAttribute("name") || "";
+      input.value = el.getAttribute("value") || "on";
+      input.checked = el.boolAttr("checked");
+      input.setAttribute("aria-checked", input.checked ? "true" : "false");
+      setValue(el);
+    }
+
+    function setValue(el) {
+      if (!el.internals) return;
+      if (!el.boolAttr("checked")) {
+        el.internals.setFormValue(null);
+        return;
+      }
+      el.internals.setFormValue(el.getAttribute("value") || "on");
+    }
+
+    function watchLabel(el) {
+      const slot = el.$("slot");
+      const label = el.$(".label");
+      if (!slot || !label) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        label.hidden = empty;
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-textarea */
+  (function () {
+    /* Behaviour for <lds-textarea> — form-associated multi-line control. */
+
+    LDS.behavior("lds-textarea", {
+      connected(el) {
+        const area = el.$(".textarea");
+        sync(el, area);
+
+        area.addEventListener("input", () => {
+          el.setAttribute("value", area.value);
+          setValue(el, area.value);
+          updateCounter(el, area);
+          if (el.boolAttr("auto-grow")) autoGrow(area);
+          el.emit("lds-input", { value: area.value });
+        });
+        area.addEventListener("change", () => {
+          el.emit("lds-change", { value: area.value });
+        });
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el, el.$(".textarea"));
+      },
+
+      formReset(el) {
+        const initial = el.getAttribute("value") || "";
+        const area = el.$(".textarea");
+        if (area) area.value = initial;
+        setValue(el, initial);
+        updateCounter(el, area);
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+        const area = el.$(".textarea");
+        if (area) area.disabled = disabled;
+      },
+
+      formStateRestore(el, state) {
+        if (state == null) return;
+        const value = String(state);
+        el.setAttribute("value", value);
+        const area = el.$(".textarea");
+        if (area) area.value = value;
+        setValue(el, value);
+        updateCounter(el, area);
+      },
+    });
+
+    function sync(el, area) {
+      if (!area) return;
+      area.placeholder = el.getAttribute("placeholder") || "";
+      area.disabled = el.boolAttr("disabled");
+      area.readOnly = el.boolAttr("readonly");
+      area.required = el.boolAttr("required");
+      area.name = el.getAttribute("name") || "";
+      area.rows = Math.max(1, Number(el.getAttribute("rows") || 3));
+
+      if (el.hasAttribute("value") && area.value !== el.getAttribute("value")) {
+        area.value = el.getAttribute("value") || "";
+      }
+      if (el.hasAttribute("maxlength")) area.maxLength = Number(el.getAttribute("maxlength"));
+      else area.removeAttribute("maxlength");
+
+      updateCounter(el, area);
+      if (el.boolAttr("auto-grow")) autoGrow(area);
+      setValue(el, area.value);
+    }
+
+    function autoGrow(area) {
+      area.style.height = "auto";
+      area.style.height = area.scrollHeight + "px";
+    }
+
+    function updateCounter(el, area) {
+      const counter = el.$(".counter");
+      if (!counter || !area) return;
+      const max = el.hasAttribute("maxlength") ? Number(el.getAttribute("maxlength")) : NaN;
+      if (!Number.isFinite(max) || max <= 0) {
+        counter.hidden = true;
+        counter.textContent = "";
+        return;
+      }
+      counter.hidden = false;
+      counter.textContent = area.value.length + " / " + max;
+    }
+
+    function setValue(el, value) {
+      if (el.internals) el.internals.setFormValue(value == null ? "" : String(value));
     }
   })();
 
@@ -2487,6 +3335,86 @@
     }
   })();
 
+  /* behaviour: lds-progress */
+  (function () {
+    /* Behaviour for <lds-progress>. */
+
+    LDS.behavior("lds-progress", {
+      connected(el) {
+        sync(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+    });
+
+    function sync(el) {
+      const variant = el.getAttribute("variant") || "linear";
+      const indeterminate = el.boolAttr("indeterminate");
+      const max = Math.max(0.0001, num(el, "max", 100));
+      let value = num(el, "value", 0);
+      if (value < 0) value = 0;
+      if (value > max) value = max;
+      const ratio = indeterminate ? 0 : value / max;
+
+      const linear = el.$(".linear");
+      const circular = el.$(".circular");
+      const bar = el.$(".bar");
+      const ringBar = el.$(".ring__bar");
+      const label = el.$(".label");
+
+      linear.hidden = variant === "circular";
+      circular.hidden = variant !== "circular";
+
+      if (!indeterminate) {
+        bar.style.width = percentage(ratio);
+        const circ = 2 * Math.PI * 14;
+        ringBar.style.strokeDasharray = String(circ);
+        ringBar.style.strokeDashoffset = String(circ * (1 - ratio));
+      } else {
+        bar.style.width = "";
+        ringBar.style.strokeDashoffset = "";
+      }
+
+      el.setAttribute("role", "progressbar");
+      if (indeterminate) {
+        el.removeAttribute("aria-valuenow");
+        el.removeAttribute("aria-valuemin");
+        el.removeAttribute("aria-valuemax");
+      } else {
+        el.setAttribute("aria-valuemin", "0");
+        el.setAttribute("aria-valuemax", String(max));
+        el.setAttribute("aria-valuenow", String(value));
+      }
+
+      const labelText = el.getAttribute("label");
+      if (labelText) {
+        label.hidden = false;
+        label.textContent = labelText;
+        el.setAttribute("aria-label", labelText);
+      } else {
+        label.hidden = true;
+        label.textContent = "";
+        if (!el.hasAttribute("aria-label")) {
+          el.setAttribute("aria-label", "Progress");
+        }
+      }
+    }
+
+    function num(el, name, fallback) {
+      const raw = el.getAttribute(name);
+      if (raw == null || raw === "") return fallback;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function percentage(ratio) {
+      return (Math.round(ratio * 1000) / 10) + "%";
+    }
+  })();
+
   /* behaviour: lds-toast */
   (function () {
     /* Behaviour for <lds-toast>.
@@ -2910,6 +3838,7 @@
   LDS.define({
     tag: "lds-avatar",
     className: "LdsAvatar",
+    formAssociated: false,
     observed: ["src", "name", "initials", "size", "shape", "label"],
     defaults: {"size": "md", "shape": "circle"},
     template: `<img class="img" part="image" alt="" hidden>
@@ -2997,6 +3926,7 @@
   LDS.define({
     tag: "lds-avatar-group",
     className: "LdsAvatarGroup",
+    formAssociated: false,
     observed: ["max", "size"],
     defaults: {"size": "md"},
     template: `<div class="stack" part="stack">
@@ -3071,6 +4001,7 @@
   LDS.define({
     tag: "lds-badge",
     className: "LdsBadge",
+    formAssociated: false,
     observed: ["intent", "variant", "size"],
     defaults: {"intent": "neutral", "variant": "subtle", "size": "sm"},
     template: `<span class="badge" part="badge"><slot></slot></span>`,
@@ -3176,6 +4107,7 @@
   LDS.define({
     tag: "lds-button",
     className: "LdsButton",
+    formAssociated: false,
     observed: ["variant", "size", "type", "disabled", "loading", "full-width", "pill", "label"],
     defaults: {"variant": "primary", "size": "md", "type": "button"},
     template: `<button class="btn" part="button" type="button">
@@ -3404,6 +4336,7 @@
   LDS.define({
     tag: "lds-icon",
     className: "LdsIcon",
+    formAssociated: false,
     observed: ["name", "size", "label"],
     defaults: {"size": "md"},
     template: `<svg class="icon" part="svg" viewBox="0 0 24 24" focusable="false"></svg>`,
@@ -3451,6 +4384,7 @@
   LDS.define({
     tag: "lds-spinner",
     className: "LdsSpinner",
+    formAssociated: false,
     observed: ["size", "label"],
     defaults: {"size": "md"},
     template: `<span class="spinner" part="spinner"></span>`,
@@ -3499,6 +4433,7 @@
   LDS.define({
     tag: "lds-tag",
     className: "LdsTag",
+    formAssociated: false,
     observed: ["intent", "variant", "size", "dismissible", "disabled"],
     defaults: {"intent": "neutral", "variant": "subtle", "size": "sm"},
     template: `<span class="tag" part="tag">
@@ -3652,10 +4587,744 @@
 }`,
   });
 
+  /* component: lds-checkbox (draft) */
+  LDS.define({
+    tag: "lds-checkbox",
+    className: "LdsCheckbox",
+    formAssociated: true,
+    observed: ["name", "value", "checked", "indeterminate", "disabled", "required", "invalid"],
+    defaults: {"value": "on"},
+    template: `<label class="root" part="root">
+  <span class="control" part="control">
+    <input class="input" part="input" type="checkbox" />
+    <span class="box" part="box" aria-hidden="true">
+      <lds-icon class="icon icon--check" name="check" size="sm"></lds-icon>
+      <lds-icon class="icon icon--indeterminate" name="minus" size="sm"></lds-icon>
+    </span>
+  </span>
+  <span class="label" part="label"><slot></slot></span>
+</label>`,
+    styles: `:host {
+  --lds-checkbox-size: var(--lds-icon-size-md);
+  --lds-checkbox-radius: var(--lds-control-radius-sm);
+  --lds-checkbox-border: var(--lds-color-border-strong);
+  --lds-checkbox-bg: var(--lds-color-bg-canvas);
+  --lds-checkbox-fg: var(--lds-color-fg-on-accent);
+
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([checked]),
+:host([indeterminate]) {
+  --lds-checkbox-border: var(--lds-color-accent-default);
+  --lds-checkbox-bg: var(--lds-color-accent-default);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-checkbox-border: var(--lds-color-danger-default);
+}
+
+.root {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--lds-space-2);
+  cursor: pointer;
+  color: var(--lds-color-fg-default);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  margin-block-start: 0.125em;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--lds-checkbox-size);
+  height: var(--lds-checkbox-size);
+  border: var(--lds-control-border-width-default) solid var(--lds-checkbox-border);
+  border-radius: var(--lds-checkbox-radius);
+  background: var(--lds-checkbox-bg);
+  color: var(--lds-checkbox-fg);
+}
+
+.input:focus-visible + .box {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.icon {
+  display: none;
+}
+
+:host([checked]:not([indeterminate])) .icon--check,
+:host([indeterminate]) .icon--indeterminate {
+  display: inline-flex;
+}
+
+.label[hidden] {
+  display: none;
+}
+
+:host([disabled]) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:host([disabled]) .root {
+  cursor: not-allowed;
+}`,
+  });
+
+  /* component: lds-field (draft) */
+  LDS.define({
+    tag: "lds-field",
+    className: "LdsField",
+    formAssociated: false,
+    observed: ["label", "required"],
+    defaults: {},
+    template: `<div class="field" part="field">
+  <div class="label-row" part="label-row">
+    <label class="label" part="label"></label>
+    <span class="required" part="required" hidden aria-hidden="true">*</span>
+  </div>
+  <div class="control" part="control"><slot></slot></div>
+  <div class="help" part="help" id=""><slot name="help"></slot></div>
+  <div class="error" part="error" id="" role="alert"><slot name="error"></slot></div>
+</div>`,
+    styles: `:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--lds-space-1);
+}
+
+.label {
+  color: var(--lds-color-fg-default);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.required {
+  color: var(--lds-color-danger-default);
+  font-weight: var(--lds-font-weight-semibold);
+}
+
+.required[hidden] {
+  display: none;
+}
+
+.control {
+  min-width: 0;
+}
+
+.help,
+.error {
+  font-size: var(--lds-font-size-xs);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.help {
+  color: var(--lds-color-fg-muted);
+}
+
+.error {
+  color: var(--lds-color-danger-fg);
+}
+
+.help[data-empty],
+.error[data-empty] {
+  display: none;
+}
+
+:host([invalid]) .label {
+  color: var(--lds-color-danger-fg);
+}`,
+  });
+
+  /* component: lds-input (draft) */
+  LDS.define({
+    tag: "lds-input",
+    className: "LdsInput",
+    formAssociated: true,
+    observed: ["type", "name", "value", "placeholder", "size", "disabled", "readonly", "required", "invalid", "maxlength"],
+    defaults: {"type": "text", "size": "md"},
+    template: `<div class="wrap" part="wrap">
+  <span class="prefix" part="prefix"><slot name="prefix"></slot></span>
+  <input class="input" part="input" />
+  <span class="suffix" part="suffix"><slot name="suffix"></slot></span>
+</div>`,
+    styles: `:host {
+  --lds-input-height: var(--lds-control-height-md);
+  --lds-input-padding-x: var(--lds-control-padding-x-md);
+  --lds-input-radius: var(--lds-control-radius-md);
+  --lds-input-font-size: var(--lds-control-font-size-md);
+  --lds-input-bg: var(--lds-color-bg-canvas);
+  --lds-input-fg: var(--lds-color-fg-default);
+  --lds-input-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-input-height: var(--lds-control-height-sm);
+  --lds-input-padding-x: var(--lds-control-padding-x-sm);
+  --lds-input-radius: var(--lds-control-radius-sm);
+  --lds-input-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-input-height: var(--lds-control-height-lg);
+  --lds-input-padding-x: var(--lds-control-padding-x-lg);
+  --lds-input-radius: var(--lds-control-radius-lg);
+  --lds-input-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-input-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-input-height);
+  padding-inline: var(--lds-input-padding-x);
+  gap: var(--lds-control-gap-md);
+  border: var(--lds-control-border-width-default) solid var(--lds-input-border);
+  border-radius: var(--lds-input-radius);
+  background: var(--lds-input-bg);
+  color: var(--lds-input-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.prefix,
+.suffix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.prefix[data-empty],
+.suffix[data-empty] {
+  display: none;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-input-font-size);
+  line-height: 1;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.input:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}`,
+  });
+
+  /* component: lds-radio-group (draft) */
+  LDS.define({
+    tag: "lds-radio-group",
+    className: "LdsRadioGroup",
+    formAssociated: true,
+    observed: ["name", "value", "label", "orientation", "disabled"],
+    defaults: {"orientation": "vertical"},
+    template: `<div class="root" part="root" role="presentation">
+  <div class="label" part="label" hidden></div>
+  <div class="options" part="options" role="radiogroup">
+    <slot></slot>
+  </div>
+</div>`,
+    styles: `:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+}
+
+.label {
+  color: var(--lds-color-fg-default);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.label[hidden] {
+  display: none;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+}
+
+:host([orientation="horizontal"]) .options {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--lds-space-3);
+}
+
+::slotted(button),
+::slotted([role="radio"]) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lds-space-2);
+  margin: 0;
+  padding: var(--lds-space-2) var(--lds-space-3);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-control-radius-md);
+  background: var(--lds-color-bg-canvas);
+  color: var(--lds-color-fg-default);
+  font: inherit;
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-snug);
+  text-align: start;
+  cursor: pointer;
+}
+
+::slotted(button:hover),
+::slotted([role="radio"]:hover) {
+  background: var(--lds-color-bg-subtle);
+}
+
+::slotted([aria-checked="true"]) {
+  border-color: var(--lds-color-accent-default);
+  background: var(--lds-color-accent-subtle);
+  color: var(--lds-color-accent-fg);
+}
+
+::slotted(button:focus-visible),
+::slotted([role="radio"]:focus-visible) {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+::slotted([disabled]),
+::slotted([aria-disabled="true"]) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:host([disabled]) {
+  opacity: 0.55;
+  pointer-events: none;
+}`,
+  });
+
+  /* component: lds-select (draft) */
+  LDS.define({
+    tag: "lds-select",
+    className: "LdsSelect",
+    formAssociated: true,
+    observed: ["name", "value", "size", "disabled", "required", "invalid"],
+    defaults: {"size": "md"},
+    template: `<div class="wrap" part="wrap">
+  <select class="select" part="select"></select>
+  <span class="chevron" part="chevron" aria-hidden="true">
+    <lds-icon name="chevron-down" size="sm"></lds-icon>
+  </span>
+</div>
+<slot hidden></slot>`,
+    styles: `:host {
+  --lds-select-height: var(--lds-control-height-md);
+  --lds-select-padding-x: var(--lds-control-padding-x-md);
+  --lds-select-radius: var(--lds-control-radius-md);
+  --lds-select-font-size: var(--lds-control-font-size-md);
+  --lds-select-bg: var(--lds-color-bg-canvas);
+  --lds-select-fg: var(--lds-color-fg-default);
+  --lds-select-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-select-height: var(--lds-control-height-sm);
+  --lds-select-padding-x: var(--lds-control-padding-x-sm);
+  --lds-select-radius: var(--lds-control-radius-sm);
+  --lds-select-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-select-height: var(--lds-control-height-lg);
+  --lds-select-padding-x: var(--lds-control-padding-x-lg);
+  --lds-select-radius: var(--lds-control-radius-lg);
+  --lds-select-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-select-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-select-height);
+  border: var(--lds-control-border-width-default) solid var(--lds-select-border);
+  border-radius: var(--lds-select-radius);
+  background: var(--lds-select-bg);
+  color: var(--lds-select-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.select {
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: var(--lds-select-height);
+  margin: 0;
+  padding-inline: var(--lds-select-padding-x) calc(var(--lds-select-padding-x) + var(--lds-icon-size-sm) + var(--lds-space-2));
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-select-font-size);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+}
+
+.select:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.chevron {
+  position: absolute;
+  inset-inline-end: var(--lds-select-padding-x);
+  display: inline-flex;
+  pointer-events: none;
+  color: var(--lds-color-fg-muted);
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}`,
+  });
+
+  /* component: lds-switch (draft) */
+  LDS.define({
+    tag: "lds-switch",
+    className: "LdsSwitch",
+    formAssociated: true,
+    observed: ["name", "value", "checked", "disabled", "required", "invalid"],
+    defaults: {"value": "on"},
+    template: `<label class="root" part="root">
+  <span class="control" part="control">
+    <input class="input" part="input" type="checkbox" role="switch" />
+    <span class="track" part="track" aria-hidden="true">
+      <span class="thumb" part="thumb"></span>
+    </span>
+  </span>
+  <span class="label" part="label"><slot></slot></span>
+</label>`,
+    styles: `:host {
+  --lds-switch-width: 2.75rem;
+  --lds-switch-height: 1.5rem;
+  --lds-switch-pad: 0.125rem;
+  --lds-switch-track: var(--lds-color-bg-muted);
+  --lds-switch-thumb: var(--lds-color-bg-canvas);
+
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([checked]) {
+  --lds-switch-track: var(--lds-color-accent-default);
+  --lds-switch-thumb: var(--lds-color-fg-on-accent);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-switch-track: var(--lds-color-danger-muted);
+}
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lds-space-2);
+  cursor: pointer;
+  color: var(--lds-color-fg-default);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.track {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: var(--lds-switch-width);
+  height: var(--lds-switch-height);
+  padding: var(--lds-switch-pad);
+  border-radius: var(--lds-control-radius-pill);
+  background: var(--lds-switch-track);
+  transition: background-color 120ms ease;
+}
+
+.thumb {
+  width: calc(var(--lds-switch-height) - (var(--lds-switch-pad) * 2));
+  height: calc(var(--lds-switch-height) - (var(--lds-switch-pad) * 2));
+  border-radius: var(--lds-control-radius-pill);
+  background: var(--lds-switch-thumb);
+  box-shadow: var(--lds-shadow-sm);
+  transition: transform 120ms ease;
+}
+
+:host([checked]) .thumb {
+  transform: translateX(calc(var(--lds-switch-width) - var(--lds-switch-height)));
+}
+
+.input:focus-visible + .track {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.label[hidden] {
+  display: none;
+}
+
+:host([disabled]) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:host([disabled]) .root {
+  cursor: not-allowed;
+}`,
+  });
+
+  /* component: lds-textarea (draft) */
+  LDS.define({
+    tag: "lds-textarea",
+    className: "LdsTextarea",
+    formAssociated: true,
+    observed: ["name", "value", "placeholder", "rows", "size", "auto-grow", "maxlength", "disabled", "readonly", "required", "invalid"],
+    defaults: {"rows": "3", "size": "md"},
+    template: `<div class="wrap" part="wrap">
+  <textarea class="textarea" part="textarea" rows="3"></textarea>
+</div>
+<div class="counter" part="counter" hidden></div>`,
+    styles: `:host {
+  --lds-textarea-padding-x: var(--lds-control-padding-x-md);
+  --lds-textarea-padding-y: var(--lds-space-3);
+  --lds-textarea-radius: var(--lds-control-radius-md);
+  --lds-textarea-font-size: var(--lds-control-font-size-md);
+  --lds-textarea-bg: var(--lds-color-bg-canvas);
+  --lds-textarea-fg: var(--lds-color-fg-default);
+  --lds-textarea-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-textarea-padding-x: var(--lds-control-padding-x-sm);
+  --lds-textarea-padding-y: var(--lds-space-2);
+  --lds-textarea-radius: var(--lds-control-radius-sm);
+  --lds-textarea-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-textarea-padding-x: var(--lds-control-padding-x-lg);
+  --lds-textarea-padding-y: var(--lds-space-4);
+  --lds-textarea-radius: var(--lds-control-radius-lg);
+  --lds-textarea-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-textarea-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: block;
+  box-sizing: border-box;
+  padding: var(--lds-textarea-padding-y) var(--lds-textarea-padding-x);
+  border: var(--lds-control-border-width-default) solid var(--lds-textarea-border);
+  border-radius: var(--lds-textarea-radius);
+  background: var(--lds-textarea-bg);
+  color: var(--lds-textarea-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  resize: vertical;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-textarea-font-size);
+  line-height: var(--lds-font-leading-normal);
+  field-sizing: content;
+}
+
+:host([auto-grow]) .textarea {
+  resize: none;
+  overflow: hidden;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.textarea::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.textarea:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  resize: none;
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}
+
+.counter {
+  margin-block-start: var(--lds-space-1);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+  text-align: end;
+}
+
+.counter[hidden] {
+  display: none;
+}`,
+  });
+
   /* component: lds-card (draft) */
   LDS.define({
     tag: "lds-card",
     className: "LdsCard",
+    formAssociated: false,
     observed: ["interactive"],
     defaults: {},
     template: `<div class="card" part="card">
@@ -3748,6 +5417,7 @@
   LDS.define({
     tag: "lds-tab-panel",
     className: "LdsTabPanel",
+    formAssociated: false,
     observed: ["name", "label", "active"],
     defaults: {},
     template: `<div class="panel" part="panel">
@@ -3770,6 +5440,7 @@
   LDS.define({
     tag: "lds-tabs",
     className: "LdsTabs",
+    formAssociated: false,
     observed: ["value", "activation"],
     defaults: {"activation": "auto"},
     template: `<div class="root" part="root">
@@ -3840,6 +5511,7 @@
   LDS.define({
     tag: "lds-breadcrumb",
     className: "LdsBreadcrumb",
+    formAssociated: false,
     observed: ["label", "expanded", "max-items"],
     defaults: {"max-items": "1"},
     template: `<nav class="root" part="root">
@@ -4006,6 +5678,7 @@
   LDS.define({
     tag: "lds-breadcrumb-item",
     className: "LdsBreadcrumbItem",
+    formAssociated: false,
     observed: ["href", "target", "current"],
     defaults: {},
     template: `<span class="item" part="item" role="listitem">
@@ -4092,6 +5765,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-menu",
     className: "LdsMenu",
+    formAssociated: false,
     observed: ["open", "placement"],
     defaults: {"placement": "bottom-end"},
     template: `<div class="root" part="root">
@@ -4168,6 +5842,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-menu-item",
     className: "LdsMenuItem",
+    formAssociated: false,
     observed: ["href", "target", "disabled", "value"],
     defaults: {},
     template: `<button class="item" part="item" type="button" role="menuitem">
@@ -4256,6 +5931,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-nav",
     className: "LdsNav",
+    formAssociated: false,
     observed: ["collapsed"],
     defaults: {},
     template: `<aside class="root" part="root">
@@ -4375,6 +6051,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-nav-group",
     className: "LdsNavGroup",
+    formAssociated: false,
     observed: ["label", "open"],
     defaults: {},
     template: `<div class="group" part="group">
@@ -4484,6 +6161,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-nav-item",
     className: "LdsNavItem",
+    formAssociated: false,
     observed: ["href", "target", "active", "disabled", "label"],
     defaults: {},
     template: `<a class="item" part="item">
@@ -4594,6 +6272,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-navbar",
     className: "LdsNavbar",
+    formAssociated: false,
     observed: ["sticky", "compact", "open", "label"],
     defaults: {},
     template: `<header class="bar" part="bar">
@@ -4832,6 +6511,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-code",
     className: "LdsCode",
+    formAssociated: false,
     observed: ["language", "copyable"],
     defaults: {},
     template: `<div class="root" part="root">
@@ -4921,6 +6601,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-pagination",
     className: "LdsPagination",
+    formAssociated: false,
     observed: ["total", "page", "page-size", "sizes", "hide-sizes", "disabled", "label"],
     defaults: {"total": "0", "page": "1", "page-size": "25", "sizes": "10,25,50,100"},
     template: `<nav class="root" part="root">
@@ -5087,6 +6768,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-table",
     className: "LdsTable",
+    formAssociated: false,
     observed: ["density", "sticky", "sortable", "striped"],
     defaults: {"density": "comfortable"},
     template: `<div class="frame" part="frame">
@@ -5141,6 +6823,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-timeline",
     className: "LdsTimeline",
+    formAssociated: false,
     observed: [],
     defaults: {},
     template: `<div class="list" part="list">
@@ -5167,6 +6850,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-timeline-item",
     className: "LdsTimelineItem",
+    formAssociated: false,
     observed: ["time", "intent"],
     defaults: {"intent": "info"},
     template: `<div class="item" part="item">
@@ -5291,10 +6975,148 @@ a.link:hover {
 }`,
   });
 
+  /* component: lds-progress (draft) */
+  LDS.define({
+    tag: "lds-progress",
+    className: "LdsProgress",
+    formAssociated: false,
+    observed: ["variant", "value", "max", "indeterminate", "label"],
+    defaults: {"variant": "linear", "value": "0", "max": "100"},
+    template: `<div class="root" part="root">
+  <div class="linear" part="linear" hidden>
+    <div class="track" part="track">
+      <div class="bar" part="bar"></div>
+    </div>
+  </div>
+  <div class="circular" part="circular" hidden>
+    <svg class="ring" part="ring" viewBox="0 0 32 32" aria-hidden="true">
+      <circle class="ring__track" cx="16" cy="16" r="14" fill="none"></circle>
+      <circle class="ring__bar" cx="16" cy="16" r="14" fill="none"></circle>
+    </svg>
+  </div>
+  <span class="label" part="label" hidden></span>
+</div>`,
+    styles: `/* Determinate / indeterminate progress — linear or circular. */
+
+:host {
+  --lds-progress-track: var(--lds-color-bg-muted);
+  --lds-progress-bar: var(--lds-color-accent-default);
+  --lds-progress-size: var(--lds-space-8);
+  --lds-progress-thickness: 3px;
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([variant="linear"]),
+:host(:not([variant])) {
+  display: flex;
+  width: 100%;
+}
+
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+  min-width: 0;
+}
+
+:host([variant="circular"]) .root {
+  flex: none;
+  align-items: center;
+}
+
+.linear,
+.circular {
+  min-width: 0;
+}
+
+.linear[hidden],
+.circular[hidden],
+.label[hidden] {
+  display: none;
+}
+
+.track {
+  overflow: hidden;
+  height: var(--lds-progress-thickness);
+  border-radius: var(--lds-radius-full);
+  background: var(--lds-progress-track);
+}
+
+.bar {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--lds-progress-bar);
+  transition: width var(--lds-transition-surface);
+}
+
+:host([indeterminate]) .bar {
+  width: 40%;
+  animation: lds-progress-indeterminate 1.2s var(--lds-easing-standard) infinite;
+}
+
+.ring {
+  width: var(--lds-progress-size);
+  height: var(--lds-progress-size);
+  transform: rotate(-90deg);
+}
+
+.ring__track,
+.ring__bar {
+  stroke-width: 3;
+}
+
+.ring__track {
+  stroke: var(--lds-progress-track);
+}
+
+.ring__bar {
+  stroke: var(--lds-progress-bar);
+  stroke-linecap: round;
+  stroke-dasharray: 88;
+  stroke-dashoffset: 88;
+  transition: stroke-dashoffset var(--lds-transition-surface);
+}
+
+:host([indeterminate]) .ring__bar {
+  animation: lds-progress-spin 1s linear infinite;
+  stroke-dashoffset: 66;
+}
+
+.label {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+}
+
+@keyframes lds-progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes lds-progress-spin {
+  to {
+    transform: rotate(270deg);
+  }
+}`,
+  });
+
   /* component: lds-toast (draft) */
   LDS.define({
     tag: "lds-toast",
     className: "LdsToast",
+    formAssociated: false,
     observed: ["intent", "open", "dismissible", "duration"],
     defaults: {"intent": "info", "duration": "5000"},
     template: `<div class="root" part="root">
@@ -5442,6 +7264,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-toast-region",
     className: "LdsToastRegion",
+    formAssociated: false,
     observed: ["placement"],
     defaults: {"placement": "top-end"},
     template: `<div class="stack" part="stack">
@@ -5515,6 +7338,7 @@ a.link:hover {
   LDS.define({
     tag: "lds-modal",
     className: "LdsModal",
+    formAssociated: false,
     observed: ["open", "size", "dismissible"],
     defaults: {"size": "md"},
     template: `<dialog class="dialog" part="dialog">

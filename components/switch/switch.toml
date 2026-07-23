@@ -1,0 +1,84 @@
+tag = "lds-switch"
+name = "Switch"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Immediate on/off toggle — distinct from checkbox."
+
+description = """
+Form-associated switch for settings that apply at once. Visually a track/thumb;
+semantically role=\"switch\". Prefer checkbox when the choice is submitted with a
+form as part of a larger decision.
+"""
+
+a11y = """
+Native checkbox with role=\"switch\" and aria-checked. Label text in the default
+slot. Space toggles via the platform.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+default = "on"
+description = "Submitted value when on."
+
+[[attributes]]
+name = "checked"
+type = "boolean"
+description = "On state."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks interaction."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling."
+
+[[slots]]
+name = ""
+description = "Visible label."
+
+[[events]]
+name = "lds-change"
+detail = "{ checked: boolean, value: string }"
+description = "Fired when the switch toggles."
+
+[[parts]]
+name = "root"
+description = "Label wrapper."
+
+[[parts]]
+name = "track"
+description = "Switch track."
+
+[[parts]]
+name = "thumb"
+description = "Switch thumb."
+
+[[parts]]
+name = "label"
+description = "Label text."
+
+[[stories]]
+name = "Default"
+description = "Off and on."
+html = """
+<div class="lds-stack">
+  <lds-switch name="pages">Page on-call</lds-switch>
+  <lds-switch name="quiet" checked>Quiet hours</lds-switch>
+  <lds-switch name="locked" disabled>Locked</lds-switch>
+</div>
+"""

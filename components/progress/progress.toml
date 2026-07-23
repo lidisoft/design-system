@@ -1,0 +1,81 @@
+tag = "lds-progress"
+name = "Progress"
+category = "feedback"
+status = "draft"
+summary = "Determinate or indeterminate progress — linear or circular."
+
+description = """
+Shows completion of a task or load. Pass value and max for determinate progress,
+or indeterminate for an unknown duration. variant chooses linear (default, full
+width) or circular.
+"""
+
+a11y = """
+Exposes role=\"progressbar\" with aria-valuenow/min/max when determinate.
+indeterminate omits valuetext numbers. Pass label for an accessible name.
+"""
+
+[[attributes]]
+name = "variant"
+type = "enum"
+values = ["linear", "circular"]
+default = "linear"
+description = "Linear bar or circular ring."
+
+[[attributes]]
+name = "value"
+type = "number"
+default = "0"
+description = "Current progress. Ignored while indeterminate."
+
+[[attributes]]
+name = "max"
+type = "number"
+default = "100"
+description = "Maximum value."
+
+[[attributes]]
+name = "indeterminate"
+type = "boolean"
+description = "Unknown duration — animated without a value."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name and optional visible caption."
+
+[[parts]]
+name = "track"
+description = "Linear track."
+
+[[parts]]
+name = "bar"
+description = "Linear fill."
+
+[[parts]]
+name = "ring"
+description = "Circular SVG."
+
+[[stories]]
+name = "Linear"
+description = "Determinate bar at 45%."
+html = """
+<lds-progress value="45" label="Deploy 45%"></lds-progress>
+"""
+
+[[stories]]
+name = "Indeterminate"
+description = "Unknown duration."
+html = """
+<lds-progress indeterminate label="Loading"></lds-progress>
+"""
+
+[[stories]]
+name = "Circular"
+description = "Compact ring for tight chrome."
+html = """
+<div class="lds-cluster" style="align-items: center">
+  <lds-progress variant="circular" value="70" label="70%"></lds-progress>
+  <lds-progress variant="circular" indeterminate label="Working"></lds-progress>
+</div>
+"""

@@ -1,0 +1,89 @@
+tag = "lds-checkbox"
+name = "Checkbox"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Boolean control with optional indeterminate state."
+
+description = """
+Form-associated checkbox. checked submits value (default \"on\"); indeterminate
+is visual/ARIA only and does not submit. Label text goes in the default slot.
+"""
+
+a11y = """
+Native checkbox input with visible custom box. Indeterminate sets
+aria-checked=\"mixed\" and input.indeterminate.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+default = "on"
+description = "Submitted value when checked."
+
+[[attributes]]
+name = "checked"
+type = "boolean"
+description = "Checked state."
+
+[[attributes]]
+name = "indeterminate"
+type = "boolean"
+description = "Mixed state (e.g. partial selection). Not submitted."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks interaction."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling."
+
+[[slots]]
+name = ""
+description = "Visible label."
+
+[[events]]
+name = "lds-change"
+detail = "{ checked: boolean, indeterminate: boolean, value: string }"
+description = "Fired when the checked state changes."
+
+[[parts]]
+name = "root"
+description = "Label wrapper."
+
+[[parts]]
+name = "control"
+description = "Hit target around the input."
+
+[[parts]]
+name = "box"
+description = "Visible checkbox chrome."
+
+[[parts]]
+name = "label"
+description = "Label text wrapper."
+
+[[stories]]
+name = "Default"
+description = "Unchecked and checked."
+html = """
+<div class="lds-stack">
+  <lds-checkbox name="ack">Acknowledge alert</lds-checkbox>
+  <lds-checkbox name="page" checked>Page on-call</lds-checkbox>
+  <lds-checkbox name="partial" indeterminate>Select all services</lds-checkbox>
+  <lds-checkbox name="off" disabled>Disabled</lds-checkbox>
+</div>
+"""

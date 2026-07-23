@@ -89,10 +89,11 @@ type Component struct {
 	CSSVars     []CSSVar    `toml:"css_vars"`
 	Stories     []Story     `toml:"stories"`
 
-	Dir      string `toml:"-"`
-	Template string `toml:"-"`
-	Styles   string `toml:"-"`
-	Behavior string `toml:"-"`
+	FormAssociated bool   `toml:"form_associated"`
+	Dir            string `toml:"-"`
+	Template       string `toml:"-"`
+	Styles         string `toml:"-"`
+	Behavior       string `toml:"-"`
 }
 
 // ClassName derives the JS constructor name, e.g. lds-button -> LdsButton.

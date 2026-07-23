@@ -38,6 +38,14 @@ every LiDiSoft service needs.
 | `lds-timeline` | **draft** — chronological event list |
 | `lds-timeline-item` | **draft** — timeline event |
 | `lds-modal` | **draft** — blocking dialog |
+| `lds-progress` | **draft** — linear / circular progress |
+| `lds-field` | **draft** — label, help, error wrapper |
+| `lds-input` | **draft** — form-associated text |
+| `lds-textarea` | **draft** — form-associated multi-line |
+| `lds-select` | **draft** — form-associated native select |
+| `lds-checkbox` | **draft** — form-associated boolean |
+| `lds-radio-group` | **draft** — form-associated one-of-many |
+| `lds-switch` | **draft** — form-associated immediate toggle |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -97,18 +105,19 @@ forms — see the form-association note in
 
 | Tag | Purpose | Notes |
 |-----|---------|-------|
-| `lds-field` | Label, help text, error, required marker | The wrapper the others compose into; owns the `aria-describedby` wiring |
-| `lds-input` | Single-line text | type, size, placeholder, prefix/suffix slots, invalid |
-| `lds-textarea` | Multi-line | auto-grow, rows, max length counter |
-| `lds-select` | Single choice | Native `<select>` internally until a custom listbox is justified |
-| `lds-checkbox` | Boolean | Indeterminate state included |
-| `lds-radio-group` | One of several | Owns roving tabindex and arrow-key navigation |
-| `lds-switch` | Immediate toggle | Distinct from checkbox: applies at once, no submit |
+| `lds-field` | Label, help text, error, required marker | **Done (draft).** Owns `aria-describedby` / `aria-invalid` wiring |
+| `lds-input` | Single-line text | **Done (draft).** FACE; type, size, prefix/suffix, invalid |
+| `lds-textarea` | Multi-line | **Done (draft).** FACE; auto-grow, rows, maxlength counter |
+| `lds-select` | Single choice | **Done (draft).** FACE; clones light-DOM `<option>`s into native `<select>` |
+| `lds-checkbox` | Boolean | **Done (draft).** FACE; indeterminate supported |
+| `lds-radio-group` | One of several | **Done (draft).** FACE; roving tabindex + arrows |
+| `lds-switch` | Immediate toggle | **Done (draft).** FACE; distinct from checkbox |
 | `lds-combobox` | Filterable choice | Hardest in the set; needs `lds-listbox` and full `aria-activedescendant` |
 | `lds-date-picker` | Dates | Consider native `<input type="date">` first |
 
 **Build `lds-field` first.** Doing it last means retrofitting label and error
-wiring into every control.
+wiring into every control. Form controls use `form_associated = true` in TOML
+so the runtime attaches `ElementInternals`.
 
 ## Layout and containers
 
@@ -163,7 +172,7 @@ chrome and behaviour around it.
 | `lds-alert` | Inline, persistent messages | intent, dismissible, title/description/actions slots |
 | `lds-toast` | Transient notifications | intent, duration, dismissible; compose in `lds-toast-region` or call `LDS.toast()` |
 | `lds-toast-region` | Toast stack host | placement corners; auto-created by `LDS.toast()`; Escape dismisses newest |
-| `lds-progress` | Determinate progress | Linear and circular; `value`/`max`, indeterminate mode |
+| `lds-progress` | Determinate progress | **Done (draft).** Linear and circular; `value`/`max`, indeterminate mode |
 | `lds-banner` | Page-level announcements | Full-bleed; maintenance windows, incidents |
 
 ## Overlays

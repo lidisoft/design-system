@@ -1,0 +1,75 @@
+tag = "lds-field"
+name = "Field"
+category = "forms"
+status = "draft"
+summary = "Label, help, error and required wiring around a form control."
+
+description = """
+Wrapper every form control composes into. Owns label association and
+aria-describedby for help / error slots. Place one control (lds-input,
+lds-textarea, lds-select, lds-checkbox, lds-switch, or a native control) in the
+default slot.
+"""
+
+a11y = """
+Generates ids, wires label[for], and sets aria-describedby / aria-invalid from
+the help and error slots. required mirrors onto the control when possible.
+"""
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Visible label text."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Shows a required marker and mirrors required onto the control."
+
+[[slots]]
+name = ""
+description = "The form control."
+
+[[slots]]
+name = "help"
+description = "Hint text below the control."
+
+[[slots]]
+name = "error"
+description = "Validation message; presence marks the field invalid."
+
+[[parts]]
+name = "label"
+description = "The label element."
+
+[[parts]]
+name = "control"
+description = "Wrapper around the control slot."
+
+[[parts]]
+name = "help"
+description = "Help text region."
+
+[[parts]]
+name = "error"
+description = "Error text region."
+
+[[stories]]
+name = "With input"
+description = "Label, help and a text input."
+html = """
+<lds-field label="Incident title" required style="max-width: 24rem">
+  <lds-input name="title" placeholder="e.g. API latency"></lds-input>
+  <span slot="help">Shown on the incident detail page.</span>
+</lds-field>
+"""
+
+[[stories]]
+name = "Invalid"
+description = "Error slot sets aria-invalid on the control."
+html = """
+<lds-field label="Email" required style="max-width: 24rem">
+  <lds-input name="email" type="email" value="not-an-email"></lds-input>
+  <span slot="error">Enter a valid email address.</span>
+</lds-field>
+"""

@@ -81,6 +81,10 @@ const LDS = {
    *   connected(el)
    *   disconnected(el)
    *   attributeChanged(el, name, prev, next)
+   *   formAssociated(el)
+   *   formReset(el)
+   *   formDisabled(el, disabled)
+   *   formStateRestore(el, state, mode)
    */
   behavior(tag, hooks) {
     LDS.behaviors.set(tag, hooks || {});
@@ -88,7 +92,7 @@ const LDS = {
 
   /**
    * Build and register a custom element from a generated descriptor:
-   * { tag, className, observed, defaults, template, styles }
+   * { tag, className, observed, defaults, template, styles, formAssociated }
    */
   define(spec) {
     const existing = customElements.get(spec.tag);
@@ -96,8 +100,13 @@ const LDS = {
 
     const observed = spec.observed || [];
     const defaults = spec.defaults || {};
+    const formAssociated = !!spec.formAssociated;
 
     class LdsElement extends HTMLElement {
+      static get formAssociated() {
+        return formAssociated;
+      }
+
       static get observedAttributes() {
         return observed;
       }
@@ -105,7 +114,13 @@ const LDS = {
       constructor() {
         super();
         this._lds = { ready: false, hooks: LDS.behaviors.get(spec.tag) || {} };
-        this.attachShadow({ mode: "open" });
+        if (formAssociated && typeof this.attachInternals === "function") {
+          this._lds.internals = this.attachInternals();
+        }
+        this.attachShadow({
+          mode: "open",
+          delegatesFocus: formAssociated,
+        });
       }
 
       connectedCallback() {
@@ -134,6 +149,31 @@ const LDS = {
         if (this._lds.hooks.attributeChanged) {
           this._lds.hooks.attributeChanged(this, name, prev, next);
         }
+      }
+
+      formAssociatedCallback() {
+        if (this._lds.hooks.formAssociated) this._lds.hooks.formAssociated(this);
+      }
+
+      formResetCallback() {
+        if (this._lds.hooks.formReset) this._lds.hooks.formReset(this);
+      }
+
+      formDisabledCallback(disabled) {
+        if (this._lds.hooks.formDisabled) {
+          this._lds.hooks.formDisabled(this, disabled);
+        }
+      }
+
+      formStateRestoreCallback(state, mode) {
+        if (this._lds.hooks.formStateRestore) {
+          this._lds.hooks.formStateRestore(this, state, mode);
+        }
+      }
+
+      /** ElementInternals when formAssociated, else null. */
+      get internals() {
+        return this._lds.internals || null;
       }
 
       /** Query the shadow root. */

@@ -1,0 +1,92 @@
+:host {
+  --lds-select-height: var(--lds-control-height-md);
+  --lds-select-padding-x: var(--lds-control-padding-x-md);
+  --lds-select-radius: var(--lds-control-radius-md);
+  --lds-select-font-size: var(--lds-control-font-size-md);
+  --lds-select-bg: var(--lds-color-bg-canvas);
+  --lds-select-fg: var(--lds-color-fg-default);
+  --lds-select-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-select-height: var(--lds-control-height-sm);
+  --lds-select-padding-x: var(--lds-control-padding-x-sm);
+  --lds-select-radius: var(--lds-control-radius-sm);
+  --lds-select-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-select-height: var(--lds-control-height-lg);
+  --lds-select-padding-x: var(--lds-control-padding-x-lg);
+  --lds-select-radius: var(--lds-control-radius-lg);
+  --lds-select-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-select-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-select-height);
+  border: var(--lds-control-border-width-default) solid var(--lds-select-border);
+  border-radius: var(--lds-select-radius);
+  background: var(--lds-select-bg);
+  color: var(--lds-select-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.select {
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: var(--lds-select-height);
+  margin: 0;
+  padding-inline: var(--lds-select-padding-x) calc(var(--lds-select-padding-x) + var(--lds-icon-size-sm) + var(--lds-space-2));
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-select-font-size);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+}
+
+.select:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.chevron {
+  position: absolute;
+  inset-inline-end: var(--lds-select-padding-x);
+  display: inline-flex;
+  pointer-events: none;
+  color: var(--lds-color-fg-muted);
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}

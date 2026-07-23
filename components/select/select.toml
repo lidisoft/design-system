@@ -1,0 +1,83 @@
+tag = "lds-select"
+name = "Select"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Single-choice control backed by a native select."
+
+description = """
+Light-DOM <option> / <optgroup> children are cloned into a shadow <select>
+(slotting into select is unreliable). Custom listbox can wait until a product
+needs it.
+"""
+
+a11y = """
+Native select semantics and keyboard behaviour. Options stay in light DOM for
+authors; the interactive control is the shadow select via delegatesFocus.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Selected option value."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Control height from control.* tokens."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks interaction."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling."
+
+[[slots]]
+name = ""
+description = "Light-DOM <option> and <optgroup> elements."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired when the selection changes."
+
+[[parts]]
+name = "wrap"
+description = "Bordered chrome."
+
+[[parts]]
+name = "select"
+description = "The native select."
+
+[[parts]]
+name = "chevron"
+description = "Dropdown indicator."
+
+[[stories]]
+name = "Default"
+description = "Options cloned from light DOM."
+html = """
+<lds-field label="Severity" style="max-width: 20rem">
+  <lds-select name="severity" value="sev2">
+    <option value="sev1">SEV-1 — critical</option>
+    <option value="sev2">SEV-2 — major</option>
+    <option value="sev3">SEV-3 — minor</option>
+  </lds-select>
+</lds-field>
+"""

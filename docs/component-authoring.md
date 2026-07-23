@@ -265,9 +265,11 @@ will not submit the surrounding form. `lds-button` solves this by finding
 `el.closest("form")` and calling `requestSubmit()` — `requestSubmit()`, not
 `submit()`, because only the former runs validation and fires the `submit`
 event. Form-*input* components have the harder version of this problem and
-should use form-associated custom elements (`static formAssociated = true`,
-`ElementInternals`); this is not yet wired into the runtime and is tracked in
-[roadmap.md](roadmap.md).
+should use form-associated custom elements. Set `form_associated = true` in the
+component TOML; `LDS.define` wires `static formAssociated`, `attachInternals()`,
+`delegatesFocus`, and the form lifecycle callbacks onto behaviour hooks
+(`formReset`, `formDisabled`, `formStateRestore`). Call
+`el.internals.setFormValue(...)` from the behaviour.
 
 **CSS cannot tell whether a slot has content.** `:empty` looks at a slot's
 fallback children, not its assigned nodes. When styling depends on it, set an

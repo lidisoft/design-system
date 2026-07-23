@@ -1,0 +1,101 @@
+:host {
+  --lds-textarea-padding-x: var(--lds-control-padding-x-md);
+  --lds-textarea-padding-y: var(--lds-space-3);
+  --lds-textarea-radius: var(--lds-control-radius-md);
+  --lds-textarea-font-size: var(--lds-control-font-size-md);
+  --lds-textarea-bg: var(--lds-color-bg-canvas);
+  --lds-textarea-fg: var(--lds-color-fg-default);
+  --lds-textarea-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-textarea-padding-x: var(--lds-control-padding-x-sm);
+  --lds-textarea-padding-y: var(--lds-space-2);
+  --lds-textarea-radius: var(--lds-control-radius-sm);
+  --lds-textarea-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-textarea-padding-x: var(--lds-control-padding-x-lg);
+  --lds-textarea-padding-y: var(--lds-space-4);
+  --lds-textarea-radius: var(--lds-control-radius-lg);
+  --lds-textarea-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-textarea-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: block;
+  box-sizing: border-box;
+  padding: var(--lds-textarea-padding-y) var(--lds-textarea-padding-x);
+  border: var(--lds-control-border-width-default) solid var(--lds-textarea-border);
+  border-radius: var(--lds-textarea-radius);
+  background: var(--lds-textarea-bg);
+  color: var(--lds-textarea-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  resize: vertical;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-textarea-font-size);
+  line-height: var(--lds-font-leading-normal);
+  field-sizing: content;
+}
+
+:host([auto-grow]) .textarea {
+  resize: none;
+  overflow: hidden;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.textarea::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.textarea:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  resize: none;
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}
+
+.counter {
+  margin-block-start: var(--lds-space-1);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+  text-align: end;
+}
+
+.counter[hidden] {
+  display: none;
+}

@@ -1,0 +1,114 @@
+/* Determinate / indeterminate progress — linear or circular. */
+
+:host {
+  --lds-progress-track: var(--lds-color-bg-muted);
+  --lds-progress-bar: var(--lds-color-accent-default);
+  --lds-progress-size: var(--lds-space-8);
+  --lds-progress-thickness: 3px;
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([variant="linear"]),
+:host(:not([variant])) {
+  display: flex;
+  width: 100%;
+}
+
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+  min-width: 0;
+}
+
+:host([variant="circular"]) .root {
+  flex: none;
+  align-items: center;
+}
+
+.linear,
+.circular {
+  min-width: 0;
+}
+
+.linear[hidden],
+.circular[hidden],
+.label[hidden] {
+  display: none;
+}
+
+.track {
+  overflow: hidden;
+  height: var(--lds-progress-thickness);
+  border-radius: var(--lds-radius-full);
+  background: var(--lds-progress-track);
+}
+
+.bar {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--lds-progress-bar);
+  transition: width var(--lds-transition-surface);
+}
+
+:host([indeterminate]) .bar {
+  width: 40%;
+  animation: lds-progress-indeterminate 1.2s var(--lds-easing-standard) infinite;
+}
+
+.ring {
+  width: var(--lds-progress-size);
+  height: var(--lds-progress-size);
+  transform: rotate(-90deg);
+}
+
+.ring__track,
+.ring__bar {
+  stroke-width: 3;
+}
+
+.ring__track {
+  stroke: var(--lds-progress-track);
+}
+
+.ring__bar {
+  stroke: var(--lds-progress-bar);
+  stroke-linecap: round;
+  stroke-dasharray: 88;
+  stroke-dashoffset: 88;
+  transition: stroke-dashoffset var(--lds-transition-surface);
+}
+
+:host([indeterminate]) .ring__bar {
+  animation: lds-progress-spin 1s linear infinite;
+  stroke-dashoffset: 66;
+}
+
+.label {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+}
+
+@keyframes lds-progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes lds-progress-spin {
+  to {
+    transform: rotate(270deg);
+  }
+}

@@ -1,0 +1,149 @@
+tag = "lds-input"
+name = "Input"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Single-line text control that participates in real forms."
+
+description = """
+Form-associated text field with optional prefix/suffix adornments. Uses a native
+<input> in the shadow root and ElementInternals for name/value submission.
+Compose inside lds-field for label, help and error wiring.
+"""
+
+a11y = """
+delegatesFocus routes label clicks and Tab into the inner input. disabled and
+readonly are mirrored onto the native control. invalid / aria-invalid style the
+border; lds-field sets aria-invalid when an error slot is present.
+"""
+
+[[attributes]]
+name = "type"
+type = "enum"
+values = ["text", "email", "password", "search", "tel", "url", "number"]
+default = "text"
+description = "Native input type."
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name (mirrored for authors; submission uses ElementInternals)."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Current value."
+
+[[attributes]]
+name = "placeholder"
+type = "string"
+description = "Placeholder text."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Control height from shared control.* tokens."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks editing and removes the control from the tab order."
+
+[[attributes]]
+name = "readonly"
+type = "boolean"
+description = "Value is visible but not editable."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Marks the control required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling; also set via aria-invalid from lds-field."
+
+[[attributes]]
+name = "maxlength"
+type = "number"
+description = "Maximum character length."
+
+[[slots]]
+name = "prefix"
+description = "Leading adornment (icon or unit)."
+
+[[slots]]
+name = "suffix"
+description = "Trailing adornment."
+
+[[events]]
+name = "lds-input"
+detail = "{ value: string }"
+description = "Fired on every keystroke."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired when the value commits (change event)."
+
+[[parts]]
+name = "wrap"
+description = "Bordered control chrome."
+
+[[parts]]
+name = "input"
+description = "The native input."
+
+[[parts]]
+name = "prefix"
+description = "Prefix slot wrapper."
+
+[[parts]]
+name = "suffix"
+description = "Suffix slot wrapper."
+
+[[stories]]
+name = "Default"
+description = "Bare text input."
+html = """
+<lds-input name="title" placeholder="Incident title" style="max-width: 24rem"></lds-input>
+"""
+
+[[stories]]
+name = "With adornments"
+description = "Prefix and suffix slots."
+html = """
+<lds-input name="host" placeholder="api.example.com" style="max-width: 24rem">
+  <span slot="prefix">https://</span>
+  <span slot="suffix">.io</span>
+</lds-input>
+"""
+
+[[stories]]
+name = "Sizes"
+description = "Shared control heights."
+html = """
+<div class="lds-stack" style="max-width: 24rem">
+  <lds-input size="sm" placeholder="Small"></lds-input>
+  <lds-input size="md" placeholder="Medium"></lds-input>
+  <lds-input size="lg" placeholder="Large"></lds-input>
+</div>
+"""
+
+[[stories]]
+name = "In a form"
+description = "Submits via ElementInternals."
+html = """
+<form class="lds-stack" style="max-width: 24rem" onsubmit="event.preventDefault(); const d = new FormData(this); this.querySelector('output').textContent = JSON.stringify(Object.fromEntries(d))">
+  <lds-field label="Title" required>
+    <lds-input name="title" required></lds-input>
+  </lds-field>
+  <div class="lds-cluster">
+    <lds-button type="submit">Create</lds-button>
+    <output class="lds-muted"></output>
+  </div>
+</form>
+"""

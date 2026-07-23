@@ -1,0 +1,114 @@
+tag = "lds-textarea"
+name = "Textarea"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Multi-line text control with optional auto-grow and length counter."
+
+description = """
+Form-associated textarea. Set rows for a fixed height, auto-grow to expand with
+content, and maxlength to show a character counter.
+"""
+
+a11y = """
+delegatesFocus into the native textarea. Counter is visual only — maxlength is
+enforced by the platform.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Current value."
+
+[[attributes]]
+name = "placeholder"
+type = "string"
+description = "Placeholder text."
+
+[[attributes]]
+name = "rows"
+type = "number"
+default = "3"
+description = "Visible row count when not auto-growing."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Padding and font size from control.* tokens."
+
+[[attributes]]
+name = "auto-grow"
+type = "boolean"
+description = "Grow height with content; disables manual resize."
+
+[[attributes]]
+name = "maxlength"
+type = "number"
+description = "Max characters; shows a counter when set."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks editing."
+
+[[attributes]]
+name = "readonly"
+type = "boolean"
+description = "Visible but not editable."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling."
+
+[[events]]
+name = "lds-input"
+detail = "{ value: string }"
+description = "Fired on every keystroke."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired when the value commits."
+
+[[parts]]
+name = "wrap"
+description = "Bordered chrome."
+
+[[parts]]
+name = "textarea"
+description = "The native textarea."
+
+[[parts]]
+name = "counter"
+description = "Character counter."
+
+[[stories]]
+name = "Default"
+description = "Fixed rows."
+html = """
+<lds-field label="Description" style="max-width: 28rem">
+  <lds-textarea name="body" rows="4" placeholder="What happened?"></lds-textarea>
+</lds-field>
+"""
+
+[[stories]]
+name = "Auto-grow and counter"
+description = "Expands with content; maxlength shows remaining budget."
+html = """
+<lds-field label="Note" style="max-width: 28rem">
+  <lds-textarea name="note" auto-grow maxlength="120" placeholder="Keep it short"></lds-textarea>
+</lds-field>
+"""

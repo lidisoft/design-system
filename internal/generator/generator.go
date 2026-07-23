@@ -282,6 +282,7 @@ func buildJS(src *Sources, version string, iconNames []string) string {
 		b.WriteString("  LDS.define({\n")
 		fmt.Fprintf(&b, "    tag: %q,\n", c.Tag)
 		fmt.Fprintf(&b, "    className: %q,\n", c.ClassName())
+		fmt.Fprintf(&b, "    formAssociated: %t,\n", c.FormAssociated)
 		fmt.Fprintf(&b, "    observed: [%s],\n", quoteList(c.Observed()))
 		fmt.Fprintf(&b, "    defaults: {%s},\n", defaultsLiteral(c))
 		fmt.Fprintf(&b, "    template: `%s`,\n", backtick(strings.TrimSpace(c.Template)))
