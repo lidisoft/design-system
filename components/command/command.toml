@@ -1,0 +1,109 @@
+tag = "lds-command"
+name = "Command"
+category = "navigation"
+status = "draft"
+summary = "Global search / command palette — filterable actions in a modal dialog."
+
+description = """
+Spotlight-style palette for jumping to pages and running actions. Compose
+lds-command-item (and optional lds-command-group) children; the palette filters
+them as the user types. Open with the open attribute, LDS.command(), or hotkey
+(Meta/Ctrl+K when hotkey is set).
+
+This is a dedicated command surface, not a general combobox — form filterable
+selects still belong to a future lds-combobox.
+"""
+
+a11y = """
+Native <dialog> with a combobox input (aria-controls / aria-activedescendant)
+and a listbox of options. Arrow keys move the active option; Enter selects;
+Escape or backdrop click closes. Focus returns via the dialog / overlay helpers.
+"""
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Whether the palette is shown."
+
+[[attributes]]
+name = "placeholder"
+type = "string"
+default = "Search…"
+description = "Search field placeholder."
+
+[[attributes]]
+name = "empty"
+type = "string"
+default = "No results"
+description = "Message when the query matches nothing."
+
+[[attributes]]
+name = "hotkey"
+type = "boolean"
+description = "Register Meta/Ctrl+K to toggle this palette."
+
+[[slots]]
+name = ""
+description = "lds-command-item and lds-command-group children."
+
+[[events]]
+name = "lds-open"
+detail = "{}"
+description = "Fired before opening. Cancel to keep it closed."
+
+[[events]]
+name = "lds-close"
+detail = "{ reason: string }"
+description = "Fired before closing. reason is escape | outside | select | hotkey. Cancel to keep it open."
+
+[[parts]]
+name = "dialog"
+description = "The native dialog."
+
+[[parts]]
+name = "input"
+description = "Search input."
+
+[[parts]]
+name = "list"
+description = "Results listbox."
+
+[[parts]]
+name = "empty"
+description = "Empty-state message."
+
+[[css_vars]]
+name = "--lds-command-width"
+default = "36rem"
+description = "Dialog width."
+
+[[stories]]
+name = "Default"
+description = "Open via the button, LDS.command(), or Meta/Ctrl+K. Type to filter."
+html = """
+<div class="lds-stack" style="max-width: 28rem; --lds-stack-gap: var(--lds-space-3)">
+  <lds-button variant="secondary" onclick="LDS.command({ el: document.getElementById('demo-command') })">Open command palette</lds-button>
+  <p class="lds-muted" style="font-size: var(--lds-font-size-sm)">Hotkey Meta/Ctrl+K toggles the palette below.</p>
+</div>
+<lds-command id="demo-command" hotkey placeholder="Search incidents, settings…">
+  <lds-command-group heading="Navigation">
+    <lds-command-item value="incidents" keywords="alerts pages">
+      <lds-icon slot="start" name="bell"></lds-icon>
+      Incidents
+    </lds-command-item>
+    <lds-command-item value="timeline" keywords="events">
+      <lds-icon slot="start" name="menu"></lds-icon>
+      Timeline
+    </lds-command-item>
+    <lds-command-item value="settings" keywords="prefs">
+      <lds-icon slot="start" name="settings"></lds-icon>
+      Settings
+      <span slot="end">⌘,</span>
+    </lds-command-item>
+  </lds-command-group>
+  <lds-command-group heading="Actions">
+    <lds-command-item value="ack" keywords="acknowledge">Acknowledge latest alert</lds-command-item>
+    <lds-command-item value="mute" disabled>Mute channel (unavailable)</lds-command-item>
+  </lds-command-group>
+</lds-command>
+"""

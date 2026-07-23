@@ -1,0 +1,35 @@
+/* Labelled group of command items. */
+
+:host {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host(:not(:first-child)) {
+  margin-block-start: var(--lds-space-2);
+  padding-block-start: var(--lds-space-2);
+  border-block-start: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.heading {
+  padding: var(--lds-space-2) var(--lds-control-padding-x-sm);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+  letter-spacing: var(--lds-font-tracking-wide);
+  text-transform: uppercase;
+}
+
+.heading:empty {
+  display: none;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+}

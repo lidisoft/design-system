@@ -1,0 +1,115 @@
+/* Global command palette / search. Native <dialog> + filterable listbox. */
+
+:host {
+  --lds-command-width: 36rem;
+  --lds-command-bg: var(--lds-color-bg-raised);
+  --lds-command-fg: var(--lds-color-fg-default);
+  --lds-command-radius: var(--lds-overlay-radius);
+  --lds-command-shadow: var(--lds-overlay-shadow);
+  --lds-command-max-height: min(28rem, calc(100vh - var(--lds-space-16)));
+
+  display: contents;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: min(var(--lds-command-width), calc(100vw - var(--lds-space-8)));
+  max-height: var(--lds-command-max-height);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-command-radius);
+  background: var(--lds-command-bg);
+  color: var(--lds-command-fg);
+  box-shadow: var(--lds-command-shadow);
+  overflow: hidden;
+}
+
+.dialog::backdrop {
+  background: var(--lds-color-bg-overlay);
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--lds-command-max-height);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-3) var(--lds-space-4);
+  border-block-end: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.search__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--lds-color-fg-muted);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-font-size-md);
+  line-height: var(--lds-font-leading-normal);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.search__hint {
+  flex: none;
+  padding: var(--lds-space-1) var(--lds-space-2);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-control-radius-sm);
+  color: var(--lds-color-fg-muted);
+  font-family: var(--lds-font-family-mono);
+  font-size: var(--lds-font-size-2xs);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(var(--lds-command-max-height) - 4rem);
+  padding: var(--lds-space-2);
+  overflow: auto;
+}
+
+.list:focus {
+  outline: none;
+}
+
+.empty {
+  padding: var(--lds-space-8) var(--lds-space-4);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+  text-align: center;
+}
+
+.empty[hidden] {
+  display: none;
+}
+
+:host([data-empty]) .list {
+  display: none;
+}

@@ -151,6 +151,17 @@ Creates an `lds-toast-region` on `document.body` if needed, appends a managed
 `lds-toast`, and returns the element. Pass `duration: 0` for sticky; pass
 `placement` to choose a corner. See the Toast and Toast region gallery pages.
 
+## Command palette
+
+```js
+LDS.command(); // opens the first <lds-command> on the page
+LDS.command({ el: document.getElementById("app-command") });
+```
+
+Compose `lds-command-item` (and optional `lds-command-group`) children. Set
+`hotkey` on the palette to toggle with Meta/Ctrl+K. Listen for `lds-select` on
+items (bubbles) for the chosen `value`.
+
 ## Overlay helpers
 
 Menus (and later tooltips / popovers) share two runtime helpers:

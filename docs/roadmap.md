@@ -88,7 +88,9 @@ components will.
 
 Genuinely optional; none of it blocks shipping.
 
-- [ ] `lds-combobox` and `lds-command` — the hardest components in the inventory
+- [x] **`lds-command` + `lds-command-item` + `lds-command-group`** — global
+      search palette (dedicated surface; general `lds-combobox` still later)
+- [ ] `lds-combobox` — form filterable select (hardest remaining form control)
 - [ ] `lds-date-picker`, after checking whether native `<input type="date">` is
       sufficient
 - [ ] Static export of the gallery as a public design-system site

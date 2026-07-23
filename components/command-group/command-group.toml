@@ -1,0 +1,43 @@
+tag = "lds-command-group"
+name = "Command group"
+category = "navigation"
+status = "draft"
+summary = "Labelled section of items inside lds-command."
+
+description = """
+Groups related command items under a heading. Hidden automatically when every
+child item is filtered out.
+"""
+
+a11y = """
+role=\"group\" with aria-label from the heading attribute.
+"""
+
+[[attributes]]
+name = "heading"
+type = "string"
+description = "Visible section label."
+
+[[slots]]
+name = ""
+description = "lds-command-item children."
+
+[[parts]]
+name = "heading"
+description = "Section label."
+
+[[parts]]
+name = "items"
+description = "Item list wrapper."
+
+[[stories]]
+name = "Default"
+description = "See the Command component stories."
+html = """
+<lds-command open>
+  <lds-command-group heading="Recent">
+    <lds-command-item value="a">Alpha</lds-command-item>
+    <lds-command-item value="b">Beta</lds-command-item>
+  </lds-command-group>
+</lds-command>
+"""

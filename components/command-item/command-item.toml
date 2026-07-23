@@ -1,0 +1,75 @@
+tag = "lds-command-item"
+name = "Command item"
+category = "navigation"
+status = "draft"
+summary = "A selectable action or destination inside lds-command."
+
+description = """
+One option in the command palette. Matches on label text, value, and keywords.
+Use href for navigations; omit it for actions. Disabled items stay visible when
+they match but cannot be activated.
+"""
+
+a11y = """
+role=\"option\". The parent palette owns aria-activedescendant and keyboard
+activation. Keep the default slot text concise — it is the accessible name.
+"""
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Value included in lds-select detail."
+
+[[attributes]]
+name = "keywords"
+type = "string"
+description = "Extra search tokens (space-separated)."
+
+[[attributes]]
+name = "href"
+type = "string"
+description = "When set, renders as a link."
+
+[[attributes]]
+name = "target"
+type = "string"
+description = "Link target when href is set."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks activation."
+
+[[slots]]
+name = ""
+description = "Item label."
+
+[[slots]]
+name = "start"
+description = "Leading adornment, typically an icon."
+
+[[slots]]
+name = "end"
+description = "Trailing adornment, e.g. a shortcut hint."
+
+[[events]]
+name = "lds-select"
+detail = "{ value?: string, originalEvent: Event }"
+description = "Fired on activation. The parent palette closes afterward."
+
+[[parts]]
+name = "item"
+description = "The inner button or anchor."
+
+[[stories]]
+name = "In a palette"
+description = "See the Command component stories for interactive filtering."
+html = """
+<lds-command open>
+  <lds-command-item value="demo">
+    <lds-icon slot="start" name="search"></lds-icon>
+    Example item
+    <span slot="end">↵</span>
+  </lds-command-item>
+</lds-command>
+"""

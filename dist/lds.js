@@ -2169,6 +2169,469 @@
     }
   })();
 
+  /* behaviour: lds-command */
+  (function () {
+    /* Behaviour for <lds-command> — global search / command palette.
+     *
+     * Filterable listbox over light-DOM lds-command-item (and optional
+     * lds-command-group) children. open shows a modal dialog; hotkey registers
+     * Meta/Ctrl+K. Selection emits lds-select from the item; the palette closes.
+     */
+
+    const state = new WeakMap();
+    let itemSeq = 0;
+    const hotkeyHosts = new Set();
+
+    LDS.behavior("lds-command", {
+      connected(el) {
+        const dialog = el.$(".dialog");
+        const input = el.$(".input");
+        const list = el.$(".list");
+
+        input.id = input.id || nextId("lds-command-input");
+        list.id = list.id || nextId("lds-command-list");
+        input.setAttribute("aria-controls", list.id);
+
+        input.addEventListener("input", () => {
+          filter(el);
+          activateFirst(el);
+        });
+
+        input.addEventListener("keydown", (event) => onInputKeydown(el, event));
+
+        el.addEventListener("lds-select", (event) => {
+          if (!el.contains(event.target)) return;
+          closeCommand(el, "select");
+        });
+
+        dialog.addEventListener("cancel", (event) => {
+          event.preventDefault();
+          closeCommand(el, "escape");
+        });
+
+        dialog.addEventListener("click", (event) => {
+          if (event.target !== dialog) return;
+          closeCommand(el, "outside");
+        });
+
+        const slot = el.$("slot");
+        if (slot) {
+          slot.addEventListener("slotchange", () => {
+            syncItems(el);
+            filter(el);
+          });
+        }
+
+        const mo = new MutationObserver(() => {
+          syncItems(el);
+          filter(el);
+        });
+        mo.observe(el, { childList: true, subtree: true, characterData: true });
+        state.set(el, { mo: mo, overlay: null });
+
+        syncPlaceholder(el);
+        syncHotkey(el);
+        syncOpen(el);
+      },
+
+      disconnected(el) {
+        teardown(el);
+        hotkeyHosts.delete(el);
+        const s = state.get(el);
+        if (s && s.mo) s.mo.disconnect();
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "open") syncOpen(el);
+        if (name === "placeholder") syncPlaceholder(el);
+        if (name === "hotkey") syncHotkey(el);
+      },
+    });
+
+    function nextId(prefix) {
+      itemSeq += 1;
+      return prefix + "-" + itemSeq;
+    }
+
+    function syncPlaceholder(el) {
+      const input = el.$(".input");
+      if (!input) return;
+      input.placeholder = el.getAttribute("placeholder") || "Search…";
+    }
+
+    function syncHotkey(el) {
+      if (el.boolAttr("hotkey")) hotkeyHosts.add(el);
+      else hotkeyHosts.delete(el);
+    }
+
+    function syncOpen(el) {
+      const dialog = el.$(".dialog");
+      const input = el.$(".input");
+      const open = el.boolAttr("open");
+
+      if (open) {
+        const ev = el.emit("lds-open");
+        if (ev.defaultPrevented) {
+          el.removeAttribute("open");
+          return;
+        }
+        if (!dialog.open) dialog.showModal();
+        setupOverlay(el);
+        syncItems(el);
+        input.value = "";
+        filter(el);
+        activateFirst(el);
+        requestAnimationFrame(() => input.focus());
+      } else {
+        teardown(el);
+        if (dialog.open) dialog.close();
+      }
+    }
+
+    function setupOverlay(el) {
+      const s = state.get(el) || {};
+      if (s.overlay) return;
+      const dialog = el.$(".dialog");
+      s.overlay = LDS.overlay.bind(dialog, {
+        trapFocus: false,
+        scrollLock: true,
+        restoreFocus: null,
+        onDismiss: function () {
+          /* Escape / outside handled on the dialog itself. */
+        },
+      });
+      state.set(el, s);
+    }
+
+    function teardown(el) {
+      const s = state.get(el);
+      if (!s) return;
+      if (s.overlay) {
+        s.overlay.disconnect();
+        s.overlay = null;
+      }
+    }
+
+    function closeCommand(el, reason) {
+      if (!el.boolAttr("open")) return;
+      const ev = el.emit("lds-close", { reason: reason });
+      if (ev.defaultPrevented) return;
+      el.removeAttribute("open");
+    }
+
+    function itemsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll("lds-command-item"));
+    }
+
+    function groupsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll(":scope > lds-command-group"));
+    }
+
+    function syncItems(el) {
+      itemsOf(el).forEach((item) => {
+        if (!item.id) item.id = nextId("lds-command-option");
+        item.setAttribute("role", "option");
+      });
+    }
+
+    function filter(el) {
+      const input = el.$(".input");
+      const empty = el.$(".empty");
+      const query = (input.value || "").trim().toLowerCase();
+      const tokens = query ? query.split(/\s+/).filter(Boolean) : [];
+      let visible = 0;
+
+      itemsOf(el).forEach((item) => {
+        const match = tokens.length === 0 || tokens.every((token) => itemMatches(item, token));
+        item.hidden = !match;
+        if (match) visible += 1;
+        item.removeAttribute("aria-selected");
+        item.removeAttribute("data-active");
+      });
+
+      groupsOf(el).forEach((group) => {
+        const any = Array.prototype.some.call(
+          group.querySelectorAll("lds-command-item"),
+          (item) => !item.hidden
+        );
+        group.hidden = !any;
+      });
+
+      const noResults = visible === 0;
+      el.toggleAttribute("data-empty", noResults);
+      empty.hidden = !noResults;
+      empty.textContent = el.getAttribute("empty") || "No results";
+    }
+
+    function itemMatches(item, token) {
+      const label = (item.textContent || "").toLowerCase();
+      const keywords = (item.getAttribute("keywords") || "").toLowerCase();
+      const value = (item.getAttribute("value") || "").toLowerCase();
+      return label.indexOf(token) >= 0 || keywords.indexOf(token) >= 0 || value.indexOf(token) >= 0;
+    }
+
+    function visibleItems(el) {
+      return itemsOf(el).filter((item) => !item.hidden && !item.boolAttr("disabled"));
+    }
+
+    function activeItem(el) {
+      return visibleItems(el).find((item) => item.hasAttribute("data-active")) || null;
+    }
+
+    function setActive(el, item) {
+      const input = el.$(".input");
+      visibleItems(el).forEach((node) => {
+        const on = node === item;
+        node.toggleAttribute("data-active", on);
+        node.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      if (item) {
+        input.setAttribute("aria-activedescendant", item.id);
+        if (typeof item.scrollIntoView === "function") {
+          item.scrollIntoView({ block: "nearest" });
+        }
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    function activateFirst(el) {
+      const items = visibleItems(el);
+      setActive(el, items[0] || null);
+    }
+
+    function moveActive(el, delta) {
+      const items = visibleItems(el);
+      if (!items.length) return;
+      const current = activeItem(el);
+      let index = current ? items.indexOf(current) : -1;
+      if (index < 0) index = delta > 0 ? -1 : 0;
+      index = (index + delta + items.length) % items.length;
+      setActive(el, items[index]);
+    }
+
+    function selectActive(el) {
+      const item = activeItem(el);
+      if (!item) return;
+      item.click();
+    }
+
+    function onInputKeydown(el, event) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        moveActive(el, 1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        moveActive(el, -1);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        selectActive(el);
+      } else if (event.key === "Home") {
+        const items = visibleItems(el);
+        if (items[0]) {
+          event.preventDefault();
+          setActive(el, items[0]);
+        }
+      } else if (event.key === "End") {
+        const items = visibleItems(el);
+        if (items.length) {
+          event.preventDefault();
+          setActive(el, items[items.length - 1]);
+        }
+      }
+    }
+
+    function onDocumentKeydown(event) {
+      if (!(event.key === "k" || event.key === "K")) return;
+      if (!(event.metaKey || event.ctrlKey)) return;
+      if (event.altKey) return;
+
+      const target = event.target;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) {
+        /* Allow opening from inputs — command palettes usually still catch ⌘K. */
+      }
+
+      const hosts = Array.from(hotkeyHosts).filter((el) => el.isConnected);
+      if (!hosts.length) return;
+
+      event.preventDefault();
+      const el = hosts[hosts.length - 1];
+      if (el.boolAttr("open")) closeCommand(el, "hotkey");
+      else el.setAttribute("open", "");
+    }
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("keydown", onDocumentKeydown, true);
+    }
+
+    /**
+     * Open a command palette. Pass { el } or the first <lds-command> on the page
+     * is used. Returns the element or null.
+     */
+    LDS.command = function (opts) {
+      opts = opts || {};
+      const el =
+        opts.el ||
+        (typeof document !== "undefined" ? document.querySelector("lds-command") : null);
+      if (!el) return null;
+      el.setAttribute("open", "");
+      return el;
+    };
+  })();
+
+  /* behaviour: lds-command-group */
+  (function () {
+    /* Behaviour for <lds-command-group>. */
+
+    LDS.behavior("lds-command-group", {
+      connected(el) {
+        sync(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+    });
+
+    function sync(el) {
+      const heading = el.$(".heading");
+      const group = el.$(".group");
+      const text = el.getAttribute("heading") || "";
+      heading.textContent = text;
+      if (text) group.setAttribute("aria-label", text);
+      else group.removeAttribute("aria-label");
+    }
+  })();
+
+  /* behaviour: lds-command-item */
+  (function () {
+    /* Behaviour for <lds-command-item> — option inside lds-command. */
+
+    LDS.behavior("lds-command-item", {
+      connected(el) {
+        ensureControl(el);
+        watchSlot(el, ".item__start slot", ".item__start");
+        watchSlot(el, ".item__end slot", ".item__end");
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              return;
+            }
+            activate(el, event);
+          },
+          true
+        );
+
+        el.addEventListener("pointermove", () => {
+          if (el.boolAttr("disabled") || el.hidden) return;
+          const command = el.closest("lds-command");
+          if (!command || !command.boolAttr("open")) return;
+          /* Parent owns aria-activedescendant; mirror hover into data-active. */
+          command.querySelectorAll("lds-command-item[data-active]").forEach((node) => {
+            if (node !== el) {
+              node.removeAttribute("data-active");
+              node.setAttribute("aria-selected", "false");
+            }
+          });
+          el.setAttribute("data-active", "");
+          el.setAttribute("aria-selected", "true");
+          const input = command.$ && command.$(".input");
+          if (input && el.id) input.setAttribute("aria-activedescendant", el.id);
+        });
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "href" || name === "disabled" || name === "value" || name === "target") {
+          ensureControl(el);
+        }
+      },
+    });
+
+    function ensureControl(el) {
+      const wantsLink = !!el.getAttribute("href");
+      let item = el.$(".item");
+      const tag = wantsLink ? "a" : "button";
+
+      if (!item || item.tagName.toLowerCase() !== tag) {
+        const next = document.createElement(tag);
+        next.className = "item";
+        next.setAttribute("part", "item");
+        if (tag === "button") next.type = "button";
+
+        if (item) {
+          while (item.firstChild) next.appendChild(item.firstChild);
+          item.replaceWith(next);
+        } else {
+          el.shadowRoot.appendChild(next);
+        }
+        item = next;
+      }
+
+      syncControl(el, item);
+    }
+
+    function syncControl(el, item) {
+      const disabled = el.boolAttr("disabled");
+
+      if (item.tagName.toLowerCase() === "a") {
+        const href = el.getAttribute("href") || "#";
+        item.setAttribute("href", href);
+        const target = el.getAttribute("target");
+        if (target) {
+          item.setAttribute("target", target);
+          if (target === "_blank" && !item.hasAttribute("rel")) {
+            item.setAttribute("rel", "noopener noreferrer");
+          }
+        } else {
+          item.removeAttribute("target");
+        }
+        if (disabled) {
+          item.setAttribute("aria-disabled", "true");
+          item.setAttribute("tabindex", "-1");
+        } else {
+          item.removeAttribute("aria-disabled");
+          item.removeAttribute("tabindex");
+        }
+      } else {
+        item.disabled = disabled;
+        item.removeAttribute("aria-disabled");
+      }
+    }
+
+    function activate(el, originalEvent) {
+      if (el.boolAttr("disabled")) return;
+
+      const detail = { originalEvent: originalEvent };
+      const value = el.getAttribute("value");
+      if (value != null) detail.value = value;
+
+      el.emit("lds-select", detail);
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-menu */
   (function () {
     /* Behaviour for <lds-menu>.
@@ -6105,6 +6568,300 @@ a.link:hover {
   font-weight: var(--lds-font-weight-semibold);
   text-decoration: none;
   pointer-events: none;
+}`,
+  });
+
+  /* component: lds-command (draft) */
+  LDS.define({
+    tag: "lds-command",
+    className: "LdsCommand",
+    formAssociated: false,
+    observed: ["open", "placeholder", "empty", "hotkey"],
+    defaults: {"placeholder": "Search…", "empty": "No results"},
+    template: `<dialog class="dialog" part="dialog">
+  <div class="chrome" part="chrome">
+    <div class="search" part="search">
+      <span class="search__icon" aria-hidden="true">
+        <lds-icon name="search" size="sm"></lds-icon>
+      </span>
+      <input
+        class="input"
+        part="input"
+        type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="true"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <span class="search__hint" part="hint" aria-hidden="true">esc</span>
+    </div>
+    <div class="list" part="list" role="listbox" tabindex="-1">
+      <slot></slot>
+    </div>
+    <div class="empty" part="empty" hidden>No results</div>
+  </div>
+</dialog>`,
+    styles: `/* Global command palette / search. Native <dialog> + filterable listbox. */
+
+:host {
+  --lds-command-width: 36rem;
+  --lds-command-bg: var(--lds-color-bg-raised);
+  --lds-command-fg: var(--lds-color-fg-default);
+  --lds-command-radius: var(--lds-overlay-radius);
+  --lds-command-shadow: var(--lds-overlay-shadow);
+  --lds-command-max-height: min(28rem, calc(100vh - var(--lds-space-16)));
+
+  display: contents;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: min(var(--lds-command-width), calc(100vw - var(--lds-space-8)));
+  max-height: var(--lds-command-max-height);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-command-radius);
+  background: var(--lds-command-bg);
+  color: var(--lds-command-fg);
+  box-shadow: var(--lds-command-shadow);
+  overflow: hidden;
+}
+
+.dialog::backdrop {
+  background: var(--lds-color-bg-overlay);
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--lds-command-max-height);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-3) var(--lds-space-4);
+  border-block-end: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.search__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--lds-color-fg-muted);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-font-size-md);
+  line-height: var(--lds-font-leading-normal);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.search__hint {
+  flex: none;
+  padding: var(--lds-space-1) var(--lds-space-2);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-control-radius-sm);
+  color: var(--lds-color-fg-muted);
+  font-family: var(--lds-font-family-mono);
+  font-size: var(--lds-font-size-2xs);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(var(--lds-command-max-height) - 4rem);
+  padding: var(--lds-space-2);
+  overflow: auto;
+}
+
+.list:focus {
+  outline: none;
+}
+
+.empty {
+  padding: var(--lds-space-8) var(--lds-space-4);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+  text-align: center;
+}
+
+.empty[hidden] {
+  display: none;
+}
+
+:host([data-empty]) .list {
+  display: none;
+}`,
+  });
+
+  /* component: lds-command-group (draft) */
+  LDS.define({
+    tag: "lds-command-group",
+    className: "LdsCommandGroup",
+    formAssociated: false,
+    observed: ["heading"],
+    defaults: {},
+    template: `<div class="group" part="group" role="group">
+  <div class="heading" part="heading"></div>
+  <div class="items" part="items"><slot></slot></div>
+</div>`,
+    styles: `/* Labelled group of command items. */
+
+:host {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host(:not(:first-child)) {
+  margin-block-start: var(--lds-space-2);
+  padding-block-start: var(--lds-space-2);
+  border-block-start: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.heading {
+  padding: var(--lds-space-2) var(--lds-control-padding-x-sm);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+  letter-spacing: var(--lds-font-tracking-wide);
+  text-transform: uppercase;
+}
+
+.heading:empty {
+  display: none;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+}`,
+  });
+
+  /* component: lds-command-item (draft) */
+  LDS.define({
+    tag: "lds-command-item",
+    className: "LdsCommandItem",
+    formAssociated: false,
+    observed: ["value", "keywords", "href", "target", "disabled"],
+    defaults: {},
+    template: `<button class="item" part="item" type="button">
+  <span class="item__start" part="start"><slot name="start"></slot></span>
+  <span class="item__label" part="label"><slot></slot></span>
+  <span class="item__end" part="end"><slot name="end"></slot></span>
+</button>`,
+    styles: `/* Selectable row inside lds-command. */
+
+:host {
+  --lds-command-item-bg: transparent;
+  --lds-command-item-bg-active: var(--lds-color-bg-subtle);
+  --lds-command-item-fg: var(--lds-color-fg-default);
+  --lds-command-item-radius: var(--lds-control-radius-sm);
+  --lds-command-item-padding-x: var(--lds-control-padding-x-sm);
+  --lds-command-item-padding-y: var(--lds-space-2);
+  --lds-command-item-gap: var(--lds-control-gap-sm);
+  --lds-command-item-font-size: var(--lds-font-size-sm);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([data-active]) {
+  --lds-command-item-bg: var(--lds-command-item-bg-active);
+}
+
+.item {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-command-item-gap);
+  width: 100%;
+  margin: 0;
+  padding: var(--lds-command-item-padding-y) var(--lds-command-item-padding-x);
+  border: 0;
+  border-radius: var(--lds-command-item-radius);
+  background: var(--lds-command-item-bg);
+  color: var(--lds-command-item-fg);
+  font: inherit;
+  font-size: var(--lds-command-item-font-size);
+  line-height: var(--lds-font-leading-normal);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--lds-command-item-bg-active);
+}
+
+.item:focus {
+  outline: none;
+}
+
+.item:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: calc(var(--lds-focus-offset) * -1);
+}
+
+:host([disabled]) .item {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+:host([disabled]) .item:hover {
+  background: var(--lds-command-item-bg);
+}
+
+.item__start,
+.item__end {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+}
+
+.item__start[data-empty],
+.item__end[data-empty] {
+  display: none;
+}
+
+.item__label {
+  flex: 1 1 auto;
+  min-width: 0;
 }`,
   });
 

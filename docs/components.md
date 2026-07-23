@@ -32,6 +32,9 @@ every LiDiSoft service needs.
 | `lds-tag` | **draft** — dismissible chip |
 | `lds-spinner` | **draft** — indeterminate progress |
 | `lds-divider` | **draft** — visual separator |
+| `lds-command` | **draft** — global search / command palette |
+| `lds-command-item` | **draft** — command palette option |
+| `lds-command-group` | **draft** — labelled command section |
 | `lds-card` | **draft** — grouped content surface |
 | `lds-code` | **draft** — code block with copy |
 | `lds-tabs` | **draft** — tablist + panels |
@@ -144,7 +147,9 @@ so the runtime attaches `ElementInternals`.
 | `lds-breadcrumb-item` | Breadcrumb step | `href`, `current`; leading separator hides on the first item |
 | `lds-menu` | Dropdown actions | **Done (draft).** `lds-menu-item`, `<hr>` separators; keyboard arrows; account-menu composition |
 | `lds-tooltip` | Supplementary hints | Never the only source of information |
-| `lds-command` | Command palette | Depends on `lds-combobox`; high value, build late |
+| `lds-command` | Command palette | **Done (draft).** Filterable modal search; `lds-command-item` / `lds-command-group`; `LDS.command()` + optional ⌘/Ctrl+K |
+| `lds-command-item` | Palette option | value, keywords, href, disabled; start/end slots |
+| `lds-command-group` | Palette section | heading; hides when all children filtered out |
 
 `lds-menu`, `lds-tooltip`, `lds-select` and `lds-combobox` share anchored
 floating-layer logic via `LDS.position` / `LDS.overlay` in the runtime (started

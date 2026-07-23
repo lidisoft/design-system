@@ -1,0 +1,24 @@
+<dialog class="dialog" part="dialog">
+  <div class="chrome" part="chrome">
+    <div class="search" part="search">
+      <span class="search__icon" aria-hidden="true">
+        <lds-icon name="search" size="sm"></lds-icon>
+      </span>
+      <input
+        class="input"
+        part="input"
+        type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="true"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <span class="search__hint" part="hint" aria-hidden="true">esc</span>
+    </div>
+    <div class="list" part="list" role="listbox" tabindex="-1">
+      <slot></slot>
+    </div>
+    <div class="empty" part="empty" hidden>No results</div>
+  </div>
+</dialog>
