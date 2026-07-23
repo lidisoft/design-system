@@ -1,0 +1,75 @@
+/* Code / payload block with optional copy control. */
+
+:host {
+  --lds-code-bg: var(--lds-color-bg-subtle);
+  --lds-code-fg: var(--lds-color-fg-default);
+  --lds-code-border: var(--lds-color-border-default);
+  --lds-code-radius: var(--lds-radius-md);
+  --lds-code-padding: var(--lds-space-4);
+  --lds-code-font-size: var(--lds-font-size-sm);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  position: relative;
+  max-width: 100%;
+}
+
+.pre {
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--lds-code-padding);
+  overflow: auto;
+  border: var(--lds-control-border-width-default) solid var(--lds-code-border);
+  border-radius: var(--lds-code-radius);
+  background: var(--lds-code-bg);
+  color: var(--lds-code-fg);
+  font-family: var(--lds-font-family-mono);
+  font-size: var(--lds-code-font-size);
+  line-height: var(--lds-font-leading-relaxed);
+}
+
+.code {
+  font: inherit;
+}
+
+.copy {
+  position: absolute;
+  inset-block-start: var(--lds-space-2);
+  inset-inline-end: var(--lds-space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: 0;
+  padding: 0;
+  border: var(--lds-control-border-width-default) solid var(--lds-code-border);
+  border-radius: var(--lds-control-radius-sm);
+  background: var(--lds-color-bg-raised);
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+}
+
+.copy[hidden] {
+  display: none;
+}
+
+.copy:hover {
+  color: var(--lds-color-fg-default);
+}
+
+.copy:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host(:not([copyable="false"])) .pre {
+  padding-inline-end: calc(var(--lds-code-padding) + var(--lds-control-height-sm));
+}

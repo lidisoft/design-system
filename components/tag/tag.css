@@ -1,0 +1,142 @@
+/* Removable chip. Shares intent colouring with lds-badge. */
+
+:host {
+  --lds-tag-bg: var(--lds-color-bg-muted);
+  --lds-tag-fg: var(--lds-color-fg-muted);
+  --lds-tag-border: var(--lds-color-border-default);
+  --lds-tag-padding-y: var(--lds-space-1);
+  --lds-tag-padding-x: var(--lds-space-2);
+  --lds-tag-font-size: var(--lds-font-size-xs);
+  --lds-tag-radius: var(--lds-radius-full);
+  --lds-tag-gap: var(--lds-space-1);
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="md"]) {
+  --lds-tag-padding-y: var(--lds-space-1);
+  --lds-tag-padding-x: var(--lds-space-3);
+  --lds-tag-font-size: var(--lds-font-size-sm);
+}
+
+:host([intent="info"]) {
+  --lds-tag-bg: var(--lds-color-accent-subtle);
+  --lds-tag-fg: var(--lds-color-accent-fg);
+  --lds-tag-border: var(--lds-color-accent-border);
+}
+
+:host([intent="success"]) {
+  --lds-tag-bg: var(--lds-color-success-subtle);
+  --lds-tag-fg: var(--lds-color-success-fg);
+  --lds-tag-border: var(--lds-color-success-border);
+}
+
+:host([intent="warning"]) {
+  --lds-tag-bg: var(--lds-color-warning-subtle);
+  --lds-tag-fg: var(--lds-color-warning-fg);
+  --lds-tag-border: var(--lds-color-warning-border);
+}
+
+:host([intent="danger"]) {
+  --lds-tag-bg: var(--lds-color-danger-subtle);
+  --lds-tag-fg: var(--lds-color-danger-fg);
+  --lds-tag-border: var(--lds-color-danger-border);
+}
+
+:host([variant="solid"]) {
+  --lds-tag-bg: var(--lds-color-fg-muted);
+  --lds-tag-fg: var(--lds-color-fg-on-accent);
+  --lds-tag-border: transparent;
+}
+
+:host([variant="solid"][intent="info"]) {
+  --lds-tag-bg: var(--lds-color-accent-default);
+}
+
+:host([variant="solid"][intent="success"]) {
+  --lds-tag-bg: var(--lds-color-success-default);
+}
+
+:host([variant="solid"][intent="warning"]) {
+  --lds-tag-bg: var(--lds-color-warning-default);
+}
+
+:host([variant="solid"][intent="danger"]) {
+  --lds-tag-bg: var(--lds-color-danger-default);
+}
+
+:host([variant="outline"]) {
+  --lds-tag-bg: transparent;
+}
+
+:host([disabled]) {
+  opacity: 0.6;
+}
+
+.tag {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-tag-gap);
+  max-width: 100%;
+  padding: var(--lds-tag-padding-y) var(--lds-tag-padding-x);
+  border: var(--lds-control-border-width-default) solid var(--lds-tag-border);
+  border-radius: var(--lds-tag-radius);
+  background: var(--lds-tag-bg);
+  color: var(--lds-tag-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-tag-font-size);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-none);
+}
+
+.tag__start,
+.tag__label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tag__start[data-empty] {
+  display: none;
+}
+
+.tag__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag__close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  margin-inline-end: calc(var(--lds-space-1) * -1);
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.tag__close[hidden] {
+  display: none;
+}
+
+.tag__close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.tag__close:disabled {
+  cursor: not-allowed;
+}

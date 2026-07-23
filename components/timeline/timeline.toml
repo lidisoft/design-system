@@ -1,0 +1,46 @@
+tag = "lds-timeline"
+name = "Timeline"
+category = "data"
+status = "draft"
+summary = "Vertical list of chronological events."
+
+description = """
+Container for lds-timeline-item children. Draws a shared vertical rail through
+item markers — used heavily for tocsin incident history.
+"""
+
+a11y = """
+Presentational list. Prefer meaningful titles and times on each item.
+"""
+
+[[slots]]
+name = ""
+description = "lds-timeline-item children."
+
+[[parts]]
+name = "list"
+description = "Column wrapping items."
+
+[[stories]]
+name = "Incident history"
+description = "Typical acknowledge / escalate / resolve sequence."
+html = """
+<lds-timeline>
+  <lds-timeline-item time="09:41" intent="info">
+    <span slot="title">Opened</span>
+    Alert group fired from prometheus.
+  </lds-timeline-item>
+  <lds-timeline-item time="09:44" intent="success">
+    <span slot="title">Acknowledged</span>
+    Ada Lovelace took the page.
+  </lds-timeline-item>
+  <lds-timeline-item time="09:52" intent="warning">
+    <span slot="title">Escalated</span>
+    Still open after 10 minutes.
+  </lds-timeline-item>
+  <lds-timeline-item time="10:03" intent="success">
+    <span slot="title">Resolved</span>
+    Latency returned below SLO.
+  </lds-timeline-item>
+</lds-timeline>
+"""

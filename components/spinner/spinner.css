@@ -1,0 +1,39 @@
+/* Indeterminate progress mark. Put aria-busy on the busy region, not here. */
+
+:host {
+  --lds-spinner-size: var(--lds-icon-size-md);
+  --lds-spinner-color: currentColor;
+  --lds-spinner-track: transparent;
+
+  display: inline-flex;
+  vertical-align: middle;
+  color: var(--lds-color-fg-muted);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-spinner-size: var(--lds-icon-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-spinner-size: var(--lds-icon-size-lg);
+}
+
+.spinner {
+  box-sizing: border-box;
+  width: var(--lds-spinner-size);
+  height: var(--lds-spinner-size);
+  border: var(--lds-control-border-width-default) solid var(--lds-spinner-color);
+  border-block-start-color: var(--lds-spinner-track);
+  border-radius: var(--lds-radius-full);
+  animation: lds-spinner-spin var(--lds-duration-slower) linear infinite;
+}
+
+@keyframes lds-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

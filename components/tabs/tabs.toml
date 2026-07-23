@@ -1,0 +1,67 @@
+tag = "lds-tabs"
+name = "Tabs"
+category = "layout"
+status = "draft"
+summary = "Sibling views with a keyboard-accessible tablist."
+
+description = """
+Owns a tablist built from child lds-tab-panel elements (name + label). Selection
+is reflected on value and announced via lds-change. activation=auto (default)
+moves selection with the arrow keys; manual only moves focus until activation.
+"""
+
+a11y = """
+Tablist uses role=tablist with role=tab buttons and role=tabpanel on panels.
+ArrowLeft/Right, Home and End move among tabs. Only the selected tab is in the
+tab order (roving tabindex).
+"""
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Name of the selected lds-tab-panel."
+
+[[attributes]]
+name = "activation"
+type = "enum"
+values = ["auto", "manual"]
+default = "auto"
+description = "auto selects on arrow keys; manual only moves focus."
+
+[[slots]]
+name = ""
+description = "lds-tab-panel children."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired before value updates. Cancel to keep the current tab."
+
+[[parts]]
+name = "root"
+description = "Wrapper."
+
+[[parts]]
+name = "tablist"
+description = "The tab button row."
+
+[[parts]]
+name = "panels"
+description = "Wrapper around slotted panels."
+
+[[stories]]
+name = "Basic"
+description = "Two panels with auto activation."
+html = """
+<lds-tabs value="overview">
+  <lds-tab-panel name="overview" label="Overview">
+    <p class="lds-muted" style="margin: 0">Incident summary and current status.</p>
+  </lds-tab-panel>
+  <lds-tab-panel name="timeline" label="Timeline">
+    <p class="lds-muted" style="margin: 0">Chronological events for this incident.</p>
+  </lds-tab-panel>
+  <lds-tab-panel name="runbooks" label="Runbooks">
+    <p class="lds-muted" style="margin: 0">Linked remediation steps.</p>
+  </lds-tab-panel>
+</lds-tabs>
+"""

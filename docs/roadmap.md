@@ -32,10 +32,10 @@ Enough to build a real screen. Everything here is unblocked today.
       `dist/icons.svg` + `LDS.icons`) and `<lds-icon>`. Unblocks anything that
       wants an icon.
 - [ ] **`lds-input`** — the second-most-used component after button.
-- [ ] **`lds-card`** — header/media/footer slots.
-- [ ] **`lds-badge`** — exercises the intent-role pattern end to end.
+- [x] **`lds-card`** — header/media/footer slots.
+- [x] **`lds-badge`** — exercises the intent-role pattern end to end.
 - [ ] **`lds-alert`** — inline messaging.
-- [ ] **`lds-spinner`** — extract from the button's inline spinner.
+- [x] **`lds-spinner`** — extract from the button's inline spinner.
 
 At the end of this phase, rebuild one `tocsin` screen with LDS. That is the
 honest test of whether the API works, and it will surface gaps faster than more
@@ -51,19 +51,20 @@ components will.
 - [ ] `lds-textarea`, `lds-select`, `lds-checkbox`, `lds-radio-group`,
       `lds-switch`
 - [x] `lds-table` — light-DOM `<table>`, sorting, sticky header, density
-- [ ] `lds-tabs` + `lds-tab-panel`
+- [x] `lds-tabs` + `lds-tab-panel`
 - [ ] `lds-empty-state`, `lds-stat`, `lds-skeleton`
 - [x] **`lds-avatar` + `lds-avatar-group`** — image / initials / icon; stack + max
-- [ ] `lds-tag`, `lds-divider`
+- [x] **`lds-tag`** — dismissible chip + `lds-remove`
+- [ ] `lds-divider`
 
 ## Phase 3 — Overlays and navigation
 
 - [x] **Shared overlay helper in the runtime** — `LDS.overlay.bind` (Escape,
-      outside click, light focus trap, focus restoration). Scroll lock still
-      deferred for modal overlays (`lds-modal` / `lds-drawer`).
+      outside click, light focus trap, focus restoration, optional `scrollLock`).
 - [x] **Shared anchored-positioning helper** — `LDS.position` (placement, flip,
       clamp, matchWidth). Used by `lds-menu`; tooltip/popover/select next.
-- [ ] `lds-modal`, `lds-drawer`, `lds-confirm` with `LDS.confirm()`
+- [x] **`lds-modal`** — native `<dialog>` + scroll lock; drawer/confirm later
+- [ ] `lds-drawer`, `lds-confirm` with `LDS.confirm()`
 - [x] **`lds-toast` + `lds-toast-region` + `LDS.toast()`** — transient
       notifications; no overlay helper required
 - [x] **`lds-menu`** — action list + `lds-menu-item`; account-menu composition
@@ -74,8 +75,10 @@ components will.
       items, collapsible groups and a collapsed icon rail
 - [ ] **`lds-breadcrumb` + `lds-breadcrumb-item`** — hierarchy trail; collapses
       middle steps when narrow
-- [ ] `lds-timeline` — needed by tocsin's incident history
-- [ ] `lds-progress`, `lds-pagination`, `lds-banner`, `lds-code`
+- [x] **`lds-timeline`** — `lds-timeline-item` event rail
+- [ ] `lds-progress`, `lds-banner`
+- [x] **`lds-code`** — monospace block with copy
+- [x] **`lds-pagination`** — summary, page-size select, ellipsis page buttons
 
 ## Phase 4 — Adoption
 

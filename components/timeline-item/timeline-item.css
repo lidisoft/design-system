@@ -1,0 +1,108 @@
+:host {
+  --lds-timeline-marker: var(--lds-color-accent-default);
+  --lds-timeline-rail: var(--lds-color-border-default);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([intent="success"]) {
+  --lds-timeline-marker: var(--lds-color-success-default);
+}
+
+:host([intent="warning"]) {
+  --lds-timeline-marker: var(--lds-color-warning-default);
+}
+
+:host([intent="danger"]) {
+  --lds-timeline-marker: var(--lds-color-danger-default);
+}
+
+:host([intent="neutral"]) {
+  --lds-timeline-marker: var(--lds-color-fg-subtle);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: var(--lds-space-6) minmax(0, 1fr);
+  gap: var(--lds-space-3);
+  min-height: var(--lds-space-10);
+}
+
+.rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.rail::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  width: var(--lds-control-border-width-default);
+  background: var(--lds-timeline-rail);
+}
+
+.marker {
+  position: relative;
+  z-index: var(--lds-z-raised);
+  box-sizing: border-box;
+  width: var(--lds-space-3);
+  height: var(--lds-space-3);
+  margin-block-start: var(--lds-space-1);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-bg-canvas);
+  border-radius: var(--lds-radius-full);
+  background: var(--lds-timeline-marker);
+  box-shadow: 0 0 0 var(--lds-control-border-width-default) var(--lds-timeline-marker);
+}
+
+:host(:first-child) .rail::before {
+  inset-block-start: var(--lds-space-3);
+}
+
+:host(:last-child) .rail::before {
+  inset-block-end: calc(100% - var(--lds-space-4));
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  padding-bottom: var(--lds-space-5);
+}
+
+:host(:last-child) .content {
+  padding-bottom: 0;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--lds-space-2);
+}
+
+.time {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.time:empty {
+  display: none;
+}
+
+.title {
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.body {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-normal);
+}

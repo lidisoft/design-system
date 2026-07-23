@@ -1,0 +1,60 @@
+tag = "lds-spinner"
+name = "Spinner"
+category = "primitives"
+status = "draft"
+summary = "Indeterminate progress indicator."
+
+description = """
+Inline loading mark extracted from the button loading treatment. Put aria-busy
+on the region that is waiting — not on the spinner — unless you pass label,
+in which case the spinner itself is exposed as a status.
+"""
+
+a11y = """
+Decorative (aria-hidden) when label is absent. With label, role=\"status\" and
+aria-label announce the busy state. Prefer labelling the surrounding region.
+"""
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Drawn from icon.size tokens."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name. When set, the spinner is announced; otherwise decorative."
+
+[[parts]]
+name = "spinner"
+description = "The animated ring."
+
+[[stories]]
+name = "Sizes"
+description = "sm / md / lg."
+html = """
+<div class="lds-cluster" style="align-items: center; color: var(--lds-color-fg-default)">
+  <lds-spinner size="sm"></lds-spinner>
+  <lds-spinner size="md"></lds-spinner>
+  <lds-spinner size="lg"></lds-spinner>
+</div>
+"""
+
+[[stories]]
+name = "With label"
+description = "Announced to assistive tech via role=status."
+html = """
+<lds-spinner label="Loading incidents"></lds-spinner>
+"""
+
+[[stories]]
+name = "In a busy region"
+description = "aria-busy belongs on the region; the spinner stays decorative."
+html = """
+<div class="lds-cluster" aria-busy="true" style="align-items: center">
+  <lds-spinner size="sm"></lds-spinner>
+  <span class="lds-muted">Saving…</span>
+</div>
+"""

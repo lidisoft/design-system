@@ -1,6 +1,6 @@
 /*!
  * LiDiSoft Design System — lds.js
- * version 0.1.0 · generated 2026-07-22
+ * version 0.1.0 · generated 2026-07-23
  *
  * GENERATED FILE — DO NOT EDIT.
  * Regenerate with: make build   (see docs/architecture.md)
@@ -261,8 +261,9 @@
   /* ------------------------------------------------------------------------
    * Overlay helpers — non-modal dismiss plumbing for menus and future popovers.
    *
-   * Menus do not lock scroll. Callers own open/close state; this only wires
-   * Escape, outside click, optional focus trap, and focus restoration.
+   * Menus do not lock scroll. Pass scrollLock: true for modals.
+   * Callers own open/close state; this wires Escape, outside click, optional
+   * focus trap, focus restoration, and optional document scroll lock.
    * ---------------------------------------------------------------------- */
 
   /**
@@ -273,6 +274,7 @@
    * @param {(reason: "escape"|"outside") => void} [opts.onDismiss]
    * @param {Element} [opts.restoreFocus] element to focus on disconnect
    * @param {boolean} [opts.trapFocus=true] cycle Tab within root
+   * @param {boolean} [opts.scrollLock=false] lock documentElement overflow while bound
    * @param {Element|Element[]} [opts.ignoreOutside] clicks here are not "outside"
    * @returns {{ disconnect(): void }}
    */
@@ -282,6 +284,13 @@
       const onDismiss = typeof opts.onDismiss === "function" ? opts.onDismiss : function () {};
       const trapFocus = opts.trapFocus !== false;
       const restoreFocus = opts.restoreFocus || null;
+      const scrollLock = !!opts.scrollLock;
+      let previousOverflow = "";
+
+      if (scrollLock && typeof document !== "undefined") {
+        previousOverflow = document.documentElement.style.overflow;
+        document.documentElement.style.overflow = "hidden";
+      }
 
       let ignore = opts.ignoreOutside || [];
       if (!Array.isArray(ignore)) ignore = [ignore];
@@ -404,6 +413,9 @@
         disconnect: function () {
           document.removeEventListener("pointerdown", onPointerDown, true);
           document.removeEventListener("keydown", onKeydown, true);
+          if (scrollLock && typeof document !== "undefined") {
+            document.documentElement.style.overflow = previousOverflow;
+          }
           if (restoreFocus && typeof restoreFocus.focus === "function") {
             try {
               restoreFocus.focus();
@@ -857,6 +869,237 @@
 
     function clearChildren(node) {
       while (node.firstChild) node.removeChild(node.firstChild);
+    }
+  })();
+
+  /* behaviour: lds-spinner */
+  (function () {
+    /* Behaviour for <lds-spinner> — accessible name when label is set. */
+
+    LDS.behavior("lds-spinner", {
+      connected(el) {
+        syncLabel(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "label") syncLabel(el);
+      },
+    });
+
+    function syncLabel(el) {
+      const label = el.getAttribute("label");
+      if (label) {
+        el.setAttribute("role", "status");
+        el.setAttribute("aria-label", label);
+        el.removeAttribute("aria-hidden");
+      } else {
+        el.removeAttribute("role");
+        el.removeAttribute("aria-label");
+        el.setAttribute("aria-hidden", "true");
+      }
+    }
+  })();
+
+  /* behaviour: lds-tag */
+  (function () {
+    /* Behaviour for <lds-tag> — dismiss control and start-slot emptiness. */
+
+    LDS.behavior("lds-tag", {
+      connected(el) {
+        const close = el.$(".tag__close");
+        watchSlot(el, '.tag__start slot[name="start"]', ".tag__start");
+        syncDismiss(el, close);
+
+        close.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (el.boolAttr("disabled")) return;
+          const ev = el.emit("lds-remove");
+          if (!ev.defaultPrevented) el.remove();
+        });
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "dismissible" || name === "disabled") {
+          syncDismiss(el, el.$(".tag__close"));
+        }
+      },
+    });
+
+    function syncDismiss(el, close) {
+      if (!close) return;
+      const show = el.boolAttr("dismissible");
+      close.hidden = !show;
+      close.disabled = el.boolAttr("disabled");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-card */
+  (function () {
+    /* Behaviour for <lds-card> — hide empty slots. */
+
+    LDS.behavior("lds-card", {
+      connected(el) {
+        watchSlot(el, 'slot[name="media"]', ".media");
+        watchSlot(el, 'slot[name="header"]', ".header");
+        watchSlot(el, "slot:not([name])", ".body");
+        watchSlot(el, 'slot[name="footer"]', ".footer");
+      },
+    });
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-tabs */
+  (function () {
+    /* Behaviour for <lds-tabs> — tablist from lds-tab-panel children. */
+
+    LDS.behavior("lds-tabs", {
+      connected(el) {
+        const tablist = el.$(".tablist");
+
+        tablist.addEventListener("click", (event) => {
+          const btn = event.target.closest("button[data-name]");
+          if (!btn || !tablist.contains(btn)) return;
+          selectTab(el, btn.getAttribute("data-name"), { focus: false });
+        });
+
+        tablist.addEventListener("keydown", (event) => {
+          const buttons = tabButtons(el);
+          if (!buttons.length) return;
+          const current = buttons.indexOf(document.activeElement);
+          if (current < 0) return;
+
+          let next = current;
+          if (event.key === "ArrowRight") next = (current + 1) % buttons.length;
+          else if (event.key === "ArrowLeft") next = (current - 1 + buttons.length) % buttons.length;
+          else if (event.key === "Home") next = 0;
+          else if (event.key === "End") next = buttons.length - 1;
+          else return;
+
+          event.preventDefault();
+          const name = buttons[next].getAttribute("data-name");
+          const activation = el.getAttribute("activation") || "auto";
+          if (activation === "manual") {
+            buttons[next].focus();
+          } else {
+            selectTab(el, name, { focus: true });
+          }
+        });
+
+        const mo = new MutationObserver(() => sync(el));
+        mo.observe(el, { childList: true, attributes: true, attributeFilter: ["name", "label"] });
+        el._lds.tabsMo = mo;
+
+        const slot = el.$("slot");
+        if (slot) slot.addEventListener("slotchange", () => sync(el));
+
+        sync(el);
+      },
+
+      disconnected(el) {
+        if (el._lds.tabsMo) {
+          el._lds.tabsMo.disconnect();
+          el._lds.tabsMo = null;
+        }
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "value") sync(el);
+      },
+    });
+
+    function panelsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll(":scope > lds-tab-panel"));
+    }
+
+    function tabButtons(el) {
+      return Array.prototype.slice.call(el.$$(".tablist .tab"));
+    }
+
+    function sync(el) {
+      const tablist = el.$(".tablist");
+      const panels = panelsOf(el);
+      let value = el.getAttribute("value");
+      if (!value && panels[0]) value = panels[0].getAttribute("name") || "";
+      if (value && !panels.some((p) => p.getAttribute("name") === value) && panels[0]) {
+        value = panels[0].getAttribute("name") || "";
+      }
+      if (value && el.getAttribute("value") !== value) {
+        el.setAttribute("value", value);
+      }
+
+      tablist.innerHTML = "";
+      panels.forEach((panel, index) => {
+        const name = panel.getAttribute("name") || "tab-" + index;
+        if (!panel.getAttribute("name")) panel.setAttribute("name", name);
+        const label = panel.getAttribute("label") || name;
+        const selected = name === value;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tab";
+        btn.setAttribute("role", "tab");
+        btn.setAttribute("data-name", name);
+        btn.id = el.tagName.toLowerCase() + "-tab-" + name;
+        btn.setAttribute("aria-selected", selected ? "true" : "false");
+        btn.tabIndex = selected ? 0 : -1;
+        btn.textContent = label;
+        tablist.appendChild(btn);
+
+        panel.toggleAttribute("active", selected);
+        panel.hidden = !selected;
+        panel.setAttribute("role", "tabpanel");
+        panel.setAttribute("aria-labelledby", btn.id);
+      });
+    }
+
+    function selectTab(el, name, opts) {
+      opts = opts || {};
+      if (!name || el.getAttribute("value") === name) {
+        if (opts.focus) {
+          const btn = el.$('.tablist .tab[data-name="' + name + '"]');
+          if (btn) btn.focus();
+        }
+        return;
+      }
+      const event = el.emit("lds-change", { value: name });
+      if (event.defaultPrevented) return;
+      el.setAttribute("value", name);
+      if (opts.focus) {
+        requestAnimationFrame(() => {
+          const btn = el.$('.tablist .tab[data-name="' + name + '"]');
+          if (btn) btn.focus();
+        });
+      }
     }
   })();
 
@@ -1727,6 +1970,315 @@
     }
   })();
 
+  /* behaviour: lds-code */
+  (function () {
+    /* Behaviour for <lds-code> — copy button and language metadata. */
+
+    LDS.behavior("lds-code", {
+      connected(el) {
+        const copy = el.$(".copy");
+        syncCopyable(el, copy);
+        syncLanguage(el);
+
+        copy.addEventListener("click", () => {
+          const text = slotText(el);
+          const write =
+            navigator.clipboard && navigator.clipboard.writeText
+              ? navigator.clipboard.writeText(text)
+              : Promise.reject(new Error("clipboard unavailable"));
+
+          write
+            .then(() => {
+              el.emit("lds-copy", { ok: true });
+            })
+            .catch(() => {
+              el.emit("lds-copy", { ok: false });
+            });
+        });
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "copyable") syncCopyable(el, el.$(".copy"));
+        if (name === "language") syncLanguage(el);
+      },
+    });
+
+    function isCopyable(el) {
+      /* Default true when attribute omitted; literal "false" turns it off. */
+      if (!el.hasAttribute("copyable")) return true;
+      return el.getAttribute("copyable") !== "false";
+    }
+
+    function syncCopyable(el, copy) {
+      if (!copy) return;
+      copy.hidden = !isCopyable(el);
+    }
+
+    function syncLanguage(el) {
+      const lang = el.getAttribute("language");
+      const code = el.$(".code");
+      if (!code) return;
+      if (lang) code.setAttribute("data-language", lang);
+      else code.removeAttribute("data-language");
+    }
+
+    function slotText(el) {
+      const slot = el.$("slot");
+      if (!slot) return el.textContent || "";
+      return slot
+        .assignedNodes({ flatten: true })
+        .map((node) => node.textContent || "")
+        .join("")
+        .replace(/\n$/, "");
+    }
+  })();
+
+  /* behaviour: lds-pagination */
+  (function () {
+    /* Behaviour for <lds-pagination>.
+     *
+     * Rebuilds page buttons with an ellipsis window, wires prev/next and a native
+     * page-size select, and reflects page / page-size after successful events.
+     */
+
+    const DEFAULT_SIZES = [10, 25, 50, 100];
+
+    LDS.behavior("lds-pagination", {
+      connected(el) {
+        const select = el.$(".sizes__select");
+        const pages = el.$(".pages");
+
+        select.addEventListener("change", () => {
+          const pageSize = parseInt(select.value, 10);
+          if (!Number.isFinite(pageSize) || pageSize < 1) return;
+          setPageSize(el, pageSize);
+        });
+
+        pages.addEventListener("click", (event) => {
+          const btn = event.target.closest("button[data-page]");
+          if (!btn || btn.disabled || !pages.contains(btn)) return;
+          const page = parseInt(btn.getAttribute("data-page"), 10);
+          if (!Number.isFinite(page)) return;
+          setPage(el, page);
+        });
+
+        syncAll(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        syncAll(el);
+      },
+    });
+
+    function syncAll(el) {
+      syncLabel(el);
+      syncSizes(el);
+      syncSummary(el);
+      syncPages(el);
+    }
+
+    function syncLabel(el) {
+      const nav = el.$(".root");
+      const label = el.getAttribute("label") || "Pagination";
+      nav.setAttribute("aria-label", label);
+    }
+
+    function num(el, name, fallback) {
+      const raw = el.getAttribute(name);
+      if (raw == null || raw === "") return fallback;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function totalOf(el) {
+      return Math.max(0, Math.floor(num(el, "total", 0)));
+    }
+
+    function pageSizeOf(el) {
+      return Math.max(1, Math.floor(num(el, "page-size", 25)));
+    }
+
+    function pageCountOf(el) {
+      const total = totalOf(el);
+      const size = pageSizeOf(el);
+      if (total === 0) return 1;
+      return Math.max(1, Math.ceil(total / size));
+    }
+
+    function pageOf(el) {
+      const max = pageCountOf(el);
+      const page = Math.floor(num(el, "page", 1));
+      return Math.min(Math.max(1, page), max);
+    }
+
+    function parseSizes(el) {
+      const raw = el.getAttribute("sizes");
+      if (raw == null) return DEFAULT_SIZES.slice();
+      const parts = raw
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      return parts.length ? parts : DEFAULT_SIZES.slice();
+    }
+
+    function syncSizes(el) {
+      const wrap = el.$(".sizes");
+      const select = el.$(".sizes__select");
+      const hidden = el.boolAttr("hide-sizes");
+      wrap.toggleAttribute("data-hidden", hidden);
+
+      const sizes = parseSizes(el);
+      const current = pageSizeOf(el);
+      if (sizes.indexOf(current) === -1) sizes.push(current);
+      sizes.sort((a, b) => a - b);
+
+      const prev = select.value;
+      select.innerHTML = "";
+      sizes.forEach((size) => {
+        const opt = document.createElement("option");
+        opt.value = String(size);
+        opt.textContent = String(size);
+        select.appendChild(opt);
+      });
+      select.value = String(current);
+      if (select.value !== String(current) && prev) {
+        /* keep best effort */
+      }
+      select.disabled = el.boolAttr("disabled") || hidden;
+    }
+
+    function syncSummary(el) {
+      const summary = el.$(".summary");
+      const total = totalOf(el);
+      if (total === 0) {
+        summary.textContent = "";
+        summary.toggleAttribute("data-empty", true);
+        return;
+      }
+
+      const size = pageSizeOf(el);
+      const page = pageOf(el);
+      const from = (page - 1) * size + 1;
+      const to = Math.min(page * size, total);
+      summary.textContent = "Showing " + from + "\u2013" + to + " of " + total;
+      summary.toggleAttribute("data-empty", false);
+    }
+
+    function syncPages(el) {
+      const host = el.$(".pages");
+      const page = pageOf(el);
+      const pageCount = pageCountOf(el);
+      const disabled = el.boolAttr("disabled");
+
+      host.innerHTML = "";
+
+      host.appendChild(
+        pageButton(el, {
+          page: page - 1,
+          label: "Previous page",
+          icon: "chevron-left",
+          disabled: disabled || page <= 1,
+        })
+      );
+
+      pageWindow(page, pageCount).forEach((item) => {
+        if (item === "…") {
+          const span = document.createElement("span");
+          span.className = "ellipsis";
+          span.setAttribute("aria-hidden", "true");
+          span.textContent = "\u2026";
+          host.appendChild(span);
+          return;
+        }
+        host.appendChild(
+          pageButton(el, {
+            page: item,
+            label: "Page " + item,
+            text: String(item),
+            current: item === page,
+            disabled: disabled,
+          })
+        );
+      });
+
+      host.appendChild(
+        pageButton(el, {
+          page: page + 1,
+          label: "Next page",
+          icon: "chevron-right",
+          disabled: disabled || page >= pageCount,
+        })
+      );
+    }
+
+    function pageButton(el, opts) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn" + (opts.icon ? " btn--icon" : "");
+      btn.setAttribute("data-page", String(opts.page));
+      btn.setAttribute("aria-label", opts.label);
+      if (opts.current) btn.setAttribute("aria-current", "page");
+      btn.disabled = !!opts.disabled;
+
+      if (opts.icon) {
+        const icon = document.createElement("lds-icon");
+        icon.setAttribute("name", opts.icon);
+        icon.setAttribute("size", "sm");
+        btn.appendChild(icon);
+      } else {
+        btn.textContent = opts.text || "";
+      }
+      return btn;
+    }
+
+    /* first, last, current ± 1, with ellipsis gaps */
+    function pageWindow(page, pageCount) {
+      if (pageCount <= 7) {
+        const all = [];
+        for (let i = 1; i <= pageCount; i++) all.push(i);
+        return all;
+      }
+
+      const set = new Set([1, pageCount, page, page - 1, page + 1]);
+      const nums = Array.from(set)
+        .filter((n) => n >= 1 && n <= pageCount)
+        .sort((a, b) => a - b);
+
+      const out = [];
+      for (let i = 0; i < nums.length; i++) {
+        if (i > 0 && nums[i] - nums[i - 1] > 1) out.push("…");
+        out.push(nums[i]);
+      }
+      return out;
+    }
+
+    function setPage(el, page) {
+      const max = pageCountOf(el);
+      const next = Math.min(Math.max(1, page), max);
+      if (next === pageOf(el)) return;
+
+      const event = el.emit("lds-page-change", { page: next });
+      if (event.defaultPrevented) return;
+      el.setAttribute("page", String(next));
+    }
+
+    function setPageSize(el, pageSize) {
+      const size = Math.max(1, Math.floor(pageSize));
+      let page = pageOf(el);
+      const total = totalOf(el);
+      const newCount = total === 0 ? 1 : Math.max(1, Math.ceil(total / size));
+      if (page > newCount) page = 1;
+
+      const event = el.emit("lds-page-size-change", { pageSize: size, page: page });
+      if (event.defaultPrevented) return;
+
+      el.setAttribute("page-size", String(size));
+      el.setAttribute("page", String(page));
+    }
+  })();
+
   /* behaviour: lds-table */
   (function () {
     /* Behaviour for <lds-table>.
@@ -1910,6 +2462,28 @@
       s.originalOrder.forEach((row) => {
         if (row.parentNode === tbody || table.contains(row)) tbody.appendChild(row);
       });
+    }
+  })();
+
+  /* behaviour: lds-timeline-item */
+  (function () {
+    /* Behaviour for <lds-timeline-item> — sync time text. */
+
+    LDS.behavior("lds-timeline-item", {
+      connected(el) {
+        syncTime(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "time") syncTime(el);
+      },
+    });
+
+    function syncTime(el) {
+      const node = el.$(".time");
+      if (!node) return;
+      node.textContent = el.getAttribute("time") || "";
     }
   })();
 
@@ -2210,6 +2784,128 @@
     };
   })();
 
+  /* behaviour: lds-modal */
+  (function () {
+    /* Behaviour for <lds-modal> — native <dialog> + overlay scroll lock. */
+
+    const modalState = new WeakMap();
+
+    LDS.behavior("lds-modal", {
+      connected(el) {
+        const dialog = el.$(".dialog");
+        const closeBtn = el.$(".close");
+
+        watchSlot(el, 'slot[name="header"]', ".header__title");
+        watchSlot(el, 'slot[name="footer"]', ".footer");
+
+        closeBtn.addEventListener("click", () => closeModal(el, "close-button"));
+
+        dialog.addEventListener("cancel", (event) => {
+          if (!isDismissible(el)) {
+            event.preventDefault();
+            return;
+          }
+          event.preventDefault();
+          closeModal(el, "escape");
+        });
+
+        dialog.addEventListener("click", (event) => {
+          if (event.target !== dialog) return;
+          if (!isDismissible(el)) return;
+          closeModal(el, "outside");
+        });
+
+        syncOpen(el);
+      },
+
+      disconnected(el) {
+        teardown(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "open") syncOpen(el);
+        if (name === "dismissible") syncDismissible(el);
+      },
+    });
+
+    function isDismissible(el) {
+      if (!el.hasAttribute("dismissible")) return true;
+      return el.getAttribute("dismissible") !== "false";
+    }
+
+    function syncDismissible(el) {
+      const closeBtn = el.$(".close");
+      if (closeBtn) closeBtn.hidden = !isDismissible(el);
+    }
+
+    function syncOpen(el) {
+      const dialog = el.$(".dialog");
+      const open = el.boolAttr("open");
+      syncDismissible(el);
+
+      if (open) {
+        if (!dialog.open) {
+          const ev = el.emit("lds-open");
+          if (ev.defaultPrevented) {
+            el.removeAttribute("open");
+            return;
+          }
+          dialog.showModal();
+        }
+        setupOverlay(el);
+      } else {
+        teardown(el);
+        if (dialog.open) dialog.close();
+      }
+    }
+
+    function setupOverlay(el) {
+      const s = modalState.get(el) || {};
+      if (s.overlay) return;
+      const dialog = el.$(".dialog");
+      s.overlay = LDS.overlay.bind(dialog, {
+        trapFocus: false,
+        scrollLock: true,
+        restoreFocus: null,
+        onDismiss: function () {
+          /* Escape / outside handled on the dialog itself. */
+        },
+      });
+      modalState.set(el, s);
+    }
+
+    function teardown(el) {
+      const s = modalState.get(el);
+      if (!s) return;
+      if (s.overlay) {
+        s.overlay.disconnect();
+        s.overlay = null;
+      }
+    }
+
+    function closeModal(el, reason) {
+      if (!el.boolAttr("open")) return;
+      const ev = el.emit("lds-close", { reason: reason });
+      if (ev.defaultPrevented) return;
+      el.removeAttribute("open");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* component: lds-avatar (draft) */
   LDS.define({
     tag: "lds-avatar",
@@ -2368,6 +3064,111 @@
 
 .overflow[hidden] {
   display: none;
+}`,
+  });
+
+  /* component: lds-badge (draft) */
+  LDS.define({
+    tag: "lds-badge",
+    className: "LdsBadge",
+    observed: ["intent", "variant", "size"],
+    defaults: {"intent": "neutral", "variant": "subtle", "size": "sm"},
+    template: `<span class="badge" part="badge"><slot></slot></span>`,
+    styles: `/* Short status label. Intents assign custom properties; variants remix them. */
+
+:host {
+  --lds-badge-bg: var(--lds-color-bg-muted);
+  --lds-badge-fg: var(--lds-color-fg-muted);
+  --lds-badge-border: var(--lds-color-border-default);
+  --lds-badge-padding-y: var(--lds-space-1);
+  --lds-badge-padding-x: var(--lds-space-2);
+  --lds-badge-font-size: var(--lds-font-size-2xs);
+  --lds-badge-radius: var(--lds-radius-full);
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="md"]) {
+  --lds-badge-padding-y: var(--lds-space-1);
+  --lds-badge-padding-x: var(--lds-space-3);
+  --lds-badge-font-size: var(--lds-font-size-xs);
+}
+
+:host([intent="info"]) {
+  --lds-badge-bg: var(--lds-color-accent-subtle);
+  --lds-badge-fg: var(--lds-color-accent-fg);
+  --lds-badge-border: var(--lds-color-accent-border);
+}
+
+:host([intent="success"]) {
+  --lds-badge-bg: var(--lds-color-success-subtle);
+  --lds-badge-fg: var(--lds-color-success-fg);
+  --lds-badge-border: var(--lds-color-success-border);
+}
+
+:host([intent="warning"]) {
+  --lds-badge-bg: var(--lds-color-warning-subtle);
+  --lds-badge-fg: var(--lds-color-warning-fg);
+  --lds-badge-border: var(--lds-color-warning-border);
+}
+
+:host([intent="danger"]) {
+  --lds-badge-bg: var(--lds-color-danger-subtle);
+  --lds-badge-fg: var(--lds-color-danger-fg);
+  --lds-badge-border: var(--lds-color-danger-border);
+}
+
+:host([variant="solid"]) {
+  --lds-badge-bg: var(--lds-color-fg-muted);
+  --lds-badge-fg: var(--lds-color-fg-on-accent);
+  --lds-badge-border: transparent;
+}
+
+:host([variant="solid"][intent="info"]) {
+  --lds-badge-bg: var(--lds-color-accent-default);
+}
+
+:host([variant="solid"][intent="success"]) {
+  --lds-badge-bg: var(--lds-color-success-default);
+}
+
+:host([variant="solid"][intent="warning"]) {
+  --lds-badge-bg: var(--lds-color-warning-default);
+}
+
+:host([variant="solid"][intent="danger"]) {
+  --lds-badge-bg: var(--lds-color-danger-default);
+}
+
+:host([variant="outline"]) {
+  --lds-badge-bg: transparent;
+}
+
+.badge {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  max-width: 100%;
+  padding: var(--lds-badge-padding-y) var(--lds-badge-padding-x);
+  overflow: hidden;
+  border: var(--lds-control-border-width-default) solid var(--lds-badge-border);
+  border-radius: var(--lds-badge-radius);
+  background: var(--lds-badge-bg);
+  color: var(--lds-badge-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-badge-font-size);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-none);
+  letter-spacing: var(--lds-font-tracking-caps);
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }`,
   });
 
@@ -2643,6 +3444,395 @@
   height: 100%;
   fill: none;
   stroke: currentColor;
+}`,
+  });
+
+  /* component: lds-spinner (draft) */
+  LDS.define({
+    tag: "lds-spinner",
+    className: "LdsSpinner",
+    observed: ["size", "label"],
+    defaults: {"size": "md"},
+    template: `<span class="spinner" part="spinner"></span>`,
+    styles: `/* Indeterminate progress mark. Put aria-busy on the busy region, not here. */
+
+:host {
+  --lds-spinner-size: var(--lds-icon-size-md);
+  --lds-spinner-color: currentColor;
+  --lds-spinner-track: transparent;
+
+  display: inline-flex;
+  vertical-align: middle;
+  color: var(--lds-color-fg-muted);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-spinner-size: var(--lds-icon-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-spinner-size: var(--lds-icon-size-lg);
+}
+
+.spinner {
+  box-sizing: border-box;
+  width: var(--lds-spinner-size);
+  height: var(--lds-spinner-size);
+  border: var(--lds-control-border-width-default) solid var(--lds-spinner-color);
+  border-block-start-color: var(--lds-spinner-track);
+  border-radius: var(--lds-radius-full);
+  animation: lds-spinner-spin var(--lds-duration-slower) linear infinite;
+}
+
+@keyframes lds-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}`,
+  });
+
+  /* component: lds-tag (draft) */
+  LDS.define({
+    tag: "lds-tag",
+    className: "LdsTag",
+    observed: ["intent", "variant", "size", "dismissible", "disabled"],
+    defaults: {"intent": "neutral", "variant": "subtle", "size": "sm"},
+    template: `<span class="tag" part="tag">
+  <span class="tag__start" part="start"><slot name="start"></slot></span>
+  <span class="tag__label" part="label"><slot></slot></span>
+  <button class="tag__close" part="close" type="button" aria-label="Remove" hidden>
+    <lds-icon name="x" size="sm"></lds-icon>
+  </button>
+</span>`,
+    styles: `/* Removable chip. Shares intent colouring with lds-badge. */
+
+:host {
+  --lds-tag-bg: var(--lds-color-bg-muted);
+  --lds-tag-fg: var(--lds-color-fg-muted);
+  --lds-tag-border: var(--lds-color-border-default);
+  --lds-tag-padding-y: var(--lds-space-1);
+  --lds-tag-padding-x: var(--lds-space-2);
+  --lds-tag-font-size: var(--lds-font-size-xs);
+  --lds-tag-radius: var(--lds-radius-full);
+  --lds-tag-gap: var(--lds-space-1);
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="md"]) {
+  --lds-tag-padding-y: var(--lds-space-1);
+  --lds-tag-padding-x: var(--lds-space-3);
+  --lds-tag-font-size: var(--lds-font-size-sm);
+}
+
+:host([intent="info"]) {
+  --lds-tag-bg: var(--lds-color-accent-subtle);
+  --lds-tag-fg: var(--lds-color-accent-fg);
+  --lds-tag-border: var(--lds-color-accent-border);
+}
+
+:host([intent="success"]) {
+  --lds-tag-bg: var(--lds-color-success-subtle);
+  --lds-tag-fg: var(--lds-color-success-fg);
+  --lds-tag-border: var(--lds-color-success-border);
+}
+
+:host([intent="warning"]) {
+  --lds-tag-bg: var(--lds-color-warning-subtle);
+  --lds-tag-fg: var(--lds-color-warning-fg);
+  --lds-tag-border: var(--lds-color-warning-border);
+}
+
+:host([intent="danger"]) {
+  --lds-tag-bg: var(--lds-color-danger-subtle);
+  --lds-tag-fg: var(--lds-color-danger-fg);
+  --lds-tag-border: var(--lds-color-danger-border);
+}
+
+:host([variant="solid"]) {
+  --lds-tag-bg: var(--lds-color-fg-muted);
+  --lds-tag-fg: var(--lds-color-fg-on-accent);
+  --lds-tag-border: transparent;
+}
+
+:host([variant="solid"][intent="info"]) {
+  --lds-tag-bg: var(--lds-color-accent-default);
+}
+
+:host([variant="solid"][intent="success"]) {
+  --lds-tag-bg: var(--lds-color-success-default);
+}
+
+:host([variant="solid"][intent="warning"]) {
+  --lds-tag-bg: var(--lds-color-warning-default);
+}
+
+:host([variant="solid"][intent="danger"]) {
+  --lds-tag-bg: var(--lds-color-danger-default);
+}
+
+:host([variant="outline"]) {
+  --lds-tag-bg: transparent;
+}
+
+:host([disabled]) {
+  opacity: 0.6;
+}
+
+.tag {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-tag-gap);
+  max-width: 100%;
+  padding: var(--lds-tag-padding-y) var(--lds-tag-padding-x);
+  border: var(--lds-control-border-width-default) solid var(--lds-tag-border);
+  border-radius: var(--lds-tag-radius);
+  background: var(--lds-tag-bg);
+  color: var(--lds-tag-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-tag-font-size);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-none);
+}
+
+.tag__start,
+.tag__label {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tag__start[data-empty] {
+  display: none;
+}
+
+.tag__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag__close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  margin-inline-end: calc(var(--lds-space-1) * -1);
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.tag__close[hidden] {
+  display: none;
+}
+
+.tag__close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.tag__close:disabled {
+  cursor: not-allowed;
+}`,
+  });
+
+  /* component: lds-card (draft) */
+  LDS.define({
+    tag: "lds-card",
+    className: "LdsCard",
+    observed: ["interactive"],
+    defaults: {},
+    template: `<div class="card" part="card">
+  <div class="media" part="media"><slot name="media"></slot></div>
+  <div class="header" part="header"><slot name="header"></slot></div>
+  <div class="body" part="body"><slot></slot></div>
+  <div class="footer" part="footer"><slot name="footer"></slot></div>
+</div>`,
+    styles: `/* Grouped content surface with optional header, media and footer. */
+
+:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([interactive]) .card {
+  transition:
+    box-shadow var(--lds-transition-surface),
+    border-color var(--lds-transition-surface);
+  cursor: pointer;
+}
+
+:host([interactive]) .card:hover {
+  border-color: var(--lds-color-border-strong);
+  box-shadow: var(--lds-shadow-lg);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-4);
+  box-sizing: border-box;
+  padding: var(--lds-card-padding);
+  border: var(--lds-control-border-width-default) solid var(--lds-card-border);
+  border-radius: var(--lds-card-radius);
+  background: var(--lds-color-bg-raised);
+  color: var(--lds-color-fg-default);
+  box-shadow: var(--lds-card-shadow);
+}
+
+.media,
+.header,
+.body,
+.footer {
+  min-width: 0;
+}
+
+.media[data-empty],
+.header[data-empty],
+.body[data-empty],
+.footer[data-empty] {
+  display: none;
+}
+
+.media {
+  margin: calc(var(--lds-card-padding) * -1);
+  margin-bottom: 0;
+  overflow: hidden;
+  border-radius: var(--lds-card-radius) var(--lds-card-radius) 0 0;
+}
+
+.media ::slotted(img) {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.header {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-3);
+  padding-top: var(--lds-space-2);
+  border-top: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}`,
+  });
+
+  /* component: lds-tab-panel (draft) */
+  LDS.define({
+    tag: "lds-tab-panel",
+    className: "LdsTabPanel",
+    observed: ["name", "label", "active"],
+    defaults: {},
+    template: `<div class="panel" part="panel">
+  <slot></slot>
+</div>`,
+    styles: `:host {
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.panel {
+  min-width: 0;
+}`,
+  });
+
+  /* component: lds-tabs (draft) */
+  LDS.define({
+    tag: "lds-tabs",
+    className: "LdsTabs",
+    observed: ["value", "activation"],
+    defaults: {"activation": "auto"},
+    template: `<div class="root" part="root">
+  <div class="tablist" part="tablist" role="tablist"></div>
+  <div class="panels" part="panels">
+    <slot></slot>
+  </div>
+</div>`,
+    styles: `/* Tablist + panels. Buttons are built in JS from lds-tab-panel children. */
+
+:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-4);
+}
+
+.tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lds-space-1);
+  border-bottom: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+}
+
+.tab {
+  box-sizing: border-box;
+  margin: 0 0 calc(var(--lds-control-border-width-default) * -1);
+  padding: var(--lds-space-2) var(--lds-space-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--lds-color-fg-muted);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--lds-color-fg-default);
+}
+
+.tab:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--lds-color-accent-default);
+  color: var(--lds-color-fg-default);
+  font-weight: var(--lds-font-weight-semibold);
+}
+
+.panels {
+  min-width: 0;
 }`,
   });
 
@@ -3638,6 +4828,261 @@ a.link:hover {
 }`,
   });
 
+  /* component: lds-code (draft) */
+  LDS.define({
+    tag: "lds-code",
+    className: "LdsCode",
+    observed: ["language", "copyable"],
+    defaults: {},
+    template: `<div class="root" part="root">
+  <pre class="pre" part="pre"><code class="code" part="code"><slot></slot></code></pre>
+  <button class="copy" part="copy" type="button" aria-label="Copy" hidden>
+    <lds-icon name="copy" size="sm"></lds-icon>
+  </button>
+</div>`,
+    styles: `/* Code / payload block with optional copy control. */
+
+:host {
+  --lds-code-bg: var(--lds-color-bg-subtle);
+  --lds-code-fg: var(--lds-color-fg-default);
+  --lds-code-border: var(--lds-color-border-default);
+  --lds-code-radius: var(--lds-radius-md);
+  --lds-code-padding: var(--lds-space-4);
+  --lds-code-font-size: var(--lds-font-size-sm);
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  position: relative;
+  max-width: 100%;
+}
+
+.pre {
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--lds-code-padding);
+  overflow: auto;
+  border: var(--lds-control-border-width-default) solid var(--lds-code-border);
+  border-radius: var(--lds-code-radius);
+  background: var(--lds-code-bg);
+  color: var(--lds-code-fg);
+  font-family: var(--lds-font-family-mono);
+  font-size: var(--lds-code-font-size);
+  line-height: var(--lds-font-leading-relaxed);
+}
+
+.code {
+  font: inherit;
+}
+
+.copy {
+  position: absolute;
+  inset-block-start: var(--lds-space-2);
+  inset-inline-end: var(--lds-space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: 0;
+  padding: 0;
+  border: var(--lds-control-border-width-default) solid var(--lds-code-border);
+  border-radius: var(--lds-control-radius-sm);
+  background: var(--lds-color-bg-raised);
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+}
+
+.copy[hidden] {
+  display: none;
+}
+
+.copy:hover {
+  color: var(--lds-color-fg-default);
+}
+
+.copy:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host(:not([copyable="false"])) .pre {
+  padding-inline-end: calc(var(--lds-code-padding) + var(--lds-control-height-sm));
+}`,
+  });
+
+  /* component: lds-pagination (draft) */
+  LDS.define({
+    tag: "lds-pagination",
+    className: "LdsPagination",
+    observed: ["total", "page", "page-size", "sizes", "hide-sizes", "disabled", "label"],
+    defaults: {"total": "0", "page": "1", "page-size": "25", "sizes": "10,25,50,100"},
+    template: `<nav class="root" part="root">
+  <p class="summary" part="summary"></p>
+  <div class="controls" part="controls">
+    <div class="sizes" part="sizes">
+      <label class="sizes__label">
+        <span class="sizes__text">Rows</span>
+        <select class="sizes__select" part="select"></select>
+      </label>
+    </div>
+    <div class="pages" part="pages" role="group" aria-label="Pages"></div>
+  </div>
+</nav>`,
+    styles: `/* Pagination — summary, page-size select, and page buttons. */
+
+:host {
+  --lds-pagination-gap: var(--lds-space-4);
+  --lds-pagination-control-height: var(--lds-control-height-sm);
+  --lds-pagination-control-radius: var(--lds-control-radius-sm);
+  --lds-pagination-font-size: var(--lds-control-font-size-sm);
+  --lds-pagination-fg: var(--lds-color-fg-default);
+  --lds-pagination-muted: var(--lds-color-fg-muted);
+  --lds-pagination-border: var(--lds-color-border-default);
+  --lds-pagination-bg: var(--lds-color-bg-canvas);
+  --lds-pagination-bg-hover: var(--lds-color-bg-subtle);
+  --lds-pagination-bg-active: var(--lds-color-bg-muted);
+  --lds-pagination-current-bg: var(--lds-color-accent-subtle);
+  --lds-pagination-current-fg: var(--lds-color-accent-fg);
+  --lds-pagination-current-border: var(--lds-color-accent-border);
+
+  display: block;
+  max-width: 100%;
+  color: var(--lds-pagination-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-pagination-font-size);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lds-pagination-gap);
+}
+
+.summary {
+  margin: 0;
+  color: var(--lds-pagination-muted);
+}
+
+.summary[data-empty] {
+  display: none;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-3);
+}
+
+.sizes[data-hidden] {
+  display: none;
+}
+
+.sizes__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lds-space-2);
+  color: var(--lds-pagination-muted);
+}
+
+.sizes__select {
+  box-sizing: border-box;
+  height: var(--lds-pagination-control-height);
+  padding-inline: var(--lds-control-padding-x-sm);
+  border: var(--lds-control-border-width-default) solid var(--lds-pagination-border);
+  border-radius: var(--lds-pagination-control-radius);
+  background: var(--lds-pagination-bg);
+  color: var(--lds-pagination-fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sizes__select:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.sizes__select:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.pages {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-1);
+}
+
+.btn {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--lds-pagination-control-height);
+  height: var(--lds-pagination-control-height);
+  margin: 0;
+  padding-inline: var(--lds-space-2);
+  border: var(--lds-control-border-width-default) solid var(--lds-pagination-border);
+  border-radius: var(--lds-pagination-control-radius);
+  background: var(--lds-pagination-bg);
+  color: var(--lds-pagination-fg);
+  font: inherit;
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--lds-pagination-bg-hover);
+}
+
+.btn:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.btn:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn[aria-current="page"] {
+  border-color: var(--lds-pagination-current-border);
+  background: var(--lds-pagination-current-bg);
+  color: var(--lds-pagination-current-fg);
+}
+
+.btn--icon {
+  padding-inline: 0;
+}
+
+.ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--lds-pagination-control-height);
+  height: var(--lds-pagination-control-height);
+  color: var(--lds-pagination-muted);
+  user-select: none;
+}`,
+  });
+
   /* component: lds-table (draft) */
   LDS.define({
     tag: "lds-table",
@@ -3689,6 +5134,160 @@ a.link:hover {
 
 ::slotted(table) {
   margin: 0;
+}`,
+  });
+
+  /* component: lds-timeline (draft) */
+  LDS.define({
+    tag: "lds-timeline",
+    className: "LdsTimeline",
+    observed: [],
+    defaults: {},
+    template: `<div class="list" part="list">
+  <slot></slot>
+</div>`,
+    styles: `:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}`,
+  });
+
+  /* component: lds-timeline-item (draft) */
+  LDS.define({
+    tag: "lds-timeline-item",
+    className: "LdsTimelineItem",
+    observed: ["time", "intent"],
+    defaults: {"intent": "info"},
+    template: `<div class="item" part="item">
+  <div class="rail" part="rail" aria-hidden="true">
+    <span class="marker" part="marker"></span>
+  </div>
+  <div class="content" part="content">
+    <div class="meta" part="meta">
+      <span class="time" part="time"></span>
+      <span class="title" part="title"><slot name="title"></slot></span>
+    </div>
+    <div class="body" part="body"><slot></slot></div>
+  </div>
+</div>`,
+    styles: `:host {
+  --lds-timeline-marker: var(--lds-color-accent-default);
+  --lds-timeline-rail: var(--lds-color-border-default);
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([intent="success"]) {
+  --lds-timeline-marker: var(--lds-color-success-default);
+}
+
+:host([intent="warning"]) {
+  --lds-timeline-marker: var(--lds-color-warning-default);
+}
+
+:host([intent="danger"]) {
+  --lds-timeline-marker: var(--lds-color-danger-default);
+}
+
+:host([intent="neutral"]) {
+  --lds-timeline-marker: var(--lds-color-fg-subtle);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: var(--lds-space-6) minmax(0, 1fr);
+  gap: var(--lds-space-3);
+  min-height: var(--lds-space-10);
+}
+
+.rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.rail::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  width: var(--lds-control-border-width-default);
+  background: var(--lds-timeline-rail);
+}
+
+.marker {
+  position: relative;
+  z-index: var(--lds-z-raised);
+  box-sizing: border-box;
+  width: var(--lds-space-3);
+  height: var(--lds-space-3);
+  margin-block-start: var(--lds-space-1);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-bg-canvas);
+  border-radius: var(--lds-radius-full);
+  background: var(--lds-timeline-marker);
+  box-shadow: 0 0 0 var(--lds-control-border-width-default) var(--lds-timeline-marker);
+}
+
+:host(:first-child) .rail::before {
+  inset-block-start: var(--lds-space-3);
+}
+
+:host(:last-child) .rail::before {
+  inset-block-end: calc(100% - var(--lds-space-4));
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  padding-bottom: var(--lds-space-5);
+}
+
+:host(:last-child) .content {
+  padding-bottom: 0;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--lds-space-2);
+}
+
+.time {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.time:empty {
+  display: none;
+}
+
+.title {
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.body {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-normal);
 }`,
   });
 
@@ -3909,6 +5508,137 @@ a.link:hover {
 
 :host(:not(:has(lds-toast))) {
   visibility: hidden;
+}`,
+  });
+
+  /* component: lds-modal (draft) */
+  LDS.define({
+    tag: "lds-modal",
+    className: "LdsModal",
+    observed: ["open", "size", "dismissible"],
+    defaults: {"size": "md"},
+    template: `<dialog class="dialog" part="dialog">
+  <div class="chrome" part="chrome">
+    <header class="header" part="header">
+      <div class="header__title"><slot name="header"></slot></div>
+      <button class="close" part="close" type="button" aria-label="Close">
+        <lds-icon name="x" size="sm"></lds-icon>
+      </button>
+    </header>
+    <div class="body" part="body"><slot></slot></div>
+    <footer class="footer" part="footer"><slot name="footer"></slot></footer>
+  </div>
+</dialog>`,
+    styles: `/* Blocking dialog built on native <dialog>. */
+
+:host {
+  --lds-modal-width: 28rem;
+  --lds-modal-bg: var(--lds-color-bg-raised);
+  --lds-modal-fg: var(--lds-color-fg-default);
+  --lds-modal-radius: var(--lds-overlay-radius);
+  --lds-modal-shadow: var(--lds-overlay-shadow);
+
+  display: contents;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-modal-width: 22rem;
+}
+
+:host([size="lg"]) {
+  --lds-modal-width: 40rem;
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: min(var(--lds-modal-width), calc(100vw - var(--lds-space-8)));
+  max-height: calc(100vh - var(--lds-space-8));
+  margin: auto;
+  padding: 0;
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-modal-radius);
+  background: var(--lds-modal-bg);
+  color: var(--lds-modal-fg);
+  box-shadow: var(--lds-modal-shadow);
+}
+
+.dialog::backdrop {
+  background: var(--lds-color-bg-overlay);
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--lds-space-8));
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-4) var(--lds-space-5);
+  border-bottom: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.header__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-control-radius-sm);
+  background: transparent;
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+}
+
+.close[hidden] {
+  display: none;
+}
+
+.close:hover {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-default);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.body {
+  padding: var(--lds-space-5);
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-4) var(--lds-space-5);
+  border-top: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.footer[data-empty] {
+  display: none;
 }`,
   });
 

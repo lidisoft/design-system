@@ -159,6 +159,7 @@ Menus (and later tooltips / popovers) share two runtime helpers:
 const handle = LDS.overlay.bind(panel, {
   restoreFocus: trigger,
   ignoreOutside: trigger,
+  scrollLock: false, // true for modals
   onDismiss(reason) {
     /* reason is "escape" or "outside" */
   },
@@ -172,8 +173,10 @@ LDS.position(panel, trigger, {
 ```
 
 `LDS.position` is manual (no CSS anchor API yet). Re-call it on scroll/resize
-while open. Prefer the components (`lds-menu`) over calling these directly
-unless you are building a one-off floating surface.
+while open. `scrollLock` sets `overflow: hidden` on `document.documentElement`
+while bound (used by `lds-modal`). Prefer the components (`lds-menu`,
+`lds-modal`) over calling these directly unless you are building a one-off
+floating surface.
 
 ## Customising
 

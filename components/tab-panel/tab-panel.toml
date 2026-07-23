@@ -1,0 +1,47 @@
+tag = "lds-tab-panel"
+name = "Tab panel"
+category = "layout"
+status = "draft"
+summary = "One view inside lds-tabs."
+
+description = """
+Child of lds-tabs. name identifies the panel; label is shown on the generated
+tab button. Visibility is owned by the parent tabs via the hidden attribute.
+"""
+
+a11y = """
+Receives role=tabpanel and aria-labelledby from the parent tabs behaviour.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Stable id matched by lds-tabs value."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Text for the tab button."
+
+[[attributes]]
+name = "active"
+type = "boolean"
+description = "Set by the parent when selected (do not set by hand)."
+
+[[slots]]
+name = ""
+description = "Panel content."
+
+[[parts]]
+name = "panel"
+description = "Content wrapper."
+
+[[stories]]
+name = "In tabs"
+description = "See the Tabs page for full compositions."
+html = """
+<lds-tabs>
+  <lds-tab-panel name="one" label="One">First panel</lds-tab-panel>
+  <lds-tab-panel name="two" label="Two">Second panel</lds-tab-panel>
+</lds-tabs>
+"""

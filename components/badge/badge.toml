@@ -1,0 +1,79 @@
+tag = "lds-badge"
+name = "Badge"
+category = "primitives"
+status = "draft"
+summary = "Short status label driven by intent and variant."
+
+description = """
+Compact status mark for severity, state and category. Intents map to the shared
+intent-role palette (info uses accent; neutral uses muted surfaces). Prefer a
+badge when the label is not interactive; use lds-tag when it can be removed.
+"""
+
+a11y = """
+Presentational by default — the visible text is the accessible name. Do not rely
+on colour alone; keep the label meaningful (e.g. SEV-1, not only a red chip).
+"""
+
+[[attributes]]
+name = "intent"
+type = "enum"
+values = ["neutral", "info", "success", "warning", "danger"]
+default = "neutral"
+description = "Colour role. info maps to accent tokens."
+
+[[attributes]]
+name = "variant"
+type = "enum"
+values = ["subtle", "solid", "outline"]
+default = "subtle"
+description = "Fill weight."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md"]
+default = "sm"
+description = "Padding and type size."
+
+[[slots]]
+name = ""
+description = "Badge label."
+
+[[parts]]
+name = "badge"
+description = "The labelled chip."
+
+[[stories]]
+name = "Intents"
+description = "Neutral through danger on the subtle variant."
+html = """
+<div class="lds-cluster">
+  <lds-badge>Neutral</lds-badge>
+  <lds-badge intent="info">Info</lds-badge>
+  <lds-badge intent="success">Success</lds-badge>
+  <lds-badge intent="warning">Warning</lds-badge>
+  <lds-badge intent="danger">Danger</lds-badge>
+</div>
+"""
+
+[[stories]]
+name = "Variants"
+description = "Subtle, solid and outline for the same intent."
+html = """
+<div class="lds-cluster">
+  <lds-badge intent="info" variant="subtle">Subtle</lds-badge>
+  <lds-badge intent="info" variant="solid">Solid</lds-badge>
+  <lds-badge intent="info" variant="outline">Outline</lds-badge>
+</div>
+"""
+
+[[stories]]
+name = "Sizes"
+description = "sm is the default density; md for slightly larger chrome."
+html = """
+<div class="lds-cluster" style="align-items: center">
+  <lds-badge size="sm" intent="success">Small</lds-badge>
+  <lds-badge size="md" intent="success">Medium</lds-badge>
+</div>
+"""

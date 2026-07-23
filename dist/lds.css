@@ -1,6 +1,6 @@
 /*!
  * LiDiSoft Design System — lds.css
- * version 0.1.0 · generated 2026-07-22
+ * version 0.1.0 · generated 2026-07-23
  *
  * GENERATED FILE — DO NOT EDIT.
  * Regenerate with: make build   (see docs/architecture.md)
@@ -190,7 +190,7 @@ hr {
   /* card */
   --lds-card-border: #e7ebf1;
   --lds-card-padding: 1.5rem;
-  --lds-card-radius: 16px;
+  --lds-card-radius: 5px;
   --lds-card-shadow: 0 1px 2px rgba(20, 30, 50, 0.04), 0 12px 32px rgba(20, 30, 50, 0.06);
 
   /* color */
@@ -316,10 +316,10 @@ hr {
   --lds-control-padding-x-lg: 1.25rem;
   --lds-control-padding-x-md: 1rem;
   --lds-control-padding-x-sm: 0.75rem;
-  --lds-control-radius-lg: 10px;
-  --lds-control-radius-md: 10px;
+  --lds-control-radius-lg: 3px;
+  --lds-control-radius-md: 3px;
   --lds-control-radius-pill: 999px;
-  --lds-control-radius-sm: 6px;
+  --lds-control-radius-sm: 2px;
 
   /* duration */
   --lds-duration-fast: 120ms;
@@ -373,17 +373,17 @@ hr {
   --lds-icon-size-sm: 16px;
 
   /* overlay */
-  --lds-overlay-radius: 16px;
+  --lds-overlay-radius: 5px;
   --lds-overlay-shadow: 0 24px 64px rgba(20, 30, 50, 0.18);
 
   /* radius */
   --lds-radius-full: 999px;
-  --lds-radius-lg: 16px;
-  --lds-radius-md: 10px;
+  --lds-radius-lg: 5px;
+  --lds-radius-md: 3px;
   --lds-radius-none: 0;
-  --lds-radius-sm: 6px;
-  --lds-radius-xl: 24px;
-  --lds-radius-xs: 4px;
+  --lds-radius-sm: 2px;
+  --lds-radius-xl: 12px;
+  --lds-radius-xs: 1px;
 
   /* shadow */
   --lds-shadow-inset: inset 0 1px 2px rgba(20, 30, 50, 0.06);

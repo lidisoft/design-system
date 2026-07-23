@@ -27,6 +27,17 @@ every LiDiSoft service needs.
 | `lds-menu` | **draft** — action menu from a trigger |
 | `lds-menu-item` | **draft** — menu action or link |
 | `lds-table` | **draft** — light-DOM table, density, sticky, sort |
+| `lds-pagination` | **draft** — page controls for lists and tables |
+| `lds-badge` | **draft** — intent status label |
+| `lds-tag` | **draft** — dismissible chip |
+| `lds-spinner` | **draft** — indeterminate progress |
+| `lds-card` | **draft** — grouped content surface |
+| `lds-code` | **draft** — code block with copy |
+| `lds-tabs` | **draft** — tablist + panels |
+| `lds-tab-panel` | **draft** — one tab view |
+| `lds-timeline` | **draft** — chronological event list |
+| `lds-timeline-item` | **draft** — timeline event |
+| `lds-modal` | **draft** — blocking dialog |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -53,10 +64,10 @@ the page created. Resist any urge to add `<lds-stack>`.
 |-----|---------|-------|
 | `lds-button` | Actions | **Done.** variant, size, type, disabled, loading, full-width, pill, label |
 | `lds-icon` | Inline iconography | **Done.** `name`, `size`, `label`; sprite from `assets/icons/` |
-| `lds-badge` | Short status labels | intent, variant (solid/subtle/outline), size |
-| `lds-tag` | Removable chips, filters | Badge plus a dismiss affordance and `lds-remove` |
+| `lds-badge` | Short status labels | **Done (draft).** intent, variant (subtle/solid/outline), size |
+| `lds-tag` | Removable chips, filters | **Done (draft).** Badge-shaped; dismissible + `lds-remove` |
 | `lds-avatar` | User/team identity | **Done (draft).** image, initials, icon fallback, size, shape; `lds-avatar-group` for stacks |
-| `lds-spinner` | Indeterminate progress | size, label; `aria-busy` on the region, not the spinner |
+| `lds-spinner` | Indeterminate progress | **Done (draft).** size, label; `aria-busy` on the region, not the spinner |
 | `lds-divider` | Visual separation | orientation, optional inline label |
 | `lds-kbd` | Keyboard shortcuts | Trivial, but recurring in help and command surfaces |
 
@@ -103,9 +114,9 @@ wiring into every control.
 
 | Tag | Purpose | Notes |
 |-----|---------|-------|
-| `lds-card` | Grouped content | header/media/footer slots, interactive variant |
+| `lds-card` | Grouped content | **Done (draft).** header/media/footer slots, interactive variant |
 | `lds-panel` | Page section with a heading | Card without the elevation |
-| `lds-tabs` | Sibling views | `lds-tab` + `lds-tab-panel`; arrow keys, roving tabindex |
+| `lds-tabs` | Sibling views | **Done (draft).** `lds-tab-panel` children; arrow keys, roving tabindex |
 | `lds-accordion` | Progressive disclosure | Built on `<details>`; single or multi expand |
 | `lds-scroll-area` | Constrained scrolling | Only if native scrollbars prove insufficient |
 
@@ -133,11 +144,11 @@ matrix.
 | Tag | Purpose | Notes |
 |-----|---------|-------|
 | `lds-table` | Tabular data | **Done (draft).** Light-DOM `<table>`; density, sticky header, striped, sortable columns |
-| `lds-pagination` | Paging | Page size, total count, keyboard support |
+| `lds-pagination` | Paging | **Done (draft).** Summary, page-size select, ellipsis page list; `lds-page-change` / `lds-page-size-change` |
 | `lds-empty-state` | Nothing to show | Icon, title, description, action slots |
 | `lds-stat` | Single metric | Value, label, delta with direction |
-| `lds-timeline` | Chronological events | `lds-timeline-item`; central for tocsin incident history |
-| `lds-code` | Code and payloads | Copy button; no syntax highlighting without a Go-side highlighter |
+| `lds-timeline` | Chronological events | **Done (draft).** `lds-timeline-item`; rail + intent markers |
+| `lds-code` | Code and payloads | **Done (draft).** Copy button; no syntax highlighting |
 | `lds-skeleton` | Loading placeholder | Shape variants; respects reduced motion |
 
 `lds-table` is the one to think hardest about. Putting rows in a shadow root
@@ -162,7 +173,7 @@ restoration. Write that once in the runtime.
 
 | Tag | Purpose | Notes |
 |-----|---------|-------|
-| `lds-modal` | Blocking dialog | Built on `<dialog>`; size, dismissible, header/body/footer slots |
+| `lds-modal` | Blocking dialog | **Done (draft).** Native `<dialog>`; size, dismissible, header/body/footer |
 | `lds-drawer` | Side panel | Modal by another name plus placement; share the implementation |
 | `lds-popover` | Non-modal floating panel | Anchored; needs the positioning helper |
 | `lds-confirm` | Destructive confirmation | Thin promise-returning wrapper over modal — `LDS.confirm()` |

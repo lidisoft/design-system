@@ -1,8 +1,9 @@
 /* ------------------------------------------------------------------------
  * Overlay helpers — non-modal dismiss plumbing for menus and future popovers.
  *
- * Menus do not lock scroll. Callers own open/close state; this only wires
- * Escape, outside click, optional focus trap, and focus restoration.
+ * Menus do not lock scroll. Pass scrollLock: true for modals.
+ * Callers own open/close state; this wires Escape, outside click, optional
+ * focus trap, focus restoration, and optional document scroll lock.
  * ---------------------------------------------------------------------- */
 
 /**
@@ -13,6 +14,7 @@
  * @param {(reason: "escape"|"outside") => void} [opts.onDismiss]
  * @param {Element} [opts.restoreFocus] element to focus on disconnect
  * @param {boolean} [opts.trapFocus=true] cycle Tab within root
+ * @param {boolean} [opts.scrollLock=false] lock documentElement overflow while bound
  * @param {Element|Element[]} [opts.ignoreOutside] clicks here are not "outside"
  * @returns {{ disconnect(): void }}
  */
@@ -22,6 +24,13 @@ LDS.overlay = {
     const onDismiss = typeof opts.onDismiss === "function" ? opts.onDismiss : function () {};
     const trapFocus = opts.trapFocus !== false;
     const restoreFocus = opts.restoreFocus || null;
+    const scrollLock = !!opts.scrollLock;
+    let previousOverflow = "";
+
+    if (scrollLock && typeof document !== "undefined") {
+      previousOverflow = document.documentElement.style.overflow;
+      document.documentElement.style.overflow = "hidden";
+    }
 
     let ignore = opts.ignoreOutside || [];
     if (!Array.isArray(ignore)) ignore = [ignore];
@@ -144,6 +153,9 @@ LDS.overlay = {
       disconnect: function () {
         document.removeEventListener("pointerdown", onPointerDown, true);
         document.removeEventListener("keydown", onKeydown, true);
+        if (scrollLock && typeof document !== "undefined") {
+          document.documentElement.style.overflow = previousOverflow;
+        }
         if (restoreFocus && typeof restoreFocus.focus === "function") {
           try {
             restoreFocus.focus();

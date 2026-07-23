@@ -1,0 +1,168 @@
+tag = "lds-pagination"
+name = "Pagination"
+category = "data"
+status = "draft"
+summary = "Page controls for lists and tables — summary, size select, and numbered pages."
+
+description = """
+Pager for server- or client-driven collections. Pass total item count, current
+page and page-size; the component derives page count, truncates the page list
+with ellipsis, and emits cancelable change events.
+
+Does not own the data — pair it with lds-table (or any list) and reload rows
+when lds-page-change / lds-page-size-change fire. Page-size uses a native
+select until lds-select exists.
+"""
+
+a11y = """
+Root is a <nav> labelled via label (default Pagination). Page buttons are real
+<button> elements with aria-label; the current page sets aria-current=\"page\".
+Prev/next use chevron icons and are disabled at the ends. Keyboard access is
+native Tab / Enter / Space.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "total"
+type = "number"
+default = "0"
+description = "Total number of items across all pages."
+
+[[attributes]]
+name = "page"
+type = "number"
+default = "1"
+description = "1-based current page. Clamped to the available page range."
+
+[[attributes]]
+name = "page-size"
+type = "number"
+default = "25"
+description = "Items per page."
+
+[[attributes]]
+name = "sizes"
+type = "string"
+default = "10,25,50,100"
+description = "Comma-separated page-size options for the select."
+
+[[attributes]]
+name = "hide-sizes"
+type = "boolean"
+description = "Hide the page-size select."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Disable all controls."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name for the nav. Defaults to Pagination."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-page-change"
+detail = "{ page: number }"
+description = "Fired before the page attribute updates. Cancel to keep the current page."
+
+[[events]]
+name = "lds-page-size-change"
+detail = "{ pageSize: number, page: number }"
+description = "Fired before page-size (and possibly page) update. Cancel to keep the current size."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "root"
+description = "The nav landmark."
+
+[[parts]]
+name = "summary"
+description = "Showing X–Y of Z text."
+
+[[parts]]
+name = "controls"
+description = "Wrapper around sizes and pages."
+
+[[parts]]
+name = "sizes"
+description = "Page-size label and select."
+
+[[parts]]
+name = "select"
+description = "The native page-size <select>."
+
+[[parts]]
+name = "pages"
+description = "Prev / page numbers / next group."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-pagination-control-height"
+default = "--lds-control-height-sm"
+description = "Height of page buttons and the size select."
+
+[[css_vars]]
+name = "--lds-pagination-current-bg"
+default = "--lds-color-accent-subtle"
+description = "Background for the current page button."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Few pages"
+description = "Short ranges render every page button — no ellipsis."
+html = """
+<lds-pagination total="48" page="2" page-size="10"></lds-pagination>
+"""
+
+[[stories]]
+name = "Many pages"
+description = "Long ranges truncate with ellipsis around the current page."
+html = """
+<lds-pagination total="237" page="3" page-size="25"></lds-pagination>
+"""
+
+[[stories]]
+name = "Without size select"
+description = "hide-sizes keeps summary and page buttons only."
+html = """
+<lds-pagination total="120" page="1" page-size="20" hide-sizes></lds-pagination>
+"""
+
+[[stories]]
+name = "Disabled"
+description = "All controls inert."
+html = """
+<lds-pagination total="90" page="2" page-size="25" disabled></lds-pagination>
+"""
+
+[[stories]]
+name = "With a table"
+description = "Typical composition — the app reloads rows when pagination events fire."
+html = """
+<div class="lds-stack">
+  <lds-table density="compact" striped>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Incident</th>
+          <th scope="col">Severity</th>
+          <th scope="col">Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>API latency above SLO</td><td>SEV-2</td><td>Ada Lovelace</td></tr>
+        <tr><td>Disk pressure on db-03</td><td>SEV-1</td><td>Grace Hopper</td></tr>
+        <tr><td>Certificate expires in 7d</td><td>SEV-3</td><td>Alan Turing</td></tr>
+      </tbody>
+    </table>
+  </lds-table>
+  <lds-pagination total="48" page="1" page-size="10"></lds-pagination>
+</div>
+"""

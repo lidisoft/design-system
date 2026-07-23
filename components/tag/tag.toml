@@ -1,0 +1,96 @@
+tag = "lds-tag"
+name = "Tag"
+category = "primitives"
+status = "draft"
+summary = "Removable chip for filters and selected values."
+
+description = """
+Badge-shaped chip with an optional dismiss control. Use for filters and
+selected facets; emit lds-remove (cancelable) when the close button is pressed.
+If not canceled, the tag removes itself from the document.
+"""
+
+a11y = """
+The dismiss control is a real button labelled Remove. disabled blocks dismiss
+and dims the chip. Prefer a clear text label in the default slot.
+"""
+
+[[attributes]]
+name = "intent"
+type = "enum"
+values = ["neutral", "info", "success", "warning", "danger"]
+default = "neutral"
+description = "Colour role. info maps to accent tokens."
+
+[[attributes]]
+name = "variant"
+type = "enum"
+values = ["subtle", "solid", "outline"]
+default = "subtle"
+description = "Fill weight."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md"]
+default = "sm"
+description = "Padding and type size."
+
+[[attributes]]
+name = "dismissible"
+type = "boolean"
+description = "Show the remove control."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks dismiss and dims the chip."
+
+[[slots]]
+name = ""
+description = "Tag label."
+
+[[slots]]
+name = "start"
+description = "Leading adornment, typically an icon."
+
+[[events]]
+name = "lds-remove"
+detail = "{}"
+description = "Fired when dismiss is activated. Cancel to keep the tag."
+
+[[parts]]
+name = "tag"
+description = "The chip surface."
+
+[[parts]]
+name = "close"
+description = "The dismiss button."
+
+[[stories]]
+name = "Dismissible"
+description = "Click the × to remove the tag (unless lds-remove is canceled)."
+html = """
+<div class="lds-cluster">
+  <lds-tag dismissible>eu-west-1</lds-tag>
+  <lds-tag dismissible intent="info">SEV-2</lds-tag>
+  <lds-tag dismissible intent="danger">paging</lds-tag>
+</div>
+"""
+
+[[stories]]
+name = "With start icon"
+description = "Start slot for a leading icon."
+html = """
+<lds-tag dismissible intent="success">
+  <lds-icon slot="start" name="check" size="sm"></lds-icon>
+  acknowledged
+</lds-tag>
+"""
+
+[[stories]]
+name = "Disabled"
+description = "Dismiss is inert while disabled."
+html = """
+<lds-tag dismissible disabled>locked-filter</lds-tag>
+"""

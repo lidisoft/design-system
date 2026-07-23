@@ -1,0 +1,62 @@
+tag = "lds-timeline-item"
+name = "Timeline item"
+category = "data"
+status = "draft"
+summary = "One event on an lds-timeline."
+
+description = """
+Marker, optional time, title slot and body. intent colours the marker from the
+shared intent palette (info/default uses accent).
+"""
+
+a11y = """
+Time and title are visible text. Keep the body concise.
+"""
+
+[[attributes]]
+name = "time"
+type = "string"
+description = "Timestamp or relative label shown beside the title."
+
+[[attributes]]
+name = "intent"
+type = "enum"
+values = ["info", "success", "warning", "danger", "neutral"]
+default = "info"
+description = "Marker colour. info uses accent."
+
+[[slots]]
+name = "title"
+description = "Event heading."
+
+[[slots]]
+name = ""
+description = "Event body."
+
+[[parts]]
+name = "item"
+description = "Row layout."
+
+[[parts]]
+name = "marker"
+description = "Rail dot."
+
+[[parts]]
+name = "time"
+description = "Time label."
+
+[[parts]]
+name = "title"
+description = "Title wrapper."
+
+[[stories]]
+name = "In a timeline"
+description = "See the Timeline page for full compositions."
+html = """
+<lds-timeline>
+  <lds-timeline-item time="09:44" intent="success">
+    <span slot="title">Acknowledged</span>
+    Ada Lovelace took the page.
+  </lds-timeline-item>
+</lds-timeline>
+"""

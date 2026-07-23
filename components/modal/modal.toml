@@ -1,0 +1,101 @@
+tag = "lds-modal"
+name = "Modal"
+category = "overlays"
+status = "draft"
+summary = "Blocking dialog on the native <dialog> element."
+
+description = """
+Modal surface with header, body and footer slots. open maps to showModal();
+dismissible (default true) allows Escape, backdrop click and the close button.
+Uses LDS.overlay scrollLock while open. Drawer and LDS.confirm() come later.
+"""
+
+a11y = """
+Native dialog provides focus trapping and Escape. The close button is labelled
+Close. Prefer a clear header label. When dismissible=\"false\", cancel is
+prevented and the close button is hidden.
+"""
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Whether the modal is shown (showModal)."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Dialog width."
+
+[[attributes]]
+name = "dismissible"
+type = "boolean"
+description = "Allow Escape, backdrop click and the close button. Defaults to true; set dismissible=\"false\" to lock."
+
+[[slots]]
+name = "header"
+description = "Dialog title."
+
+[[slots]]
+name = ""
+description = "Dialog body."
+
+[[slots]]
+name = "footer"
+description = "Actions row."
+
+[[events]]
+name = "lds-open"
+detail = "{}"
+description = "Fired before showModal. Cancel to keep closed."
+
+[[events]]
+name = "lds-close"
+detail = "{ reason: string }"
+description = "Fired before closing. Cancel to keep open."
+
+[[parts]]
+name = "dialog"
+description = "The native dialog element."
+
+[[parts]]
+name = "close"
+description = "The dismiss button."
+
+[[parts]]
+name = "body"
+description = "Scrollable body."
+
+[[stories]]
+name = "Open"
+description = "Toggle open with a button. Escape and backdrop dismiss."
+html = """
+<div class="lds-stack">
+  <lds-button size="sm" onclick="this.nextElementSibling.setAttribute('open','')">Open modal</lds-button>
+  <lds-modal>
+    <span slot="header">Acknowledge incident</span>
+    <p class="lds-muted" style="margin: 0">This will notify the current on-call that you are responding.</p>
+    <div slot="footer" class="lds-cluster">
+      <lds-button size="sm" variant="ghost" onclick="this.closest('lds-modal').removeAttribute('open')">Cancel</lds-button>
+      <lds-button size="sm" onclick="this.closest('lds-modal').removeAttribute('open')">Acknowledge</lds-button>
+    </div>
+  </lds-modal>
+</div>
+"""
+
+[[stories]]
+name = "Non-dismissible"
+description = "Must use an explicit action; Escape and backdrop do nothing."
+html = """
+<div class="lds-stack">
+  <lds-button size="sm" variant="secondary" onclick="this.nextElementSibling.setAttribute('open','')">Open locked modal</lds-button>
+  <lds-modal dismissible="false" size="sm">
+    <span slot="header">Deploy in progress</span>
+    <p class="lds-muted" style="margin: 0">Wait for the canary to finish.</p>
+    <div slot="footer">
+      <lds-button size="sm" onclick="this.closest('lds-modal').removeAttribute('open')">Done</lds-button>
+    </div>
+  </lds-modal>
+</div>
+"""

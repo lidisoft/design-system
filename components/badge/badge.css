@@ -1,0 +1,96 @@
+/* Short status label. Intents assign custom properties; variants remix them. */
+
+:host {
+  --lds-badge-bg: var(--lds-color-bg-muted);
+  --lds-badge-fg: var(--lds-color-fg-muted);
+  --lds-badge-border: var(--lds-color-border-default);
+  --lds-badge-padding-y: var(--lds-space-1);
+  --lds-badge-padding-x: var(--lds-space-2);
+  --lds-badge-font-size: var(--lds-font-size-2xs);
+  --lds-badge-radius: var(--lds-radius-full);
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="md"]) {
+  --lds-badge-padding-y: var(--lds-space-1);
+  --lds-badge-padding-x: var(--lds-space-3);
+  --lds-badge-font-size: var(--lds-font-size-xs);
+}
+
+:host([intent="info"]) {
+  --lds-badge-bg: var(--lds-color-accent-subtle);
+  --lds-badge-fg: var(--lds-color-accent-fg);
+  --lds-badge-border: var(--lds-color-accent-border);
+}
+
+:host([intent="success"]) {
+  --lds-badge-bg: var(--lds-color-success-subtle);
+  --lds-badge-fg: var(--lds-color-success-fg);
+  --lds-badge-border: var(--lds-color-success-border);
+}
+
+:host([intent="warning"]) {
+  --lds-badge-bg: var(--lds-color-warning-subtle);
+  --lds-badge-fg: var(--lds-color-warning-fg);
+  --lds-badge-border: var(--lds-color-warning-border);
+}
+
+:host([intent="danger"]) {
+  --lds-badge-bg: var(--lds-color-danger-subtle);
+  --lds-badge-fg: var(--lds-color-danger-fg);
+  --lds-badge-border: var(--lds-color-danger-border);
+}
+
+:host([variant="solid"]) {
+  --lds-badge-bg: var(--lds-color-fg-muted);
+  --lds-badge-fg: var(--lds-color-fg-on-accent);
+  --lds-badge-border: transparent;
+}
+
+:host([variant="solid"][intent="info"]) {
+  --lds-badge-bg: var(--lds-color-accent-default);
+}
+
+:host([variant="solid"][intent="success"]) {
+  --lds-badge-bg: var(--lds-color-success-default);
+}
+
+:host([variant="solid"][intent="warning"]) {
+  --lds-badge-bg: var(--lds-color-warning-default);
+}
+
+:host([variant="solid"][intent="danger"]) {
+  --lds-badge-bg: var(--lds-color-danger-default);
+}
+
+:host([variant="outline"]) {
+  --lds-badge-bg: transparent;
+}
+
+.badge {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  max-width: 100%;
+  padding: var(--lds-badge-padding-y) var(--lds-badge-padding-x);
+  overflow: hidden;
+  border: var(--lds-control-border-width-default) solid var(--lds-badge-border);
+  border-radius: var(--lds-badge-radius);
+  background: var(--lds-badge-bg);
+  color: var(--lds-badge-fg);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-badge-font-size);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-none);
+  letter-spacing: var(--lds-font-tracking-caps);
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

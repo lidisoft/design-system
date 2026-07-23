@@ -1,0 +1,78 @@
+/* Grouped content surface with optional header, media and footer. */
+
+:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([interactive]) .card {
+  transition:
+    box-shadow var(--lds-transition-surface),
+    border-color var(--lds-transition-surface);
+  cursor: pointer;
+}
+
+:host([interactive]) .card:hover {
+  border-color: var(--lds-color-border-strong);
+  box-shadow: var(--lds-shadow-lg);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-4);
+  box-sizing: border-box;
+  padding: var(--lds-card-padding);
+  border: var(--lds-control-border-width-default) solid var(--lds-card-border);
+  border-radius: var(--lds-card-radius);
+  background: var(--lds-color-bg-raised);
+  color: var(--lds-color-fg-default);
+  box-shadow: var(--lds-card-shadow);
+}
+
+.media,
+.header,
+.body,
+.footer {
+  min-width: 0;
+}
+
+.media[data-empty],
+.header[data-empty],
+.body[data-empty],
+.footer[data-empty] {
+  display: none;
+}
+
+.media {
+  margin: calc(var(--lds-card-padding) * -1);
+  margin-bottom: 0;
+  overflow: hidden;
+  border-radius: var(--lds-card-radius) var(--lds-card-radius) 0 0;
+}
+
+.media ::slotted(img) {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.header {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-3);
+  padding-top: var(--lds-space-2);
+  border-top: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}

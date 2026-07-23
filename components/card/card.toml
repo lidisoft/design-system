@@ -1,0 +1,94 @@
+tag = "lds-card"
+name = "Card"
+category = "layout"
+status = "draft"
+summary = "Grouped content with optional header, media and footer."
+
+description = """
+Elevated surface for clustering related content. Slots cover media, header,
+body and footer. The interactive attribute adds hover elevation for clickable
+cards — the caller owns the role and activation (wrap in a link or handle click).
+"""
+
+a11y = """
+Presentational container. For interactive cards, put the activation on a real
+link/button inside the card or on a wrapping <a>; do not rely on the host alone.
+"""
+
+[[attributes]]
+name = "interactive"
+type = "boolean"
+description = "Hover elevation for clickable card surfaces."
+
+[[slots]]
+name = "media"
+description = "Leading media, typically an image."
+
+[[slots]]
+name = "header"
+description = "Title or heading row."
+
+[[slots]]
+name = ""
+description = "Card body."
+
+[[slots]]
+name = "footer"
+description = "Actions or meta row."
+
+[[parts]]
+name = "card"
+description = "The elevated surface."
+
+[[parts]]
+name = "media"
+description = "Media region."
+
+[[parts]]
+name = "header"
+description = "Header region."
+
+[[parts]]
+name = "body"
+description = "Body region."
+
+[[parts]]
+name = "footer"
+description = "Footer region."
+
+[[stories]]
+name = "Basic"
+description = "Header, body and footer actions."
+html = """
+<lds-card style="max-width: 22rem">
+  <span slot="header">API latency</span>
+  <p class="lds-muted" style="margin: 0">p95 above SLO for 12 minutes in eu-west-1.</p>
+  <div slot="footer" class="lds-cluster">
+    <lds-button size="sm">Acknowledge</lds-button>
+    <lds-button size="sm" variant="ghost">Snooze</lds-button>
+  </div>
+</lds-card>
+"""
+
+[[stories]]
+name = "With badge"
+description = "Compose with lds-badge in the header."
+html = """
+<lds-card style="max-width: 22rem">
+  <div slot="header" class="lds-split">
+    <span>Disk pressure</span>
+    <lds-badge intent="danger">SEV-1</lds-badge>
+  </div>
+  <p class="lds-muted" style="margin: 0">db-03 volume at 92%.</p>
+</lds-card>
+"""
+
+[[stories]]
+name = "Interactive"
+description = "Hover elevation for surfaces that navigate somewhere."
+html = """
+<lds-card interactive style="max-width: 22rem">
+  <span slot="header">Open runbook</span>
+  <p class="lds-muted" style="margin: 0">Failover primary database.</p>
+</lds-card>
+"""

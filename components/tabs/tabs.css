@@ -1,0 +1,56 @@
+/* Tablist + panels. Buttons are built in JS from lds-tab-panel children. */
+
+:host {
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-4);
+}
+
+.tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lds-space-1);
+  border-bottom: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+}
+
+.tab {
+  box-sizing: border-box;
+  margin: 0 0 calc(var(--lds-control-border-width-default) * -1);
+  padding: var(--lds-space-2) var(--lds-space-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--lds-color-fg-muted);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--lds-color-fg-default);
+}
+
+.tab:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--lds-color-accent-default);
+  color: var(--lds-color-fg-default);
+  font-weight: var(--lds-font-weight-semibold);
+}
+
+.panels {
+  min-width: 0;
+}

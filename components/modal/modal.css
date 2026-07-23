@@ -1,0 +1,111 @@
+/* Blocking dialog built on native <dialog>. */
+
+:host {
+  --lds-modal-width: 28rem;
+  --lds-modal-bg: var(--lds-color-bg-raised);
+  --lds-modal-fg: var(--lds-color-fg-default);
+  --lds-modal-radius: var(--lds-overlay-radius);
+  --lds-modal-shadow: var(--lds-overlay-shadow);
+
+  display: contents;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-modal-width: 22rem;
+}
+
+:host([size="lg"]) {
+  --lds-modal-width: 40rem;
+}
+
+.dialog {
+  box-sizing: border-box;
+  width: min(var(--lds-modal-width), calc(100vw - var(--lds-space-8)));
+  max-height: calc(100vh - var(--lds-space-8));
+  margin: auto;
+  padding: 0;
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-modal-radius);
+  background: var(--lds-modal-bg);
+  color: var(--lds-modal-fg);
+  box-shadow: var(--lds-modal-shadow);
+}
+
+.dialog::backdrop {
+  background: var(--lds-color-bg-overlay);
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--lds-space-8));
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-4) var(--lds-space-5);
+  border-bottom: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.header__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-control-radius-sm);
+  background: transparent;
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+}
+
+.close[hidden] {
+  display: none;
+}
+
+.close:hover {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-default);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.body {
+  padding: var(--lds-space-5);
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-4) var(--lds-space-5);
+  border-top: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.footer[data-empty] {
+  display: none;
+}

@@ -1,0 +1,68 @@
+tag = "lds-code"
+name = "Code"
+category = "data"
+status = "draft"
+summary = "Code or payload block with optional copy."
+
+description = """
+Monospace block for snippets and API payloads. No syntax highlighting in this
+pass — language is metadata only. When copyable (default), a button copies the
+slotted text and emits lds-copy; show a toast from the caller if you want feedback.
+"""
+
+a11y = """
+The copy control is a real button labelled Copy. Prefer keeping the payload
+selectable as plain text in the pre/code surface.
+"""
+
+[[attributes]]
+name = "language"
+type = "string"
+description = "Language hint (data-language only; no highlighting)."
+
+[[attributes]]
+name = "copyable"
+type = "boolean"
+description = "Show the copy button. Defaults to true when omitted; set copyable=\"false\" to hide."
+
+[[slots]]
+name = ""
+description = "Code text or inline nodes."
+
+[[events]]
+name = "lds-copy"
+detail = "{ ok: boolean }"
+description = "Fired after a copy attempt."
+
+[[parts]]
+name = "root"
+description = "Wrapper around pre and copy."
+
+[[parts]]
+name = "pre"
+description = "The scrollable pre element."
+
+[[parts]]
+name = "code"
+description = "The code element."
+
+[[parts]]
+name = "copy"
+description = "The copy button."
+
+[[stories]]
+name = "Basic"
+description = "JSON payload with copy."
+html = """
+<lds-code language="json">{
+  "severity": "a3f9c2e8",
+  "severity": "SEV-2"
+}</lds-code>
+"""
+
+[[stories]]
+name = "Without copy"
+description = "copyable=false hides the button."
+html = """
+<lds-code copyable="false">make check</lds-code>
+"""
