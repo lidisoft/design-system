@@ -73,7 +73,7 @@ components will.
 - [ ] **`lds-breadcrumb` + `lds-breadcrumb-item`** — hierarchy trail; collapses
       middle steps when narrow
 - [x] **`lds-timeline`** — `lds-timeline-item` event rail
-- [x] **`lds-progress`**, [ ] `lds-banner`
+- [x] **`lds-progress`**, [x] **`lds-banner`**
 - [x] **`lds-code`** — monospace block with copy
 - [x] **`lds-pagination`** — summary, page-size select, ellipsis page buttons
 

@@ -3335,6 +3335,107 @@
     }
   })();
 
+  /* behaviour: lds-banner */
+  (function () {
+    /* Behaviour for <lds-banner> — page-level announcement strip. */
+
+    LDS.behavior("lds-banner", {
+      connected(el) {
+        const close = el.$(".close");
+        const root = el.$(".root");
+
+        syncRole(el, root);
+        syncDismissible(el, close);
+        syncFallbackIcon(el);
+        watchSlot(el, 'slot[name="title"]', ".title");
+        watchSlot(el, ".body > slot", ".body");
+        watchSlot(el, 'slot[name="action"]', ".action");
+        watchIconSlot(el);
+
+        close.addEventListener("click", () => dismiss(el, "close"));
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        const close = el.$(".close");
+        const root = el.$(".root");
+        if (name === "intent") {
+          syncRole(el, root);
+          syncFallbackIcon(el);
+        }
+        if (name === "dismissible" && close) syncDismissible(el, close);
+      },
+    });
+
+    function isDismissible(el) {
+      return el.boolAttr("dismissible");
+    }
+
+    function syncDismissible(el, close) {
+      close.hidden = !isDismissible(el);
+    }
+
+    function syncRole(el, root) {
+      root.setAttribute(
+        "role",
+        el.getAttribute("intent") === "danger" ? "alert" : "status"
+      );
+    }
+
+    function syncFallbackIcon(el) {
+      const intent = el.getAttribute("intent") || "info";
+      el.$$(".icon__fallback").forEach((icon) => {
+        icon.hidden = icon.getAttribute("data-intent") !== intent;
+      });
+    }
+
+    function dismiss(el, reason) {
+      if (el.hasAttribute("hidden")) return;
+
+      const event = el.emit("lds-dismiss", { reason: reason });
+      if (event.defaultPrevented) return;
+
+      el.setAttribute("hidden", "");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+
+    function watchIconSlot(el) {
+      const slot = el.$('slot[name="icon"]');
+      const wrap = el.$(".icon");
+      if (!slot || !wrap) return;
+
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty-slot", empty);
+        /* Show fallbacks only when the icon slot is empty. */
+        el.$$(".icon__fallback").forEach((icon) => {
+          if (!empty) icon.hidden = true;
+          else icon.hidden = icon.getAttribute("data-intent") !== (el.getAttribute("intent") || "info");
+        });
+      };
+
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-progress */
   (function () {
     /* Behaviour for <lds-progress>. */
@@ -6972,6 +7073,209 @@ a.link:hover {
   color: var(--lds-color-fg-muted);
   font-size: var(--lds-font-size-sm);
   line-height: var(--lds-font-leading-normal);
+}`,
+  });
+
+  /* component: lds-banner (draft) */
+  LDS.define({
+    tag: "lds-banner",
+    className: "LdsBanner",
+    formAssociated: false,
+    observed: ["intent", "dismissible", "sticky"],
+    defaults: {"intent": "info"},
+    template: `<div class="root" part="root">
+  <div class="inner" part="inner">
+    <span class="icon" part="icon" aria-hidden="true">
+      <slot name="icon"></slot>
+      <lds-icon class="icon__fallback" data-intent="info" name="info"></lds-icon>
+      <lds-icon class="icon__fallback" data-intent="success" name="circle-check" hidden></lds-icon>
+      <lds-icon class="icon__fallback" data-intent="warning" name="alert-triangle" hidden></lds-icon>
+      <lds-icon class="icon__fallback" data-intent="danger" name="alert-circle" hidden></lds-icon>
+    </span>
+    <div class="main">
+      <div class="title" part="title"><slot name="title"></slot></div>
+      <div class="body" part="body"><slot></slot></div>
+    </div>
+    <div class="action" part="action"><slot name="action"></slot></div>
+    <button type="button" class="close" part="close" aria-label="Dismiss" hidden>
+      <lds-icon name="x"></lds-icon>
+    </button>
+  </div>
+</div>`,
+    styles: `/* Page-level announcement. Full-bleed within its containing block. */
+
+:host {
+  --lds-banner-bg: var(--lds-color-accent-subtle);
+  --lds-banner-fg: var(--lds-color-accent-fg);
+  --lds-banner-border: var(--lds-color-accent-border);
+  --lds-banner-icon: var(--lds-color-accent-default);
+
+  display: block;
+  width: 100%;
+  color: var(--lds-banner-fg);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([intent="success"]) {
+  --lds-banner-bg: var(--lds-color-success-subtle);
+  --lds-banner-fg: var(--lds-color-success-fg);
+  --lds-banner-border: var(--lds-color-success-border);
+  --lds-banner-icon: var(--lds-color-success-default);
+}
+
+:host([intent="warning"]) {
+  --lds-banner-bg: var(--lds-color-warning-subtle);
+  --lds-banner-fg: var(--lds-color-warning-fg);
+  --lds-banner-border: var(--lds-color-warning-border);
+  --lds-banner-icon: var(--lds-color-warning-default);
+}
+
+:host([intent="danger"]) {
+  --lds-banner-bg: var(--lds-color-danger-subtle);
+  --lds-banner-fg: var(--lds-color-danger-fg);
+  --lds-banner-border: var(--lds-color-danger-border);
+  --lds-banner-icon: var(--lds-color-danger-default);
+}
+
+:host([sticky]) {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--lds-z-sticky);
+}
+
+.root {
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--lds-banner-bg);
+  border-block-end: var(--lds-control-border-width-default) solid var(--lds-banner-border);
+}
+
+.inner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--lds-space-3);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--lds-banner-max-width, none);
+  margin-inline: auto;
+  padding-block: var(--lds-space-3);
+  padding-inline: var(--lds-space-4);
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  margin-block-start: 0.1em;
+  color: var(--lds-banner-icon);
+}
+
+.icon__fallback[hidden] {
+  display: none;
+}
+
+.main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--lds-space-1);
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-snug);
+}
+
+.title[data-empty] {
+  display: none;
+}
+
+.body {
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-regular);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.body[data-empty] {
+  display: none;
+}
+
+.action {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-space-2);
+  align-self: center;
+}
+
+.action[data-empty] {
+  display: none;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: calc(var(--lds-space-1) * -1);
+  padding: 0;
+
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: var(--lds-control-radius-sm);
+  cursor: pointer;
+  appearance: none;
+  opacity: 0.7;
+  transition:
+    background var(--lds-transition-control),
+    opacity var(--lds-transition-control);
+}
+
+.close:hover {
+  opacity: 1;
+  background: var(--lds-color-bg-muted);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.close[hidden] {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .inner {
+    flex-wrap: wrap;
+  }
+
+  .action {
+    width: 100%;
+    padding-inline-start: calc(var(--lds-icon-size-md) + var(--lds-space-3));
+  }
+
+  .close {
+    position: absolute;
+    inset-block-start: var(--lds-space-2);
+    inset-inline-end: var(--lds-space-2);
+  }
+
+  .root {
+    position: relative;
+  }
 }`,
   });
 

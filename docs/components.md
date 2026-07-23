@@ -39,6 +39,7 @@ every LiDiSoft service needs.
 | `lds-timeline-item` | **draft** — timeline event |
 | `lds-modal` | **draft** — blocking dialog |
 | `lds-progress` | **draft** — linear / circular progress |
+| `lds-banner` | **draft** — full-bleed page announcement |
 | `lds-field` | **draft** — label, help, error wrapper |
 | `lds-input` | **draft** — form-associated text |
 | `lds-textarea` | **draft** — form-associated multi-line |
@@ -173,7 +174,7 @@ chrome and behaviour around it.
 | `lds-toast` | Transient notifications | intent, duration, dismissible; compose in `lds-toast-region` or call `LDS.toast()` |
 | `lds-toast-region` | Toast stack host | placement corners; auto-created by `LDS.toast()`; Escape dismisses newest |
 | `lds-progress` | Determinate progress | **Done (draft).** Linear and circular; `value`/`max`, indeterminate mode |
-| `lds-banner` | Page-level announcements | Full-bleed; maintenance windows, incidents |
+| `lds-banner` | Page-level announcements | **Done (draft).** Full-bleed; intent, dismissible, sticky; title/action/icon slots |
 
 ## Overlays
 

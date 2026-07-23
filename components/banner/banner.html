@@ -1,0 +1,19 @@
+<div class="root" part="root">
+  <div class="inner" part="inner">
+    <span class="icon" part="icon" aria-hidden="true">
+      <slot name="icon"></slot>
+      <lds-icon class="icon__fallback" data-intent="info" name="info"></lds-icon>
+      <lds-icon class="icon__fallback" data-intent="success" name="circle-check" hidden></lds-icon>
+      <lds-icon class="icon__fallback" data-intent="warning" name="alert-triangle" hidden></lds-icon>
+      <lds-icon class="icon__fallback" data-intent="danger" name="alert-circle" hidden></lds-icon>
+    </span>
+    <div class="main">
+      <div class="title" part="title"><slot name="title"></slot></div>
+      <div class="body" part="body"><slot></slot></div>
+    </div>
+    <div class="action" part="action"><slot name="action"></slot></div>
+    <button type="button" class="close" part="close" aria-label="Dismiss" hidden>
+      <lds-icon name="x"></lds-icon>
+    </button>
+  </div>
+</div>

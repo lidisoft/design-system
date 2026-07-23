@@ -1,0 +1,144 @@
+tag = "lds-banner"
+name = "Banner"
+category = "feedback"
+status = "draft"
+summary = "Full-bleed page announcement for maintenance, incidents and notices."
+
+description = """
+Persistent, page-level strip — not an inline alert and not a toast. Sit it at
+the top of the layout (or sticky) for maintenance windows, degraded service, or
+org-wide notices. Use lds-toast for transient feedback and a future lds-alert
+for in-flow messages.
+"""
+
+a11y = """
+role=\"status\" by default; role=\"alert\" when intent is danger. Dismiss is a real
+button labelled Dismiss. Callers own the title and body; keep them short.
+"""
+
+[[attributes]]
+name = "intent"
+type = "enum"
+values = ["info", "success", "warning", "danger"]
+default = "info"
+description = "Severity colour and default icon. info uses the accent roles."
+
+[[attributes]]
+name = "dismissible"
+type = "boolean"
+description = "Show a dismiss control. Dismissal sets hidden and fires lds-dismiss."
+
+[[attributes]]
+name = "sticky"
+type = "boolean"
+description = "Stick to the top of the scrolling container while visible."
+
+[[slots]]
+name = "icon"
+description = "Optional leading icon; defaults to an intent-matched system icon."
+
+[[slots]]
+name = "title"
+description = "Short heading."
+
+[[slots]]
+name = ""
+description = "Body copy."
+
+[[slots]]
+name = "action"
+description = "Optional follow-up control, typically an lds-button."
+
+[[events]]
+name = "lds-dismiss"
+detail = "{ reason: string }"
+description = "Fired before hiding. Cancel to keep the banner visible. reason is close."
+
+[[parts]]
+name = "root"
+description = "Full-bleed surface."
+
+[[parts]]
+name = "inner"
+description = "Content row inside the surface."
+
+[[parts]]
+name = "icon"
+description = "Leading icon region."
+
+[[parts]]
+name = "title"
+description = "Title slot wrapper."
+
+[[parts]]
+name = "body"
+description = "Body slot wrapper."
+
+[[parts]]
+name = "action"
+description = "Action slot wrapper."
+
+[[parts]]
+name = "close"
+description = "Dismiss button."
+
+[[css_vars]]
+name = "--lds-banner-bg"
+default = "per intent"
+description = "Background."
+
+[[css_vars]]
+name = "--lds-banner-fg"
+default = "per intent"
+description = "Text colour."
+
+[[css_vars]]
+name = "--lds-banner-max-width"
+default = "none"
+description = "Optional content max-width; the coloured strip stays full-bleed."
+
+[[stories]]
+name = "Intents"
+description = "Severity colour and matching icons."
+html = """
+<div class="lds-stack" style="--lds-stack-gap: var(--lds-space-3)">
+  <lds-banner intent="info">
+    <span slot="title">Scheduled maintenance</span>
+    API writes pause 02:00–02:30 UTC. Reads are unaffected.
+  </lds-banner>
+  <lds-banner intent="success">
+    <span slot="title">All systems operational</span>
+    The incident on us-east has been resolved.
+  </lds-banner>
+  <lds-banner intent="warning">
+    <span slot="title">Elevated latency</span>
+    Notification delivery is slower than usual.
+  </lds-banner>
+  <lds-banner intent="danger">
+    <span slot="title">Degraded — paging paused</span>
+    On-call paging is offline. Use the backup phone tree.
+  </lds-banner>
+</div>
+"""
+
+[[stories]]
+name = "Dismissible with action"
+description = "Optional dismiss and a follow-up control."
+html = """
+<lds-banner intent="warning" dismissible>
+  <span slot="title">Quiet hours end in 15 minutes</span>
+  Escalations will resume automatically.
+  <lds-button slot="action" size="sm" variant="secondary">Extend</lds-button>
+</lds-banner>
+"""
+
+[[stories]]
+name = "Custom icon"
+description = "Override the default intent icon."
+html = """
+<lds-banner intent="info">
+  <lds-icon slot="icon" name="bell"></lds-icon>
+  <span slot="title">New on-call schedule</span>
+  The rotation for Platform takes effect Monday.
+</lds-banner>
+"""
