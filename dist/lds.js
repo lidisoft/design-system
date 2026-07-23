@@ -555,7 +555,7 @@
     }
   };
 
-  LDS.icons = ["alert-circle", "alert-triangle", "bell", "check", "chevron-down", "chevron-left", "chevron-right", "chevron-up", "circle-check", "copy", "external-link", "info", "loader-circle", "menu", "minus", "more-horizontal", "plus", "search", "settings", "trash-2", "user", "x"];
+  LDS.icons = ["alert-circle", "alert-triangle", "bell", "calendar", "check", "chevron-down", "chevron-left", "chevron-right", "chevron-up", "circle-check", "copy", "external-link", "info", "loader-circle", "menu", "minus", "more-horizontal", "plus", "search", "settings", "trash-2", "user", "users", "x"];
 
   /* behaviour: lds-avatar */
   (function () {

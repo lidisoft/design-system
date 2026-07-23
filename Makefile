@@ -89,7 +89,8 @@ ICON_DIR := assets/icons
 ICON_BASE := https://cdn.jsdelivr.net/npm/lucide-static@1.25.0/icons
 ICONS := check x chevron-down chevron-up chevron-left chevron-right search \
 	plus minus menu more-horizontal alert-triangle alert-circle info \
-	circle-check external-link copy trash-2 settings user bell loader-circle
+	circle-check external-link copy trash-2 settings user users calendar \
+	bell loader-circle
 
 icons:
 	@mkdir -p $(ICON_DIR)

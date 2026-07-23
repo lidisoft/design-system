@@ -98,6 +98,7 @@ html = """
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="alert-circle" size="lg"></lds-icon>alert-circle</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="alert-triangle" size="lg"></lds-icon>alert-triangle</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="bell" size="lg"></lds-icon>bell</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="calendar" size="lg"></lds-icon>calendar</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="check" size="lg"></lds-icon>check</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="chevron-down" size="lg"></lds-icon>chevron-down</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="chevron-left" size="lg"></lds-icon>chevron-left</span>
@@ -116,6 +117,7 @@ html = """
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="settings" size="lg"></lds-icon>settings</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="trash-2" size="lg"></lds-icon>trash-2</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="user" size="lg"></lds-icon>user</span>
+  <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="users" size="lg"></lds-icon>users</span>
   <span class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); align-items: center; font-size: var(--lds-font-size-2xs); color: var(--lds-color-fg-muted)"><lds-icon name="x" size="lg"></lds-icon>x</span>
 </div>
 """
