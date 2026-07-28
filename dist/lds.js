@@ -1,6 +1,6 @@
 /*!
  * LiDiSoft Design System — lds.js
- * version 0.1.0 · generated 2026-07-23
+ * version 0.0.1 · generated 2026-07-28
  *
  * GENERATED FILE — DO NOT EDIT.
  * Regenerate with: make build   (see docs/architecture.md)
@@ -4937,7 +4937,7 @@
 }`,
   });
 
-  /* component: lds-button (stable) */
+  /* component: lds-button (draft) */
   LDS.define({
     tag: "lds-button",
     className: "LdsButton",
@@ -5258,7 +5258,7 @@
 }`,
   });
 
-  /* component: lds-icon (beta) */
+  /* component: lds-icon (draft) */
   LDS.define({
     tag: "lds-icon",
     className: "LdsIcon",
@@ -9181,6 +9181,6 @@ a.link:hover {
 }`,
   });
 
-  LDS.version = "0.1.0";
+  LDS.version = "0.0.1";
   global.LDS = LDS;
 })(typeof globalThis !== "undefined" ? globalThis : window);

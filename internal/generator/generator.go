@@ -31,7 +31,7 @@ import (
 )
 
 // Version is stamped into the generated banners and exposed as LDS.version.
-const Version = "0.1.0"
+const Version = "0.0.1"
 
 // Options configures a build.
 type Options struct {

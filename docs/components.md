@@ -12,8 +12,8 @@ every LiDiSoft service needs.
 
 | Component | Status |
 |-----------|--------|
-| `lds-button` | **stable** — the reference implementation |
-| `lds-icon` | **beta** — build-time Lucide sprite |
+| `lds-button` | **draft** — the reference implementation |
+| `lds-icon` | **draft** — build-time Lucide sprite |
 | `lds-navbar` | **draft** — top bar with compact toggle |
 | `lds-nav` | **draft** — sidebar with item + group |
 | `lds-nav-item` | **draft** — sidebar destination |

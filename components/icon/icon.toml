@@ -1,7 +1,7 @@
 tag = "lds-icon"
 name = "Icon"
 category = "primitives"
-status = "beta"
+status = "draft"
 summary = "Inline iconography from the build-time Lucide sprite."
 
 description = """

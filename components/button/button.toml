@@ -1,7 +1,7 @@
 tag = "lds-button"
 name = "Button"
 category = "primitives"
-status = "stable"
+status = "draft"
 summary = "Triggers an action. The reference implementation for every other component."
 
 description = """
