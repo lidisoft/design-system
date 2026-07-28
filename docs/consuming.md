@@ -247,6 +247,23 @@ button.addEventListener("lds-click", (event) => {
 - **Major** — removed or renamed tokens, attributes, events or parts; changed
   default appearance.
 
+### Releasing
+
+Create a version tag on `main`, then push it:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Pushing a `v*` tag triggers the GitHub release workflow. It runs the release
+gate (`gofmt` check, `make vet`, `make test`, `make verify`), builds release
+notes from every commit since the previous tag, and publishes a GitHub release
+with `dist/` archives attached for static-site consumers.
+
+If `dist/` is stale, the workflow fails instead of publishing. Run
+`make build`, commit the regenerated bundles, and push a corrected tag.
+
 Custom properties are part of the public API. A consuming app that sets
 `--lds-button-radius` breaks if that property is renamed, and nothing will catch
 it at compile time — hence the deprecation policy in

@@ -105,8 +105,11 @@ Independent of components, ordered by value.
       pairing in both themes, as a Go test over the resolved token set. Cheap to
       write, catches a whole class of regression, and removes the manual step
       currently described in [design-tokens.md](design-tokens.md#contrast).
-- [ ] **CI pipeline.** `make check` on every push. `make verify` is the load
-      bearing part — it fails when `dist/` drifts from the sources.
+- [ ] **CI pipeline.** Release automation on pushed `v*` tags is in place:
+      releases now run a quality gate, generate notes from commits since the
+      previous tag, and publish `dist/` archives on GitHub. Still missing:
+      `make check` on every push. `make verify` is the load bearing part — it
+      fails when `dist/` drifts from the sources.
 - [ ] **A component linter.** Fail the build on a hex value in component CSS, a
       missing `display` on `:host`, an undocumented `part`, or an attribute in
       the template that is not declared in the TOML. Mechanically enforces most
