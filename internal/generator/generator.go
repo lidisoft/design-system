@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
@@ -296,15 +295,19 @@ func buildJS(src *Sources, version string, iconNames []string) string {
 	return b.String()
 }
 
+// banner deliberately carries no generation timestamp: dist/ is committed,
+// and make verify diffs a fresh build against it byte for byte, so a
+// wall-clock date here would fail that check on any day it wasn't
+// regenerated — with no source change to explain why.
 func banner(file, version string) string {
 	return fmt.Sprintf(`/*!
  * LiDiSoft Design System — %s
- * version %s · generated %s
+ * version %s
  *
  * GENERATED FILE — DO NOT EDIT.
  * Regenerate with: make build   (see docs/architecture.md)
  */
-`, file, version, time.Now().UTC().Format("2006-01-02"))
+`, file, version)
 }
 
 func defaultsLiteral(c catalog.Component) string {

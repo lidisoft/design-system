@@ -1,6 +1,6 @@
 /*!
  * LiDiSoft Design System — lds.js
- * version 0.0.1 · generated 2026-07-28
+ * version 0.0.1
  *
  * GENERATED FILE — DO NOT EDIT.
  * Regenerate with: make build   (see docs/architecture.md)
