@@ -20,6 +20,7 @@ a different approach — see [docs/decisions.md](docs/decisions.md#1-go-generate
 ```bash
 make dev                    # gallery on :8081 — the main dev loop
 make build                  # regenerate dist/
+make site                   # export the gallery to site/ as a static SPA
 make check                  # fmt + vet + test + dist freshness — run before finishing
 make new name=x category=y  # scaffold a component
 make icons                  # refetch vendored Lucide SVGs into assets/icons/

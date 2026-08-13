@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Title}} · LDS</title>
   <!-- The gallery consumes the real bundle. If it looks wrong here, it is wrong. -->
-  <link rel="stylesheet" href="/dist/lds.css">
-  <link rel="stylesheet" href="/_gallery/gallery.css">
+  <link rel="stylesheet" href="{{.Base}}/dist/lds.css">
+  <link rel="stylesheet" href="{{.Base}}/_gallery/gallery.css">
 </head>
 <body>
   <a class="lds-skip-link" href="#main">Skip to content</a>
@@ -20,13 +20,13 @@
       </div>
 
       <nav class="sidebar__nav" aria-label="Gallery">
-        <a href="/" {{if eq .Active "overview"}}aria-current="page"{{end}}>Overview</a>
-        <a href="/tokens" {{if eq .Active "tokens"}}aria-current="page"{{end}}>Tokens</a>
+        <a href="{{$.Base}}/" {{if eq .Active "overview"}}aria-current="page"{{end}}>Overview</a>
+        <a href="{{$.Base}}/tokens" {{if eq .Active "tokens"}}aria-current="page"{{end}}>Tokens</a>
 
         {{range .Nav}}
           <p class="sidebar__group">{{title .Name}}</p>
           {{range .Components}}
-            <a href="/components/{{.Tag}}" {{if eq $.Active .Tag}}aria-current="page"{{end}}>
+            <a href="{{$.Base}}/components/{{.Tag}}" {{if eq $.Active .Tag}}aria-current="page"{{end}}>
               {{.Name}}
               <span class="status status--{{.Status}}">{{.Status}}</span>
             </a>
@@ -44,7 +44,7 @@
     </main>
   </div>
 
-  <script src="/dist/lds.js"></script>
+  <script src="{{.Base}}/dist/lds.js"></script>
   <script>
     /* Theme preference is gallery-local; consuming apps do their own thing. */
     (function () {

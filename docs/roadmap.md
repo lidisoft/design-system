@@ -94,7 +94,9 @@ Genuinely optional; none of it blocks shipping.
 - [x] **`lds-date-picker`** — native `<input type="date">` (plus time /
       datetime-local / month / week); sufficient until a product needs a custom
       calendar grid
-- [ ] Static export of the gallery as a public design-system site
+- [x] **Static export of the gallery as a public design-system site** —
+      `make site` / `lds export`, deployed to GitHub Pages on tag push; see
+      [gallery.md](gallery.md#static-export)
 - [ ] Additional themes (high contrast; a marketing/inverse theme)
 
 ## Toolchain work

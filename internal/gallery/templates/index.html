@@ -54,7 +54,7 @@
       <ul class="catalog">
         {{range .Components}}
           <li>
-            <a href="/components/{{.Tag}}">
+            <a href="{{$.Base}}/components/{{.Tag}}">
               <strong>{{.Name}}</strong>
               <code>&lt;{{.Tag}}&gt;</code>
               <span class="status status--{{.Status}}">{{.Status}}</span>

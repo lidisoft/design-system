@@ -112,6 +112,31 @@ Template helpers available: `title`, `isColor`, `inGroup`, `slotName`,
 - **No interactive controls (knobs).** Stories are authored HTML; if you want to
   see a variant, write it. This keeps stories greppable and diffable.
 - **No search.** The sidebar fits on one screen. Revisit past ~40 components.
-- **No static export.** The gallery is a dev tool. Publishing it would mean
-  choosing what a public design-system site should say, which is a separate job
-  — see [roadmap.md](roadmap.md).
+
+## Static export
+
+```bash
+make site                        # writes site/, links rooted at /design-system
+SITE_BASE=/other make site       # a different subpath
+SITE_BASE= make site             # root-hosted, e.g. local preview
+```
+
+Or directly: `go run ./cmd/lds export --out site --base /design-system`.
+
+This crawls the same routes the dev server answers — `/`, `/tokens`, every
+`/components/{tag}` — and writes each as `<path>/index.html`, plus the `dist/`
+bundles, vendored fonts and gallery chrome, so the result is a plain static
+site with no server and no client-side router. `--base` is a URL path prefix
+baked into every internal link and asset reference (`href`, `src`); it exists
+because the export is not necessarily served from the root of its domain.
+
+On a pushed `v*` tag, `.github/workflows/release.yml` runs `make site` and
+deploys it to GitHub Pages. This repo lives under the `lidisoft` GitHub org
+alongside the org's `lidisoft.github.io` site, which has the custom domain
+`lidisoft.com` — GitHub Pages automatically serves project sites as subpaths
+of that domain, so enabling Pages here (Settings → Pages → Source →
+"GitHub Actions", a one-time manual step) makes the exported gallery available
+at `lidisoft.com/design-system` with no reverse proxy involved.
+
+`site/` is generated and gitignored, the same way `dist/` would be if it
+weren't deliberately committed for `//go:embed` consumers.

@@ -65,3 +65,45 @@ jobs:
             "$RUNNER_TEMP/lds-$version.zip" \
             "$RUNNER_TEMP/lds-$version.tar.gz" \
             "$RUNNER_TEMP/SHA256SUMS.txt"
+
+  # Publishes the gallery as a static site to GitHub Pages. Since this repo is
+  # a project under the lidisoft.github.io org site, and that site has a
+  # custom domain (lidisoft.com) configured, this project's Pages URL is
+  # automatically served at lidisoft.com/design-system — hence --base
+  # matching the repo name.
+  #
+  # Requires this repo's Settings → Pages → Source to be set to "GitHub
+  # Actions" once, by hand.
+  pages:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build static gallery
+        run: make site
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

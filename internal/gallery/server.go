@@ -29,6 +29,11 @@ type Server struct {
 	root string
 	dev  bool
 
+	// basePath prefixes every internal link and asset reference. Empty when
+	// served from the root (dev mode); set by Export for static hosting under
+	// a subpath, e.g. "/design-system".
+	basePath string
+
 	mu     sync.RWMutex
 	cached *build
 
@@ -102,6 +107,7 @@ type pageData struct {
 	Active    string
 	Version   string
 	Dev       bool
+	Base      string
 	Nav       []catalog.CategoryGroup
 	Tokens    *tokens.Set
 	Component *catalog.Component
@@ -135,6 +141,7 @@ func (s *Server) base(b *build) pageData {
 	return pageData{
 		Version: generator.Version,
 		Dev:     s.dev,
+		Base:    s.basePath,
 		Nav:     catalog.ByCategory(b.sources.Components),
 		Tokens:  b.sources.Tokens,
 	}

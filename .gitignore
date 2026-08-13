@@ -2,6 +2,10 @@
 tmp/
 bin/
 
+# Static gallery export (`make site`) — rebuilt on tag, published to
+# GitHub Pages, never committed.
+/site/
+
 # Local env
 .env
 

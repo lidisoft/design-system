@@ -1,4 +1,4 @@
-.PHONY: help build dev up down logs ps rebuild test fmt vet check fonts icons new clean verify notes
+.PHONY: help build dev up down logs ps rebuild test fmt vet check fonts icons new clean verify notes site
 
 # Default gallery port. 8080 belongs to tocsin in the local ecosystem.
 PORT ?= 8081
@@ -9,6 +9,7 @@ help:
 	@echo "  make dev              run the gallery locally on :$(PORT)"
 	@echo "  make up               run the gallery under Docker + Air (hot reload)"
 	@echo "  make build            regenerate dist/lds.css and dist/lds.js"
+	@echo "  make site             export the gallery to site/ as a static SPA"
 	@echo "  make notes tag=v0.1.0 preview release notes for a tag or ref"
 	@echo "  make new name=alert   scaffold a new component"
 	@echo "  make check            fmt + vet + test + verify"
@@ -25,6 +26,14 @@ build:
 notes:
 	@test -n "$(tag)" || (echo "usage: make notes tag=v0.1.0" && exit 1)
 	@scripts/release-notes.sh $(tag)
+
+# Static export of the gallery, published to lidisoft.com/design-system as a
+# GitHub Pages project site. SITE_BASE matches that subpath; override for a
+# custom domain or root-hosted preview (SITE_BASE= make site).
+SITE_BASE ?= /design-system
+
+site:
+	go run ./cmd/lds export --out site --base "$(SITE_BASE)"
 
 # Fails when dist/ does not match the sources, which is what keeps the
 # committed bundles honest in CI.
@@ -105,4 +114,4 @@ icons:
 	@ls -1 $(ICON_DIR)/*.svg | wc -l | xargs -I{} echo "{} icons in $(ICON_DIR)"
 
 clean:
-	rm -rf dist tmp
+	rm -rf dist tmp site

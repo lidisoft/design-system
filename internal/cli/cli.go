@@ -35,6 +35,7 @@ func New() *cli.Command {
 		Commands: []*cli.Command{
 			buildCmd(),
 			serveCmd(),
+			exportCmd(),
 			tokensCmd(),
 			newComponentCmd(),
 		},
@@ -110,6 +111,31 @@ func serveCmd() *cli.Command {
 			if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				return err
 			}
+			return nil
+		},
+	}
+}
+
+func exportCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "export",
+		Usage: "render the gallery to a static site",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "out", Usage: "output directory", Value: "site"},
+			&cli.StringFlag{Name: "base", Usage: "URL path prefix for every link and asset, e.g. /design-system"},
+		},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			root := cmd.String("root")
+			out := cmd.String("out")
+			if !filepath.IsAbs(out) {
+				out = filepath.Join(root, out)
+			}
+
+			start := time.Now()
+			if err := gallery.Export(root, out, cmd.String("base")); err != nil {
+				return err
+			}
+			fmt.Printf("static gallery written to %s in %s\n", out, time.Since(start).Round(time.Millisecond))
 			return nil
 		},
 	}
