@@ -32,7 +32,6 @@ LDS.position = function (floating, anchor, opts) {
     if (Number.isNaN(offset)) offset = 8;
   }
 
-  const anchorRect = anchor.getBoundingClientRect();
   const prevVisibility = floating.style.visibility;
   const prevDisplay = floating.style.display;
   floating.style.visibility = "hidden";
@@ -40,6 +39,11 @@ LDS.position = function (floating, anchor, opts) {
   floating.style.position = "fixed";
   floating.style.top = "0";
   floating.style.left = "0";
+
+  /* Measure the anchor only once the floating element is out of flow: while
+   * it is still static it can widen the anchor's container and shift the
+   * anchor, which is then measured where it will not stay. */
+  const anchorRect = anchor.getBoundingClientRect();
   if (opts.matchWidth) {
     floating.style.minWidth = Math.ceil(anchorRect.width) + "px";
   }

@@ -12,6 +12,7 @@ const WARM_MS = 300;
 
 const tooltipState = new WeakMap();
 let lastHiddenAt = 0;
+let current = null; /* the tooltip on screen, if any; only one at a time */
 
 LDS.behavior("lds-tooltip", {
   connected(el) {
@@ -22,7 +23,9 @@ LDS.behavior("lds-tooltip", {
       if (event.pointerType === "touch") return;
       clearTimeout(s.hideTimer);
       if (isShown(el)) return;
-      const warm = Date.now() - lastHiddenAt < WARM_MS;
+      /* Warm when another hint is still up (its grace period has not run out)
+       * or has just gone. */
+      const warm = current !== null || Date.now() - lastHiddenAt < WARM_MS;
       s.showTimer = setTimeout(() => show(el), warm ? 0 : delayOf(el));
     });
 
@@ -101,6 +104,8 @@ function show(el) {
   if (!s || isShown(el)) return;
   if (el.boolAttr("disabled") || !hasContent(el)) return;
 
+  if (current && current !== el) hide(current);
+  current = el;
   el.$(".bubble").hidden = false;
   position(el);
 
@@ -123,6 +128,7 @@ function hide(el) {
 
   el.$(".bubble").hidden = true;
   lastHiddenAt = Date.now();
+  if (current === el) current = null;
 
   window.removeEventListener("resize", s.reposition);
   window.removeEventListener("scroll", s.reposition, true);

@@ -32,6 +32,7 @@
 
 .panel {
   box-sizing: border-box;
+  position: fixed;
   z-index: var(--lds-z-popover);
   display: none;
   width: var(--lds-popover-width);

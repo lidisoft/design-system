@@ -502,7 +502,6 @@
       if (Number.isNaN(offset)) offset = 8;
     }
 
-    const anchorRect = anchor.getBoundingClientRect();
     const prevVisibility = floating.style.visibility;
     const prevDisplay = floating.style.display;
     floating.style.visibility = "hidden";
@@ -510,6 +509,11 @@
     floating.style.position = "fixed";
     floating.style.top = "0";
     floating.style.left = "0";
+
+    /* Measure the anchor only once the floating element is out of flow: while
+     * it is still static it can widen the anchor's container and shift the
+     * anchor, which is then measured where it will not stay. */
+    const anchorRect = anchor.getBoundingClientRect();
     if (opts.matchWidth) {
       floating.style.minWidth = Math.ceil(anchorRect.width) + "px";
     }
@@ -4795,8 +4799,11 @@
         trapFocus: false,
         scrollLock: true,
         restoreFocus: null,
-        onDismiss: function () {
-          /* Escape / outside handled on the dialog itself. */
+        /* The overlay cancels Escape's keydown, which stops the dialog's own
+         * cancel event, so Escape is handled here. Backdrop clicks land on the
+         * dialog and are handled by its click listener. */
+        onDismiss: function (reason) {
+          if (reason === "escape" && isDismissible(el)) closeModal(el, "escape");
         },
       });
       modalState.set(el, s);
@@ -5035,6 +5042,7 @@
 
     const tooltipState = new WeakMap();
     let lastHiddenAt = 0;
+    let current = null; /* the tooltip on screen, if any; only one at a time */
 
     LDS.behavior("lds-tooltip", {
       connected(el) {
@@ -5045,7 +5053,9 @@
           if (event.pointerType === "touch") return;
           clearTimeout(s.hideTimer);
           if (isShown(el)) return;
-          const warm = Date.now() - lastHiddenAt < WARM_MS;
+          /* Warm when another hint is still up (its grace period has not run out)
+           * or has just gone. */
+          const warm = current !== null || Date.now() - lastHiddenAt < WARM_MS;
           s.showTimer = setTimeout(() => show(el), warm ? 0 : delayOf(el));
         });
 
@@ -5124,6 +5134,8 @@
       if (!s || isShown(el)) return;
       if (el.boolAttr("disabled") || !hasContent(el)) return;
 
+      if (current && current !== el) hide(current);
+      current = el;
       el.$(".bubble").hidden = false;
       position(el);
 
@@ -5146,6 +5158,7 @@
 
       el.$(".bubble").hidden = true;
       lastHiddenAt = Date.now();
+      if (current === el) current = null;
 
       window.removeEventListener("resize", s.reposition);
       window.removeEventListener("scroll", s.reposition, true);
@@ -7652,6 +7665,7 @@ a.link:hover {
 
 .panel {
   box-sizing: border-box;
+  position: fixed;
   z-index: var(--lds-z-popover);
   display: none;
   flex-direction: column;
@@ -9909,6 +9923,7 @@ a.link:hover {
 
 .panel {
   box-sizing: border-box;
+  position: fixed;
   z-index: var(--lds-z-popover);
   display: none;
   width: var(--lds-popover-width);
@@ -9974,6 +9989,7 @@ a.link:hover {
 
 .bubble {
   box-sizing: border-box;
+  position: fixed;
   z-index: var(--lds-z-tooltip);
   max-width: min(var(--lds-tooltip-max-width), calc(100vw - var(--lds-space-4)));
   padding: var(--lds-space-1) var(--lds-space-2);

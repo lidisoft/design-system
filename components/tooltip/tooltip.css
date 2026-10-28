@@ -22,6 +22,7 @@
 
 .bubble {
   box-sizing: border-box;
+  position: fixed;
   z-index: var(--lds-z-tooltip);
   max-width: min(var(--lds-tooltip-max-width), calc(100vw - var(--lds-space-4)));
   padding: var(--lds-space-1) var(--lds-space-2);

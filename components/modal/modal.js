@@ -80,8 +80,11 @@ function setupOverlay(el) {
     trapFocus: false,
     scrollLock: true,
     restoreFocus: null,
-    onDismiss: function () {
-      /* Escape / outside handled on the dialog itself. */
+    /* The overlay cancels Escape's keydown, which stops the dialog's own
+     * cancel event, so Escape is handled here. Backdrop clicks land on the
+     * dialog and are handled by its click listener. */
+    onDismiss: function (reason) {
+      if (reason === "escape" && isDismissible(el)) closeModal(el, "escape");
     },
   });
   modalState.set(el, s);

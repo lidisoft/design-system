@@ -30,6 +30,7 @@
 
 .panel {
   box-sizing: border-box;
+  position: fixed;
   z-index: var(--lds-z-popover);
   display: none;
   flex-direction: column;
