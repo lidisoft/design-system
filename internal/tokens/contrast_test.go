@@ -50,6 +50,13 @@ func contrastPairs() []pair {
 	}
 	pairs = append(pairs, pair{"color.fg.on-warning", "color.warning.default", textMin})
 
+	// Chart marks and reference lines are graphical objects.
+	for _, role := range []string{"completed", "started", "unstarted", "abandoned", "reference", "marker", "annotation"} {
+		for _, bg := range []string{"color.bg.canvas", "color.bg.raised"} {
+			pairs = append(pairs, pair{"color.chart." + role, bg, uiMin})
+		}
+	}
+
 	return pairs
 }
 
@@ -60,6 +67,10 @@ var accepted = map[string]float64{
 	"color.fg.on-accent on color.accent.default":  2,
 	"color.fg.on-accent on color.success.default": 2,
 	"color.fg.on-accent on color.danger.default":  2,
+
+	// Unstarted work recedes on purpose; charts must label it or offer a table.
+	"color.chart.unstarted on color.bg.canvas": 2,
+	"color.chart.unstarted on color.bg.raised": 2,
 }
 
 func TestContrastMeetsWCAG(t *testing.T) {

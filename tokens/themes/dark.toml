@@ -96,3 +96,14 @@ inset = "inset 0 1px 2px rgba(0, 0, 0, 0.35)"
 
 [card]
 border = "{color.border.default}"
+
+# Aliases resolve at build time, so the reference roles are restated to pick up
+# this theme's fg and danger values.
+[color.chart]
+completed = "{color.green.500}"
+started = "{color.blue.500}"
+unstarted = "{color.gray.600}"
+abandoned = "{color.coral.400}"
+reference = "{color.fg.subtle}"
+marker = "{color.danger.fg}"
+annotation = "{color.fg.muted}"

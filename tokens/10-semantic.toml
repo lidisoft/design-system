@@ -187,3 +187,25 @@ shadow = "{shadow.xl}"
 [transition]
 control = "{duration.fast} {easing.standard}"
 surface = "{duration.normal} {easing.standard}"
+
+# ---------------------------------------------------------------------------
+# Charts — work outcomes, stacked in this order. Validated as a categorical
+# palette (CVD and normal-vision separation) on adjacent pairs in that order;
+# see docs/design-tokens.md#chart-tokens before reordering or adding a slot.
+# ---------------------------------------------------------------------------
+
+[color.chart]
+completed = "{color.green.600}"
+started = "{color.blue.600}"
+# Deliberately quiet, below 3:1: charts using it must label values or offer a
+# table view. Not a categorical hue; do not reuse it for another series.
+unstarted = "{color.gray.400}"
+abandoned = "{color.coral.600}"
+# Ideal line, today marker and scope-change annotation.
+reference = "{color.fg.subtle}"
+marker = "{color.danger.fg}"
+annotation = "{color.fg.muted}"
+
+[chart]
+"bar-radius" = "4px"   # free end of a bar or segment; joins stay square
+"segment-gap" = "2px"  # surface gap between stacked segments and adjacent bars

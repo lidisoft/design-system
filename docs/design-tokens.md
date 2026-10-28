@@ -150,6 +150,7 @@ selector = ".marketing-hero, [data-lds-theme=\"inverse\"]"
 | `size` | `container`, `prose` |
 | `control` | Shared geometry for buttons, inputs, selects, switches |
 | `card`, `overlay` | Composed surface treatments |
+| `chart` | Mark geometry for charts; colours live in `color.chart` |
 | `focus` | Ring width and offset |
 
 ### The `control` group earns its place
@@ -189,6 +190,37 @@ selector instead of a block per intent:
 
 Adding an intent means adding seven aliases — and every component that follows
 this pattern supports it immediately.
+
+### Chart tokens
+
+`color.chart` colours work by outcome, for burndown, scope, timeline and
+throughput charts. Use them in this stacking order, which is the order the
+palette was validated in:
+
+| Token | Light | Dark | Use |
+|-------|-------|------|-----|
+| `color.chart.completed` | `green.600` | `green.500` | Done work |
+| `color.chart.started` | `blue.600` | `blue.500` | In progress |
+| `color.chart.unstarted` | `gray.400` | `gray.600` | Not started; deliberately quiet |
+| `color.chart.abandoned` | `coral.600` | `coral.400` | Cancelled or dropped |
+| `color.chart.reference` | `fg.subtle` | `fg.subtle` | Ideal or target line |
+| `color.chart.marker` | `danger.fg` | `danger.fg` | Today marker |
+| `color.chart.annotation` | `fg.muted` | `fg.muted` | Scope-change markers and notes |
+
+Validated with the dataviz palette checks on adjacent pairs: worst normal-vision
+separation 19.8 (light) and 21.4 (dark), worst colour-blind separation 17.1
+(light, protan) and 19.6 (dark, deutan). Reordering the slots or adding one
+needs a new validation run.
+
+Rules that come with them:
+
+- `unstarted` is below 3:1 against the surface (2.2:1 light, 2.4:1 dark) by
+  design. Any chart that uses it labels its values or offers a table view.
+- Colour is never the only carrier: a chart with two or more series has a
+  legend, and short series are labelled directly.
+- Text in a chart uses `fg` roles, never a series colour.
+- `chart.bar-radius` (4px) rounds only the free end of a bar or stacked segment;
+  `chart.segment-gap` (2px) separates stacked segments and adjacent bars.
 
 ## Inspecting tokens
 

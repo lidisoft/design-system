@@ -63,3 +63,12 @@ Reviewed 2026-10-28.
 `TestContrastMeetsWCAG` in `internal/tokens` now asserts these pairs in both
 themes. The accepted on-accent pairs are listed in its `accepted` map with the
 2:1 floor.
+
+## Chart tokens (2026-10-28)
+
+Added `color.chart.*` for Horizon. Light `abandoned` uses `coral.600` (4.1:1 on
+canvas) because `coral.500` measured 2.9:1. `unstarted` stays below 3:1 by
+choice (2.2:1 light, 2.4:1 dark): raising it to `gray.500` passed contrast but
+failed the normal-vision separation check against `started` (ΔE 10.4 light,
+11.8 dark, floor 15). It is in the test's `accepted` map at a 2:1 floor, and
+charts using it must label values or offer a table view.

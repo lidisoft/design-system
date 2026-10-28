@@ -193,6 +193,10 @@ hr {
   --lds-card-radius: 5px;
   --lds-card-shadow: 0 1px 2px rgba(20, 30, 50, 0.04), 0 12px 32px rgba(20, 30, 50, 0.06);
 
+  /* chart */
+  --lds-chart-bar-radius: 4px;
+  --lds-chart-segment-gap: 2px;
+
   /* color */
   --lds-color-accent-active: #29649b;
   --lds-color-accent-border: #b0d9f4;
@@ -221,6 +225,13 @@ hr {
   --lds-color-border-inverse: #333c4d;
   --lds-color-border-strong: #cfd6e0;
   --lds-color-border-subtle: #eef1f6;
+  --lds-color-chart-abandoned: #d9503c;
+  --lds-color-chart-annotation: #4a5364;
+  --lds-color-chart-completed: #2d8544;
+  --lds-color-chart-marker: #ad3c2c;
+  --lds-color-chart-reference: #646e80;
+  --lds-color-chart-started: #3480c2;
+  --lds-color-chart-unstarted: #a7b1c2;
   --lds-color-coral-50: #fef2f0;
   --lds-color-coral-100: #fde0db;
   --lds-color-coral-200: #fbc3ba;
@@ -453,6 +464,13 @@ hr {
   --lds-color-border-inverse: #cfd6e0;
   --lds-color-border-strong: #4a5364;
   --lds-color-border-subtle: #1a1f2b;
+  --lds-color-chart-abandoned: #f78475;
+  --lds-color-chart-annotation: #a7b1c2;
+  --lds-color-chart-completed: #3aa757;
+  --lds-color-chart-marker: #f99e90;
+  --lds-color-chart-reference: #7c8798;
+  --lds-color-chart-started: #4a9fe3;
+  --lds-color-chart-unstarted: #4a5364;
   --lds-color-danger-active: #fbc3ba;
   --lds-color-danger-border: rgba(245, 111, 92, 0.35);
   --lds-color-danger-default: #f78475;
