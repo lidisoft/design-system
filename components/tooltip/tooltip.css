@@ -1,0 +1,48 @@
+/* Hover and focus hint. The bubble lives in the host's shadow root, so moving
+ * the pointer from the trigger onto the bubble never leaves the host. */
+
+:host {
+  --lds-tooltip-bg: var(--lds-color-bg-inverse);
+  --lds-tooltip-fg: var(--lds-color-fg-inverse);
+  --lds-tooltip-max-width: 20rem;
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.anchor {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.bubble {
+  box-sizing: border-box;
+  z-index: var(--lds-z-tooltip);
+  max-width: min(var(--lds-tooltip-max-width), calc(100vw - var(--lds-space-4)));
+  padding: var(--lds-space-1) var(--lds-space-2);
+  border-radius: var(--lds-radius-md);
+  background: var(--lds-tooltip-bg);
+  color: var(--lds-tooltip-fg);
+  box-shadow: var(--lds-shadow-md);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+  overflow-wrap: anywhere;
+  animation: lds-tooltip-in var(--lds-transition-control);
+}
+
+.bubble[hidden] {
+  display: none;
+}
+
+@keyframes lds-tooltip-in {
+  from {
+    opacity: 0;
+  }
+}

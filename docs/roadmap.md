@@ -59,13 +59,15 @@ components will.
 - [x] **Shared overlay helper in the runtime** — `LDS.overlay.bind` (Escape,
       outside click, light focus trap, focus restoration, optional `scrollLock`).
 - [x] **Shared anchored-positioning helper** — `LDS.position` (placement, flip,
-      clamp, matchWidth). Used by `lds-menu`; tooltip/popover/select next.
+      clamp, matchWidth). Used by `lds-menu`, `lds-popover` and `lds-tooltip`.
 - [x] **`lds-modal`** — native `<dialog>` + scroll lock; drawer/confirm later
-- [ ] `lds-drawer`, `lds-confirm` with `LDS.confirm()`
+- [x] **`lds-drawer`** — modal or `non-modal` side panel on native `<dialog>`
+- [ ] `lds-confirm` with `LDS.confirm()`
 - [x] **`lds-toast` + `lds-toast-region` + `LDS.toast()`** — transient
       notifications; no overlay helper required
 - [x] **`lds-menu`** — action list + `lds-menu-item`; account-menu composition
-- [ ] `lds-tooltip`, `lds-popover`
+- [x] **`lds-tooltip`**, **`lds-popover`** — `LDS.position` gained centred and
+      left/right placements for them
 - [ ] **`lds-navbar`** — top bar with brand/links/actions and compact toggle
       (first nav deliverable; no drawer dependency)
 - [ ] **`lds-nav` + `lds-nav-item` + `lds-nav-group`** — sidebar with active

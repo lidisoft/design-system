@@ -478,16 +478,21 @@
   /**
    * Position `floating` next to `anchor`.
    *
+   * Placement is `side` or `side-align`: side is top | bottom | left | right,
+   * align is start | end, and a bare side centres on the anchor. The side flips
+   * when the preferred one would overflow and the opposite one fits.
+   *
    * @param {HTMLElement} floating
    * @param {Element} anchor
    * @param {object} [opts]
-   * @param {"bottom-start"|"bottom-end"|"top-start"|"top-end"} [opts.placement]
+   * @param {string} [opts.placement] default "bottom-end"
    * @param {number} [opts.offset] gap in CSS pixels; default = control.gap.md
    * @param {boolean} [opts.matchWidth] min-width matches anchor width
+   * @returns {string} the side actually used, after any flip
    */
   LDS.position = function (floating, anchor, opts) {
     opts = opts || {};
-    if (!floating || !anchor) return;
+    if (!floating || !anchor) return "";
 
     const placement = opts.placement || "bottom-end";
     let offset = opts.offset;
@@ -514,31 +519,44 @@
     const vh = window.innerHeight;
 
     const parts = placement.split("-");
-    let side = parts[0]; /* top | bottom */
-    let align = parts[1] || "start"; /* start | end */
+    let side = parts[0];
+    const align = parts[1] || "center";
+    const vertical = side === "top" || side === "bottom";
 
-    let top;
-    let left;
+    /* Main axis: the coordinate on the side, flipped if it does not fit. */
+    const before = vertical
+      ? anchorRect.top - offset - floatRect.height
+      : anchorRect.left - offset - floatRect.width;
+    const after = vertical ? anchorRect.bottom + offset : anchorRect.right + offset;
+    const limit = vertical ? vh : vw;
+    const size = vertical ? floatRect.height : floatRect.width;
 
-    if (side === "bottom") {
-      top = anchorRect.bottom + offset;
-      if (top + floatRect.height > vh && anchorRect.top - offset - floatRect.height >= 0) {
-        side = "top";
-        top = anchorRect.top - offset - floatRect.height;
+    let main;
+    if (side === "bottom" || side === "right") {
+      main = after;
+      if (after + size > limit && before >= 0) {
+        main = before;
+        side = side === "bottom" ? "top" : "left";
       }
     } else {
-      top = anchorRect.top - offset - floatRect.height;
-      if (top < 0 && anchorRect.bottom + offset + floatRect.height <= vh) {
-        side = "bottom";
-        top = anchorRect.bottom + offset;
+      main = before;
+      if (before < 0 && after + size <= limit) {
+        main = after;
+        side = side === "top" ? "bottom" : "right";
       }
     }
 
-    if (align === "end") {
-      left = anchorRect.right - floatRect.width;
-    } else {
-      left = anchorRect.left;
-    }
+    /* Cross axis: start, end or centre along the anchor. */
+    const crossStart = vertical ? anchorRect.left : anchorRect.top;
+    const crossEnd = vertical ? anchorRect.right : anchorRect.bottom;
+    const crossSize = vertical ? floatRect.width : floatRect.height;
+    let cross;
+    if (align === "start") cross = crossStart;
+    else if (align === "end") cross = crossEnd - crossSize;
+    else cross = (crossStart + crossEnd) / 2 - crossSize / 2;
+
+    let top = vertical ? main : cross;
+    let left = vertical ? cross : main;
 
     /* Clamp into the viewport with a small inset. */
     const inset = 8;
@@ -553,6 +571,7 @@
     } else {
       floating.style.removeProperty("display");
     }
+    return side;
   };
 
   LDS.icons = ["alert-circle", "alert-triangle", "archive", "arrow-up-down", "at-sign", "bell", "bookmark", "calendar", "calendar-days", "chart-column", "chart-gantt", "check", "chevron-down", "chevron-left", "chevron-right", "chevron-up", "circle", "circle-check", "circle-dashed", "circle-dot", "circle-x", "copy", "corner-down-right", "external-link", "eye", "filter", "flag", "folder", "git-branch", "git-commit-horizontal", "git-merge", "git-pull-request", "grip-vertical", "history", "inbox", "info", "kanban", "keyboard", "layers", "link", "list", "loader-circle", "lock", "log-out", "menu", "message-square", "milestone", "minus", "moon", "more-horizontal", "octagon-alert", "paperclip", "plus", "repeat", "rocket", "search", "settings", "signal-high", "signal-low", "signal-medium", "sliders-horizontal", "sun", "table", "tag", "trash-2", "user", "users", "x"];
@@ -4546,6 +4565,152 @@
     };
   })();
 
+  /* behaviour: lds-drawer */
+  (function () {
+    /* Behaviour for <lds-drawer> — native <dialog> pinned to an edge.
+     *
+     * Modal drawers use showModal() and LDS.overlay's scroll lock, like lds-modal.
+     * Non-modal drawers use show(): no backdrop, no scroll lock, no outside-click
+     * dismissal, so a list beside an issue peek stays clickable. Escape still
+     * closes them while focus is inside.
+     */
+
+    const drawerState = new WeakMap();
+
+    LDS.behavior("lds-drawer", {
+      connected(el) {
+        const dialog = el.$(".dialog");
+
+        watchSlot(el, 'slot[name="header"]', ".header__title");
+        watchSlot(el, 'slot[name="footer"]', ".footer");
+
+        el.$(".close").addEventListener("click", () => closeDrawer(el, "close-button"));
+
+        /* Fired by modal dialogs on Escape; some browsers fire it for non-modal
+         * ones too. Either way the drawer decides, not the platform. */
+        dialog.addEventListener("cancel", (event) => {
+          event.preventDefault();
+          if (isDismissible(el)) closeDrawer(el, "escape");
+        });
+
+        dialog.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape" || event.defaultPrevented) return;
+          if (!el.boolAttr("non-modal")) return;
+          event.preventDefault();
+          if (isDismissible(el)) closeDrawer(el, "escape");
+        });
+
+        /* On a modal dialog a click whose target is the dialog itself landed on
+         * the backdrop: the chrome fills the whole panel. */
+        dialog.addEventListener("click", (event) => {
+          if (event.target !== dialog || el.boolAttr("non-modal")) return;
+          if (isDismissible(el)) closeDrawer(el, "outside");
+        });
+
+        /* Keep the attribute honest if something else closes the dialog, e.g. a
+         * slotted <form method="dialog">. */
+        dialog.addEventListener("close", () => {
+          if (el.boolAttr("open")) el.removeAttribute("open");
+        });
+
+        syncOpen(el);
+      },
+
+      disconnected(el) {
+        teardown(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "open") syncOpen(el);
+        if (name === "dismissible") syncDismissible(el);
+        if (name === "non-modal" && el.boolAttr("open")) {
+          /* show() and showModal() cannot convert into each other. */
+          teardown(el);
+          el.$(".dialog").close();
+          el.setAttribute("open", "");
+          syncOpen(el);
+        }
+      },
+    });
+
+    function isDismissible(el) {
+      if (!el.hasAttribute("dismissible")) return true;
+      return el.getAttribute("dismissible") !== "false";
+    }
+
+    function syncDismissible(el) {
+      const closeBtn = el.$(".close");
+      if (closeBtn) closeBtn.hidden = !isDismissible(el);
+    }
+
+    function syncOpen(el) {
+      const dialog = el.$(".dialog");
+      const open = el.boolAttr("open");
+      syncDismissible(el);
+
+      if (!open) {
+        teardown(el);
+        if (dialog.open) dialog.close();
+        return;
+      }
+      if (dialog.open) return;
+
+      if (el.emit("lds-open").defaultPrevented) {
+        el.removeAttribute("open");
+        return;
+      }
+
+      if (el.boolAttr("non-modal")) {
+        dialog.show();
+        return;
+      }
+
+      dialog.showModal();
+      const s = drawerState.get(el) || {};
+      if (!s.overlay) {
+        s.overlay = LDS.overlay.bind(dialog, {
+          trapFocus: false,
+          scrollLock: true,
+          /* The overlay cancels Escape's keydown, which stops the dialog's own
+           * cancel event, so Escape is handled here. Backdrop clicks land on the
+           * dialog and are handled by its click listener. */
+          onDismiss: function (reason) {
+            if (reason === "escape" && isDismissible(el)) closeDrawer(el, "escape");
+          },
+        });
+      }
+      drawerState.set(el, s);
+    }
+
+    function teardown(el) {
+      const s = drawerState.get(el);
+      if (!s || !s.overlay) return;
+      s.overlay.disconnect();
+      s.overlay = null;
+    }
+
+    function closeDrawer(el, reason) {
+      if (!el.boolAttr("open")) return;
+      if (el.emit("lds-close", { reason: reason }).defaultPrevented) return;
+      el.removeAttribute("open");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-modal */
   (function () {
     /* Behaviour for <lds-modal> — native <dialog> + overlay scroll lock. */
@@ -4665,6 +4830,337 @@
       };
       slot.addEventListener("slotchange", update);
       update();
+    }
+  })();
+
+  /* behaviour: lds-popover */
+  (function () {
+    /* Behaviour for <lds-popover>.
+     *
+     * Opens a non-modal panel anchored to a slotted trigger. Uses LDS.overlay for
+     * Escape and outside-click dismissal and LDS.position for layout. Unlike
+     * lds-menu it does not trap focus: Tab leaves the panel and the page stays
+     * usable, which is what property pickers and display options need.
+     */
+
+    const popoverState = new WeakMap();
+
+    LDS.behavior("lds-popover", {
+      connected(el) {
+        const triggerSlot = el.$('slot[name="trigger"]');
+
+        const onTriggerClick = (event) => {
+          event.preventDefault();
+          if (el.boolAttr("open")) closePopover(el, "toggle");
+          else openPopover(el);
+        };
+
+        popoverState.set(el, {
+          onTriggerClick,
+          overlay: null,
+          reposition: null,
+          trigger: null,
+          restore: false,
+        });
+
+        triggerSlot.addEventListener("slotchange", () => wireTrigger(el));
+        wireTrigger(el);
+        syncOpen(el);
+      },
+
+      disconnected(el) {
+        teardownOpen(el);
+        const s = popoverState.get(el);
+        if (s && s.trigger) s.trigger.removeEventListener("click", s.onTriggerClick);
+        popoverState.delete(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready || !popoverState.has(el)) return;
+        if (name === "open") syncOpen(el);
+        if (name === "placement" && el.boolAttr("open")) positionPanel(el);
+        if (name === "label") syncLabel(el);
+      },
+    });
+
+    function triggerOf(el) {
+      const slot = el.$('slot[name="trigger"]');
+      if (!slot) return null;
+      return slot.assignedElements({ flatten: true })[0] || null;
+    }
+
+    function wireTrigger(el) {
+      const s = popoverState.get(el);
+      if (!s) return;
+      if (s.trigger) s.trigger.removeEventListener("click", s.onTriggerClick);
+      s.trigger = triggerOf(el);
+      if (!s.trigger) return;
+      s.trigger.addEventListener("click", s.onTriggerClick);
+      syncTriggerA11y(el);
+    }
+
+    function syncTriggerA11y(el) {
+      const trigger = triggerOf(el);
+      if (!trigger) return;
+      trigger.setAttribute("aria-haspopup", "dialog");
+      trigger.setAttribute("aria-expanded", el.boolAttr("open") ? "true" : "false");
+    }
+
+    function syncLabel(el) {
+      const panel = el.$(".panel");
+      const label = el.getAttribute("label");
+      if (label) panel.setAttribute("aria-label", label);
+      else panel.removeAttribute("aria-label");
+    }
+
+    function openPopover(el) {
+      if (el.boolAttr("open")) return;
+      if (el.emit("lds-open").defaultPrevented) return;
+      el.setAttribute("open", "");
+    }
+
+    /* Focus returns to the trigger after Escape or a programmatic close, but not
+     * after an outside click — the user has just put focus somewhere else. */
+    function closePopover(el, reason) {
+      if (!el.boolAttr("open")) return;
+      if (el.emit("lds-close", { reason: reason }).defaultPrevented) return;
+      const s = popoverState.get(el);
+      if (s) s.restore = reason !== "outside";
+      el.removeAttribute("open");
+    }
+
+    function syncOpen(el) {
+      const panel = el.$(".panel");
+      const open = el.boolAttr("open");
+      panel.hidden = !open;
+      syncTriggerA11y(el);
+      syncLabel(el);
+      if (open) setupOpen(el);
+      else teardownOpen(el);
+    }
+
+    function setupOpen(el) {
+      const s = popoverState.get(el);
+      const panel = el.$(".panel");
+      if (!s) return;
+      teardownOpen(el);
+
+      positionPanel(el);
+      s.reposition = () => positionPanel(el);
+      window.addEventListener("resize", s.reposition);
+      window.addEventListener("scroll", s.reposition, true);
+
+      const trigger = triggerOf(el);
+      s.restore = true;
+      s.overlay = LDS.overlay.bind(panel, {
+        trapFocus: false,
+        ignoreOutside: trigger ? [trigger] : [],
+        onDismiss: (reason) => closePopover(el, reason),
+      });
+
+      requestAnimationFrame(() => {
+        if (!el.boolAttr("open")) return;
+        const first = firstFocusable(el);
+        (first || panel).focus();
+      });
+    }
+
+    function teardownOpen(el) {
+      const s = popoverState.get(el);
+      if (!s) return;
+      if (s.reposition) {
+        window.removeEventListener("resize", s.reposition);
+        window.removeEventListener("scroll", s.reposition, true);
+        s.reposition = null;
+      }
+      if (!s.overlay) return;
+      s.overlay.disconnect();
+      s.overlay = null;
+      if (s.restore) focusTrigger(el);
+    }
+
+    function positionPanel(el) {
+      const trigger = triggerOf(el);
+      if (!trigger) return;
+      LDS.position(el.$(".panel"), trigger, {
+        placement: el.getAttribute("placement") || "bottom-start",
+      });
+    }
+
+    function focusTrigger(el) {
+      const trigger = triggerOf(el);
+      if (!trigger) return;
+      const inner = trigger.shadowRoot
+        ? trigger.shadowRoot.querySelector('button:not([disabled]),a[href],input,[tabindex]:not([tabindex="-1"])')
+        : null;
+      (inner || trigger).focus();
+    }
+
+    /* First focusable slotted element. Custom elements with delegatesFocus or an
+     * inner control focus through their host. */
+    function firstFocusable(el) {
+      const selector =
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"]),lds-button:not([disabled]),lds-input,lds-select,lds-textarea,lds-checkbox,lds-switch,lds-radio-group,lds-menu-item,lds-command-item';
+      const slot = el.$(".panel slot");
+      for (const node of slot.assignedElements({ flatten: true })) {
+        if (node.matches(selector)) return focusTarget(node);
+        const inner = node.querySelector(selector);
+        if (inner) return focusTarget(inner);
+      }
+      return null;
+    }
+
+    function focusTarget(node) {
+      if (node.shadowRoot) {
+        const inner = node.shadowRoot.querySelector('button:not([disabled]),a[href],input,select,textarea');
+        if (inner) return inner;
+      }
+      return node;
+    }
+  })();
+
+  /* behaviour: lds-tooltip */
+  (function () {
+    /* Behaviour for <lds-tooltip>.
+     *
+     * Shows a hint for the slotted trigger after a hover delay, or at once when the
+     * trigger takes keyboard focus. Meets WCAG 1.4.13: the bubble can be hovered
+     * without disappearing, and Escape dismisses it without moving focus.
+     */
+
+    /* Grace period for the pointer to cross from trigger to bubble, and the window
+     * in which the next tooltip skips its delay (moving along a toolbar). */
+    const HIDE_GRACE_MS = 100;
+    const WARM_MS = 300;
+
+    const tooltipState = new WeakMap();
+    let lastHiddenAt = 0;
+
+    LDS.behavior("lds-tooltip", {
+      connected(el) {
+        const s = { showTimer: 0, hideTimer: 0, reposition: null, onKeydown: null };
+        tooltipState.set(el, s);
+
+        el.addEventListener("pointerenter", (event) => {
+          if (event.pointerType === "touch") return;
+          clearTimeout(s.hideTimer);
+          if (isShown(el)) return;
+          const warm = Date.now() - lastHiddenAt < WARM_MS;
+          s.showTimer = setTimeout(() => show(el), warm ? 0 : delayOf(el));
+        });
+
+        el.addEventListener("pointerleave", () => {
+          clearTimeout(s.showTimer);
+          s.hideTimer = setTimeout(() => hide(el), HIDE_GRACE_MS);
+        });
+
+        el.addEventListener("focusin", () => {
+          if (focusIsVisible()) show(el);
+        });
+
+        el.addEventListener("focusout", () => hide(el));
+
+        /* A click is an action, not a request for the hint. */
+        el.addEventListener("pointerdown", () => {
+          clearTimeout(s.showTimer);
+          hide(el);
+        });
+
+        syncText(el);
+      },
+
+      disconnected(el) {
+        hide(el);
+        tooltipState.delete(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "content") syncText(el);
+        if (name === "disabled" && el.boolAttr("disabled")) hide(el);
+        if (name === "placement" && isShown(el)) position(el);
+      },
+    });
+
+    function delayOf(el) {
+      const n = parseInt(el.getAttribute("delay"), 10);
+      return Number.isNaN(n) ? 500 : Math.max(0, n);
+    }
+
+    function syncText(el) {
+      const text = el.$(".text");
+      if (text) text.textContent = el.getAttribute("content") || "";
+    }
+
+    function hasContent(el) {
+      if (el.getAttribute("content")) return true;
+      return !!el.querySelector(':scope > [slot="content"]');
+    }
+
+    function triggerOf(el) {
+      const slot = el.$(".anchor slot");
+      return (slot && slot.assignedElements({ flatten: true })[0]) || el;
+    }
+
+    function isShown(el) {
+      const bubble = el.$(".bubble");
+      return !!bubble && !bubble.hidden;
+    }
+
+    function focusIsVisible() {
+      let active = document.activeElement;
+      while (active && active.shadowRoot && active.shadowRoot.activeElement) {
+        active = active.shadowRoot.activeElement;
+      }
+      try {
+        return !!active && active.matches(":focus-visible");
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function show(el) {
+      const s = tooltipState.get(el);
+      if (!s || isShown(el)) return;
+      if (el.boolAttr("disabled") || !hasContent(el)) return;
+
+      el.$(".bubble").hidden = false;
+      position(el);
+
+      s.reposition = () => position(el);
+      window.addEventListener("resize", s.reposition);
+      window.addEventListener("scroll", s.reposition, true);
+
+      s.onKeydown = (event) => {
+        if (event.key === "Escape") hide(el);
+      };
+      document.addEventListener("keydown", s.onKeydown, true);
+    }
+
+    function hide(el) {
+      const s = tooltipState.get(el);
+      if (!s) return;
+      clearTimeout(s.showTimer);
+      clearTimeout(s.hideTimer);
+      if (!isShown(el)) return;
+
+      el.$(".bubble").hidden = true;
+      lastHiddenAt = Date.now();
+
+      window.removeEventListener("resize", s.reposition);
+      window.removeEventListener("scroll", s.reposition, true);
+      document.removeEventListener("keydown", s.onKeydown, true);
+      s.reposition = null;
+      s.onKeydown = null;
+    }
+
+    function position(el) {
+      const raw = LDS.token("space.1", el);
+      const offset = raw ? parseFloat(raw) * parseFloat(getComputedStyle(document.documentElement).fontSize) : 4;
+      LDS.position(el.$(".bubble"), triggerOf(el), {
+        placement: el.getAttribute("placement") || "top",
+        offset: Number.isNaN(offset) ? 4 : offset,
+      });
     }
   })();
 
@@ -9051,6 +9547,187 @@ a.link:hover {
 }`,
   });
 
+  /* component: lds-drawer (draft) */
+  LDS.define({
+    tag: "lds-drawer",
+    className: "LdsDrawer",
+    formAssociated: false,
+    observed: ["open", "placement", "size", "non-modal", "dismissible"],
+    defaults: {"placement": "end", "size": "md"},
+    template: `<dialog class="dialog" part="dialog">
+  <div class="chrome" part="chrome">
+    <header class="header" part="header">
+      <div class="header__title"><slot name="header"></slot></div>
+      <slot name="actions"></slot>
+      <button class="close" part="close" type="button" aria-label="Close">
+        <lds-icon name="x" size="sm"></lds-icon>
+      </button>
+    </header>
+    <div class="body" part="body"><slot></slot></div>
+    <footer class="footer" part="footer"><slot name="footer"></slot></footer>
+  </div>
+</dialog>`,
+    styles: `/* Side panel on native <dialog>. Modal by default (showModal: top layer,
+ * backdrop, inert page); non-modal uses show() so the page stays usable. */
+
+:host {
+  --lds-drawer-width: 28rem;
+  --lds-drawer-inset-top: 0;
+  --lds-drawer-bg: var(--lds-color-bg-raised);
+  --lds-drawer-fg: var(--lds-color-fg-default);
+  --lds-drawer-shadow: var(--lds-overlay-shadow);
+
+  display: contents;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-drawer-width: 20rem;
+}
+
+:host([size="lg"]) {
+  --lds-drawer-width: 40rem;
+}
+
+.dialog {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: var(--lds-z-drawer);
+  inset: var(--lds-drawer-inset-top) 0 0 auto;
+  width: min(var(--lds-drawer-width), 100vw);
+  max-width: none;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-inline-start: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  background: var(--lds-drawer-bg);
+  color: var(--lds-drawer-fg);
+  box-shadow: var(--lds-drawer-shadow);
+}
+
+:host([placement="start"]) .dialog {
+  inset: var(--lds-drawer-inset-top) auto 0 0;
+  border-inline-start: 0;
+  border-inline-end: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+}
+
+.dialog[open] {
+  animation: lds-drawer-in-end var(--lds-transition-surface);
+}
+
+:host([placement="start"]) .dialog[open] {
+  animation-name: lds-drawer-in-start;
+}
+
+/* A non-modal panel sits beside the content it relates to; a heavy shadow
+ * would read as blocking. */
+:host([non-modal]) .dialog {
+  box-shadow: var(--lds-shadow-md);
+}
+
+.dialog::backdrop {
+  background: var(--lds-color-bg-overlay);
+}
+
+@keyframes lds-drawer-in-end {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes lds-drawer-in-start {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-space-2);
+  padding: var(--lds-space-3) var(--lds-space-4);
+  border-bottom: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.header__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  overflow-wrap: anywhere;
+}
+
+::slotted([slot="actions"]) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-space-1);
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-control-radius-sm);
+  background: transparent;
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+}
+
+.close[hidden] {
+  display: none;
+}
+
+.close:hover {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-default);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--lds-space-4);
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-3) var(--lds-space-4);
+  border-top: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.footer[data-empty] {
+  display: none;
+}`,
+  });
+
   /* component: lds-modal (draft) */
   LDS.define({
     tag: "lds-modal",
@@ -9180,6 +9857,146 @@ a.link:hover {
 
 .footer[data-empty] {
   display: none;
+}`,
+  });
+
+  /* component: lds-popover (draft) */
+  LDS.define({
+    tag: "lds-popover",
+    className: "LdsPopover",
+    formAssociated: false,
+    observed: ["open", "placement", "label"],
+    defaults: {"placement": "bottom-start"},
+    template: `<div class="root" part="root">
+  <div class="trigger" part="trigger">
+    <slot name="trigger"></slot>
+  </div>
+  <div class="panel" part="panel" role="dialog" hidden tabindex="-1">
+    <slot></slot>
+  </div>
+</div>`,
+    styles: `/* Non-modal anchored panel — trigger in flow, panel positioned with
+ * LDS.position. Shares its surface tokens with lds-menu. */
+
+:host {
+  --lds-popover-bg: var(--lds-color-bg-raised);
+  --lds-popover-fg: var(--lds-color-fg-default);
+  --lds-popover-border: var(--lds-color-border-default);
+  --lds-popover-radius: var(--lds-overlay-radius);
+  --lds-popover-shadow: var(--lds-overlay-shadow);
+  --lds-popover-padding: var(--lds-space-3);
+  --lds-popover-width: auto;
+  --lds-popover-max-width: 22rem;
+
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.trigger {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.panel {
+  box-sizing: border-box;
+  z-index: var(--lds-z-popover);
+  display: none;
+  width: var(--lds-popover-width);
+  max-width: min(var(--lds-popover-max-width), calc(100vw - var(--lds-space-4)));
+  max-height: calc(100vh - var(--lds-space-4));
+  overflow: auto;
+  padding: var(--lds-popover-padding);
+  border: var(--lds-control-border-width-default) solid var(--lds-popover-border);
+  border-radius: var(--lds-popover-radius);
+  background: var(--lds-popover-bg);
+  color: var(--lds-popover-fg);
+  box-shadow: var(--lds-popover-shadow);
+  font-size: var(--lds-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+:host([open]) .panel {
+  display: block;
+}
+
+.panel[hidden] {
+  display: none !important;
+}
+
+.panel:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}`,
+  });
+
+  /* component: lds-tooltip (draft) */
+  LDS.define({
+    tag: "lds-tooltip",
+    className: "LdsTooltip",
+    formAssociated: false,
+    observed: ["content", "placement", "delay", "disabled"],
+    defaults: {"placement": "top", "delay": "500"},
+    template: `<span class="anchor" part="anchor"><slot></slot></span>
+<div class="bubble" part="bubble" role="tooltip" hidden>
+  <slot name="content"><span class="text"></span></slot>
+</div>`,
+    styles: `/* Hover and focus hint. The bubble lives in the host's shadow root, so moving
+ * the pointer from the trigger onto the bubble never leaves the host. */
+
+:host {
+  --lds-tooltip-bg: var(--lds-color-bg-inverse);
+  --lds-tooltip-fg: var(--lds-color-fg-inverse);
+  --lds-tooltip-max-width: 20rem;
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.anchor {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.bubble {
+  box-sizing: border-box;
+  z-index: var(--lds-z-tooltip);
+  max-width: min(var(--lds-tooltip-max-width), calc(100vw - var(--lds-space-4)));
+  padding: var(--lds-space-1) var(--lds-space-2);
+  border-radius: var(--lds-radius-md);
+  background: var(--lds-tooltip-bg);
+  color: var(--lds-tooltip-fg);
+  box-shadow: var(--lds-shadow-md);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-xs);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: var(--lds-font-leading-snug);
+  overflow-wrap: anywhere;
+  animation: lds-tooltip-in var(--lds-transition-control);
+}
+
+.bubble[hidden] {
+  display: none;
+}
+
+@keyframes lds-tooltip-in {
+  from {
+    opacity: 0;
+  }
 }`,
   });
 

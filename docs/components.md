@@ -42,6 +42,9 @@ every LiDiSoft service needs.
 | `lds-timeline` | **draft** — chronological event list |
 | `lds-timeline-item` | **draft** — timeline event |
 | `lds-modal` | **draft** — blocking dialog |
+| `lds-drawer` | **draft** — side panel, modal or non-modal |
+| `lds-popover` | **draft** — non-modal anchored panel |
+| `lds-tooltip` | **draft** — hover / focus hint |
 | `lds-progress` | **draft** — linear / circular progress |
 | `lds-banner` | **draft** — full-bleed page announcement |
 | `lds-alert` | **draft** — inline persistent message |
@@ -147,7 +150,7 @@ so the runtime attaches `ElementInternals`.
 | `lds-breadcrumb` | Hierarchy trail | Collapses middle steps behind an ellipsis when narrow; `expanded`, `max-items` |
 | `lds-breadcrumb-item` | Breadcrumb step | `href`, `current`; leading separator hides on the first item |
 | `lds-menu` | Dropdown actions | **Done (draft).** `lds-menu-item`, `<hr>` separators; keyboard arrows; account-menu composition |
-| `lds-tooltip` | Supplementary hints | Never the only source of information |
+| `lds-tooltip` | Supplementary hints | **Done (draft).** content / content slot, placement, delay; never the only source of information |
 | `lds-command` | Command palette | **Done (draft).** Filterable modal search; `lds-command-item` / `lds-command-group`; `LDS.command()` + optional ⌘/Ctrl+K |
 | `lds-command-item` | Palette option | value, keywords, href, disabled; start/end slots |
 | `lds-command-group` | Palette section | heading; hides when all children filtered out |
@@ -192,8 +195,8 @@ restoration. Write that once in the runtime.
 | Tag | Purpose | Notes |
 |-----|---------|-------|
 | `lds-modal` | Blocking dialog | **Done (draft).** Native `<dialog>`; size, dismissible, header/body/footer |
-| `lds-drawer` | Side panel | Modal by another name plus placement; share the implementation |
-| `lds-popover` | Non-modal floating panel | Anchored; needs the positioning helper |
+| `lds-drawer` | Side panel | **Done (draft).** Native `<dialog>`; placement start/end, size, `non-modal` peek, actions slot |
+| `lds-popover` | Non-modal floating panel | **Done (draft).** trigger slot, placement, label; no focus trap |
 | `lds-confirm` | Destructive confirmation | Thin promise-returning wrapper over modal — `LDS.confirm()` |
 
 ## What LDS will not ship

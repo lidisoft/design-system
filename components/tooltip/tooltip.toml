@@ -1,0 +1,140 @@
+tag = "lds-tooltip"
+name = "Tooltip"
+category = "overlays"
+status = "draft"
+summary = "Short hint on hover or keyboard focus, mostly for icon-only buttons."
+
+description = """
+Wraps one trigger and shows a small hint next to it: after a short delay on
+hover, or at once when the trigger receives keyboard focus. Moving along a row
+of tooltipped buttons shows each hint without waiting again.
+
+A tooltip is supplementary. It must never be the only place information lives,
+it never holds interactive content, and it does not appear on touch. For
+anything clickable inside the floating panel, use lds-popover.
+"""
+
+a11y = """
+The bubble is role="tooltip". It stays open while hovered and Escape hides it
+without moving focus (WCAG 1.4.13).
+
+The bubble lives in the tooltip's shadow root, so it cannot be referenced with
+aria-describedby from the trigger and is not announced. The trigger must carry
+its own accessible name: for an icon-only lds-button, set `label` to the same
+text as the tooltip. Do not put information in a tooltip that a screen-reader
+user would need.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "content"
+type = "string"
+description = "Tooltip text. Use the content slot instead for rich content such as a shortcut hint."
+
+[[attributes]]
+name = "placement"
+type = "enum"
+values = ["top", "bottom", "left", "right", "top-start", "top-end", "bottom-start", "bottom-end"]
+default = "top"
+description = "Preferred side; flips on collision. Use right for a collapsed sidebar rail."
+
+[[attributes]]
+name = "delay"
+type = "number"
+default = "500"
+description = "Hover delay in milliseconds. Keyboard focus always shows the hint at once."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Suppresses the tooltip, e.g. when a collapsed rail expands and labels are visible."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "The trigger. Exactly one focusable element."
+
+[[slots]]
+name = "content"
+description = "Rich tooltip content. Overrides the content attribute."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "anchor"
+description = "Wrapper around the trigger."
+
+[[parts]]
+name = "bubble"
+description = "The floating hint."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-tooltip-bg"
+default = "--lds-color-bg-inverse"
+description = "Bubble background."
+
+[[css_vars]]
+name = "--lds-tooltip-fg"
+default = "--lds-color-fg-inverse"
+description = "Bubble text colour."
+
+[[css_vars]]
+name = "--lds-tooltip-max-width"
+default = "20rem"
+description = "Upper bound on the bubble width; long text wraps."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Icon-only toolbar"
+description = "Hover one button, then slide along the row: the next hints appear without the delay. Tab through to see them on focus."
+html = """
+<div class="lds-cluster" style="--lds-cluster-gap: var(--lds-space-1); padding-block: var(--lds-space-8)">
+  <lds-tooltip content="Copy link">
+    <lds-button variant="ghost" size="sm" label="Copy link"><lds-icon slot="start" name="link"></lds-icon></lds-button>
+  </lds-tooltip>
+  <lds-tooltip content="Subscribe">
+    <lds-button variant="ghost" size="sm" label="Subscribe"><lds-icon slot="start" name="bell"></lds-icon></lds-button>
+  </lds-tooltip>
+  <lds-tooltip content="Archive">
+    <lds-button variant="ghost" size="sm" label="Archive"><lds-icon slot="start" name="archive"></lds-icon></lds-button>
+  </lds-tooltip>
+  <lds-tooltip content="More actions">
+    <lds-button variant="ghost" size="sm" label="More actions"><lds-icon slot="start" name="more-horizontal"></lds-icon></lds-button>
+  </lds-tooltip>
+</div>
+"""
+
+[[stories]]
+name = "Placements"
+description = "A bare side centres the bubble. right suits a collapsed sidebar."
+html = """
+<div class="lds-cluster" style="justify-content: center; padding-block: var(--lds-space-12)">
+  <lds-tooltip content="Above" placement="top"><lds-button variant="secondary" size="sm">top</lds-button></lds-tooltip>
+  <lds-tooltip content="Below" placement="bottom"><lds-button variant="secondary" size="sm">bottom</lds-button></lds-tooltip>
+  <lds-tooltip content="Left" placement="left"><lds-button variant="secondary" size="sm">left</lds-button></lds-tooltip>
+  <lds-tooltip content="Right" placement="right"><lds-button variant="secondary" size="sm">right</lds-button></lds-tooltip>
+</div>
+"""
+
+[[stories]]
+name = "Rich content and long text"
+description = "The content slot takes markup such as a shortcut hint. Long text wraps at the max width."
+html = """
+<div class="lds-cluster" style="padding-block: var(--lds-space-12)">
+  <lds-tooltip>
+    <lds-button size="sm"><lds-icon slot="start" name="plus"></lds-icon>New issue</lds-button>
+    <span slot="content">Create an issue · <kbd>C</kbd></span>
+  </lds-tooltip>
+  <lds-tooltip content="Escalates to the secondary on-call after 15 minutes without acknowledgement, then to the engineering manager after 30.">
+    <lds-button variant="link" size="sm">Escalation policy</lds-button>
+  </lds-tooltip>
+  <lds-tooltip content="Disabled tooltips never show" disabled>
+    <lds-button variant="ghost" size="sm">disabled</lds-button>
+  </lds-tooltip>
+</div>
+"""

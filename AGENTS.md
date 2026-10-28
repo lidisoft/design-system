@@ -101,7 +101,8 @@ All three are solved in `components/button/button.js`.
 
 [docs/roadmap.md](docs/roadmap.md). Form association and the first form controls
 (`lds-field`, inputs, select, checkbox, radio-group, switch) are in place — next
-high-value gaps are `lds-alert`, overlays (`drawer` / `tooltip`), and nav.
+high-value gaps are `lds-combobox`, `lds-kbd`, a segmented control, a date range
+picker, `lds-empty-state` and `lds-skeleton`.
 
 ## Honest limitations
 

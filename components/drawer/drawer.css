@@ -1,0 +1,159 @@
+/* Side panel on native <dialog>. Modal by default (showModal: top layer,
+ * backdrop, inert page); non-modal uses show() so the page stays usable. */
+
+:host {
+  --lds-drawer-width: 28rem;
+  --lds-drawer-inset-top: 0;
+  --lds-drawer-bg: var(--lds-color-bg-raised);
+  --lds-drawer-fg: var(--lds-color-fg-default);
+  --lds-drawer-shadow: var(--lds-overlay-shadow);
+
+  display: contents;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-drawer-width: 20rem;
+}
+
+:host([size="lg"]) {
+  --lds-drawer-width: 40rem;
+}
+
+.dialog {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: var(--lds-z-drawer);
+  inset: var(--lds-drawer-inset-top) 0 0 auto;
+  width: min(var(--lds-drawer-width), 100vw);
+  max-width: none;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-inline-start: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  background: var(--lds-drawer-bg);
+  color: var(--lds-drawer-fg);
+  box-shadow: var(--lds-drawer-shadow);
+}
+
+:host([placement="start"]) .dialog {
+  inset: var(--lds-drawer-inset-top) auto 0 0;
+  border-inline-start: 0;
+  border-inline-end: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+}
+
+.dialog[open] {
+  animation: lds-drawer-in-end var(--lds-transition-surface);
+}
+
+:host([placement="start"]) .dialog[open] {
+  animation-name: lds-drawer-in-start;
+}
+
+/* A non-modal panel sits beside the content it relates to; a heavy shadow
+ * would read as blocking. */
+:host([non-modal]) .dialog {
+  box-shadow: var(--lds-shadow-md);
+}
+
+.dialog::backdrop {
+  background: var(--lds-color-bg-overlay);
+}
+
+@keyframes lds-drawer-in-end {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes lds-drawer-in-start {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-space-2);
+  padding: var(--lds-space-3) var(--lds-space-4);
+  border-bottom: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.header__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  overflow-wrap: anywhere;
+}
+
+::slotted([slot="actions"]) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--lds-space-1);
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-control-radius-sm);
+  background: transparent;
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+}
+
+.close[hidden] {
+  display: none;
+}
+
+.close:hover {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-default);
+}
+
+.close:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--lds-space-4);
+  overflow: auto;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--lds-space-3);
+  padding: var(--lds-space-3) var(--lds-space-4);
+  border-top: var(--lds-control-border-width-default) solid var(--lds-color-border-subtle);
+}
+
+.footer[data-empty] {
+  display: none;
+}

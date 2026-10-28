@@ -1,0 +1,62 @@
+/* Non-modal anchored panel — trigger in flow, panel positioned with
+ * LDS.position. Shares its surface tokens with lds-menu. */
+
+:host {
+  --lds-popover-bg: var(--lds-color-bg-raised);
+  --lds-popover-fg: var(--lds-color-fg-default);
+  --lds-popover-border: var(--lds-color-border-default);
+  --lds-popover-radius: var(--lds-overlay-radius);
+  --lds-popover-shadow: var(--lds-overlay-shadow);
+  --lds-popover-padding: var(--lds-space-3);
+  --lds-popover-width: auto;
+  --lds-popover-max-width: 22rem;
+
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+.root {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.trigger {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.panel {
+  box-sizing: border-box;
+  z-index: var(--lds-z-popover);
+  display: none;
+  width: var(--lds-popover-width);
+  max-width: min(var(--lds-popover-max-width), calc(100vw - var(--lds-space-4)));
+  max-height: calc(100vh - var(--lds-space-4));
+  overflow: auto;
+  padding: var(--lds-popover-padding);
+  border: var(--lds-control-border-width-default) solid var(--lds-popover-border);
+  border-radius: var(--lds-popover-radius);
+  background: var(--lds-popover-bg);
+  color: var(--lds-popover-fg);
+  box-shadow: var(--lds-popover-shadow);
+  font-size: var(--lds-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+:host([open]) .panel {
+  display: block;
+}
+
+.panel[hidden] {
+  display: none !important;
+}
+
+.panel:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}

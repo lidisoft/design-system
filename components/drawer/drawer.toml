@@ -1,0 +1,203 @@
+tag = "lds-drawer"
+name = "Drawer"
+category = "overlays"
+status = "draft"
+summary = "Side panel pinned to an edge, modal by default or non-modal for a peek beside a list."
+
+description = """
+A panel that slides in from the end (or start) edge, built on the native
+<dialog> element like lds-modal and with the same header, body and footer
+slots.
+
+Modal (the default) blocks the page with a backdrop, locks scrolling and closes
+on Escape, backdrop click or the close button. Use it for focused tasks such as
+an edit form.
+
+non-modal leaves the page interactive: no backdrop, no scroll lock, and an
+outside click does not close it. Use it for a detail peek beside a list, where
+selecting another row should update the panel rather than dismiss it. Set
+--lds-drawer-inset-top to keep it below a sticky navbar.
+"""
+
+a11y = """
+The native dialog provides the dialog role. Opening moves focus into the panel,
+and closing returns it to the element that had it.
+
+Modal: focus is contained by the platform and the rest of the page is inert.
+
+Non-modal: focus is not contained; Tab can leave the panel. Escape closes the
+panel only while focus is inside it, because elsewhere it belongs to the page.
+
+Always provide a header so the dialog has a visible title. When
+dismissible="false" the close button is hidden and Escape does nothing, so the
+content must offer its own way out.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Whether the drawer is shown."
+
+[[attributes]]
+name = "placement"
+type = "enum"
+values = ["end", "start"]
+default = "end"
+description = "Edge the panel is pinned to. end is the right edge in left-to-right layouts."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Panel width; always capped to the viewport."
+
+[[attributes]]
+name = "non-modal"
+type = "boolean"
+description = "Keep the page interactive: no backdrop, no scroll lock, no outside-click dismissal."
+
+[[attributes]]
+name = "dismissible"
+type = "boolean"
+description = "Allow Escape, backdrop click and the close button. Defaults to true; set dismissible=\"false\" to lock."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "header"
+description = "Panel title."
+
+[[slots]]
+name = "actions"
+description = "Buttons beside the close button, e.g. copy link or open in full page."
+
+[[slots]]
+name = ""
+description = "Panel body. Scrolls independently of the header and footer."
+
+[[slots]]
+name = "footer"
+description = "Actions row. Hidden when empty."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-open"
+detail = "{}"
+description = "Fired before the drawer opens. Cancel to keep it closed."
+
+[[events]]
+name = "lds-close"
+detail = "{ reason: \"escape\" | \"outside\" | \"close-button\" }"
+description = "Fired before the drawer closes. Cancel to keep it open."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "dialog"
+description = "The native dialog element."
+
+[[parts]]
+name = "header"
+description = "Title row with actions and close button."
+
+[[parts]]
+name = "close"
+description = "The dismiss button."
+
+[[parts]]
+name = "body"
+description = "Scrollable body."
+
+[[parts]]
+name = "footer"
+description = "Actions row."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-drawer-width"
+default = "per size"
+description = "Panel width."
+
+[[css_vars]]
+name = "--lds-drawer-inset-top"
+default = "0"
+description = "Distance from the top of the viewport, e.g. the navbar height."
+
+[[css_vars]]
+name = "--lds-drawer-bg"
+default = "--lds-color-bg-raised"
+description = "Panel background."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Modal"
+description = "Blocks the page. Escape, the backdrop and the close button dismiss it."
+html = """
+<div>
+  <lds-button size="sm" onclick="this.nextElementSibling.setAttribute('open','')">Edit escalation policy</lds-button>
+  <lds-drawer>
+    <span slot="header">Escalation policy</span>
+    <div class="lds-stack">
+      <lds-field label="Name"><lds-input value="Platform primary"></lds-input></lds-field>
+      <lds-field label="Escalate after"><lds-input value="15 minutes"></lds-input></lds-field>
+    </div>
+    <div slot="footer" class="lds-cluster">
+      <lds-button size="sm" variant="ghost" onclick="this.closest('lds-drawer').removeAttribute('open')">Cancel</lds-button>
+      <lds-button size="sm" onclick="this.closest('lds-drawer').removeAttribute('open')">Save</lds-button>
+    </div>
+  </lds-drawer>
+</div>
+"""
+
+[[stories]]
+name = "Non-modal peek"
+description = "The list stays clickable while the panel is open; choosing another row updates the panel instead of closing it."
+html = """
+<div class="lds-stack" style="--lds-stack-gap: var(--lds-space-1); max-width: 24rem">
+  <lds-button variant="ghost" size="sm" onclick="const d = document.getElementById('peek-demo'); d.querySelector('[slot=header]').textContent = 'HOR-101 Ship release 2.4'; d.setAttribute('open','')">HOR-101 Ship release 2.4</lds-button>
+  <lds-button variant="ghost" size="sm" onclick="const d = document.getElementById('peek-demo'); d.querySelector('[slot=header]').textContent = 'HOR-102 Migrate sidebar to lds-nav'; d.setAttribute('open','')">HOR-102 Migrate sidebar to lds-nav</lds-button>
+  <lds-button variant="ghost" size="sm" onclick="const d = document.getElementById('peek-demo'); d.querySelector('[slot=header]').textContent = 'HOR-103 Fix focus ring contrast'; d.setAttribute('open','')">HOR-103 Fix focus ring contrast</lds-button>
+  <lds-drawer id="peek-demo" non-modal size="sm">
+    <span slot="header">HOR-101 Ship release 2.4</span>
+    <div slot="actions">
+      <lds-tooltip content="Copy link">
+        <lds-button variant="ghost" size="sm" label="Copy link"><lds-icon slot="start" name="link"></lds-icon></lds-button>
+      </lds-tooltip>
+    </div>
+    <p class="lds-muted" style="margin: 0">Issue details render here. Press Escape with focus inside the panel to close it.</p>
+  </lds-drawer>
+</div>
+"""
+
+[[stories]]
+name = "Start edge and long content"
+description = "Pinned to the start edge. The body scrolls while header and footer stay put."
+html = """
+<div>
+  <lds-button size="sm" variant="secondary" onclick="this.nextElementSibling.setAttribute('open','')">Open from start</lds-button>
+  <lds-drawer placement="start" size="sm">
+    <span slot="header">Activity for an issue with a long title that has to wrap across lines</span>
+    <div class="lds-stack">
+      <p style="margin: 0">Ada changed the status to In progress.</p>
+      <p style="margin: 0">Grace linked a pull request.</p>
+      <p style="margin: 0">Linus commented: the rollout plan needs a rollback step.</p>
+      <p style="margin: 0">Ada changed the priority to High.</p>
+      <p style="margin: 0">Grace added the label release.</p>
+      <p style="margin: 0">Linus moved the issue to iteration 14.</p>
+      <p style="margin: 0">Ada assigned the issue to Grace.</p>
+      <p style="margin: 0">Grace changed the due date to Friday.</p>
+      <p style="margin: 0">Linus commented: rollback step added.</p>
+      <p style="margin: 0">Ada changed the status to In review.</p>
+      <p style="margin: 0">Grace merged the pull request.</p>
+      <p style="margin: 0">Ada changed the status to Done.</p>
+    </div>
+    <div slot="footer"><lds-button size="sm" variant="ghost" onclick="this.closest('lds-drawer').removeAttribute('open')">Close</lds-button></div>
+  </lds-drawer>
+</div>
+"""

@@ -1,0 +1,156 @@
+tag = "lds-popover"
+name = "Popover"
+category = "overlays"
+status = "draft"
+summary = "Non-modal panel anchored to a trigger, for pickers, filters and display options."
+
+description = """
+Opens a floating panel next to a slotted trigger and leaves the rest of the page
+usable. Reach for it when the panel holds controls: a property picker, a filter
+form, display options. For a plain list of actions use lds-menu, which adds
+arrow-key navigation. For a hint on hover use lds-tooltip.
+
+Uses LDS.position for layout (flips on collision) and LDS.overlay for Escape and
+outside-click dismissal.
+"""
+
+a11y = """
+The panel is role="dialog" and non-modal: focus moves to the first focusable
+element inside it (or the panel itself) on open, but Tab is not trapped. The
+trigger gets aria-haspopup="dialog" and aria-expanded.
+
+Escape closes the panel and returns focus to the trigger. An outside click
+closes it without moving focus, since the user just chose where focus goes.
+
+Give the panel an accessible name with `label` unless its first content is a
+heading that names it.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "open"
+type = "boolean"
+description = "Whether the panel is shown."
+
+[[attributes]]
+name = "placement"
+type = "enum"
+values = ["bottom-start", "bottom", "bottom-end", "top-start", "top", "top-end", "left", "right"]
+default = "bottom-start"
+description = "Preferred side and alignment relative to the trigger; the side flips on collision."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name of the panel, applied as aria-label."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = "trigger"
+description = "Control that toggles the panel, typically lds-button."
+
+[[slots]]
+name = ""
+description = "Panel content."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-open"
+detail = "{}"
+description = "Fired before the panel opens. Cancel to keep it closed."
+
+[[events]]
+name = "lds-close"
+detail = "{ reason: \"escape\" | \"outside\" | \"toggle\" }"
+description = "Fired before the panel closes. Cancel to keep it open."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "root"
+description = "Wrapper around trigger and panel."
+
+[[parts]]
+name = "trigger"
+description = "Wrapper around the trigger slot."
+
+[[parts]]
+name = "panel"
+description = "The floating surface."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-popover-width"
+default = "auto"
+description = "Panel width. Set a fixed width for pickers so the panel does not resize while filtering."
+
+[[css_vars]]
+name = "--lds-popover-max-width"
+default = "22rem"
+description = "Upper bound on the panel width; always capped to the viewport."
+
+[[css_vars]]
+name = "--lds-popover-padding"
+default = "--lds-space-3"
+description = "Inner padding. Set to 0 when the content brings its own, e.g. a list."
+
+[[css_vars]]
+name = "--lds-popover-bg"
+default = "--lds-color-bg-raised"
+description = "Panel background."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Display options"
+description = "Controls inside the panel. Tab moves through them and out of the panel; Escape returns to the trigger."
+html = """
+<lds-popover label="Display options">
+  <lds-button slot="trigger" variant="secondary" size="sm">
+    <lds-icon slot="start" name="sliders-horizontal"></lds-icon>
+    Display
+  </lds-button>
+  <div class="lds-stack" style="--lds-stack-gap: var(--lds-space-3); width: 16rem">
+    <lds-field label="Group by">
+      <lds-select size="sm">
+        <option>Status</option>
+        <option>Assignee</option>
+        <option>Priority</option>
+      </lds-select>
+    </lds-field>
+    <lds-switch checked>Show sub-issues</lds-switch>
+    <lds-switch>Show empty groups</lds-switch>
+  </div>
+</lds-popover>
+"""
+
+[[stories]]
+name = "Placements"
+description = "A bare side centres on the trigger. Scroll the page so a panel would overflow to see it flip."
+html = """
+<div class="lds-cluster" style="justify-content: center; padding-block: var(--lds-space-12)">
+  <lds-popover placement="top"><lds-button slot="trigger" variant="secondary" size="sm">top</lds-button>Centred above.</lds-popover>
+  <lds-popover placement="bottom"><lds-button slot="trigger" variant="secondary" size="sm">bottom</lds-button>Centred below.</lds-popover>
+  <lds-popover placement="left"><lds-button slot="trigger" variant="secondary" size="sm">left</lds-button>To the left.</lds-popover>
+  <lds-popover placement="right"><lds-button slot="trigger" variant="secondary" size="sm">right</lds-button>To the right.</lds-popover>
+  <lds-popover placement="bottom-end"><lds-button slot="trigger" variant="secondary" size="sm">bottom-end</lds-button>Aligned to the trigger's end.</lds-popover>
+</div>
+"""
+
+[[stories]]
+name = "Long content"
+description = "The panel caps its width and scrolls inside the viewport."
+html = """
+<lds-popover label="Release notes">
+  <lds-button slot="trigger" variant="ghost" size="sm">What changed?</lds-button>
+  <div class="lds-stack" style="--lds-stack-gap: var(--lds-space-2)">
+    <strong>Release 2.4</strong>
+    <p style="margin: 0">Escalation policies now support follow-the-sun rotations across three regions, with handover notes carried between shifts and an audit trail of every acknowledgement, reassignment and snooze recorded against the incident.</p>
+    <p style="margin: 0" class="lds-muted">An_unbroken_identifier_like_escalation_policy_follow_the_sun_rotation_v2 wraps instead of overflowing.</p>
+  </div>
+</lds-popover>
+"""
