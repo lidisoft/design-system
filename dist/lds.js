@@ -4905,6 +4905,7 @@
 
 :host([variant="solid"][intent="warning"]) {
   --lds-badge-bg: var(--lds-color-warning-default);
+  --lds-badge-fg: var(--lds-color-fg-on-warning);
 }
 
 :host([variant="solid"][intent="danger"]) {
@@ -5436,6 +5437,7 @@
 
 :host([variant="solid"][intent="warning"]) {
   --lds-tag-bg: var(--lds-color-warning-default);
+  --lds-tag-fg: var(--lds-color-fg-on-warning);
 }
 
 :host([variant="solid"][intent="danger"]) {

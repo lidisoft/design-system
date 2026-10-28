@@ -27,6 +27,7 @@ subtle = "{color.gray.500}"
 disabled = "{color.gray.600}"
 inverse = "{color.gray.900}"
 "on-accent" = "{color.gray.0}"
+"on-warning" = "{color.gray.900}"
 link = "{color.blue.300}"
 
 [color.border]

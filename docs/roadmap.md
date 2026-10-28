@@ -103,10 +103,9 @@ Genuinely optional; none of it blocks shipping.
 
 Independent of components, ordered by value.
 
-- [ ] **Automated contrast checking.** Assert WCAG AA on every `fg`/`bg`
-      pairing in both themes, as a Go test over the resolved token set. Cheap to
-      write, catches a whole class of regression, and removes the manual step
-      currently described in [design-tokens.md](design-tokens.md#contrast).
+- [x] **Automated contrast checking.** `TestContrastMeetsWCAG` in
+      `internal/tokens` asserts WCAG AA on every listed `fg`/`bg` pairing in
+      both themes; see [design-tokens.md](design-tokens.md#contrast).
 - [ ] **CI pipeline.** Release automation on pushed `v*` tags is in place:
       releases now run a quality gate, generate notes from commits since the
       previous tag, and publish `dist/` archives on GitHub. Still missing:
@@ -133,7 +132,7 @@ Recorded honestly rather than discovered later.
 |-----------|-------------|------------|
 | No JS type checking | Reference and type errors surface at runtime | Keep behaviours small; exercise them in stories |
 | No component tests | Behaviour regressions are caught by eye | Browser tests, if the dependency is judged worthwhile |
-| No contrast automation | A token change can quietly break AA | Automate — first item under toolchain work |
+| Contrast is checked per listed pair | A component using a role on an unlisted surface is not covered | Add the pair to `internal/tokens/contrast_test.go` |
 | Form association is opt-in per control | Non-FACE elements still cannot submit | Set `form_associated = true` in the component TOML |
 | `dist/` is committed | Merge conflicts in generated files | Regenerate on conflict; never hand-edit |
 | Inline stories | Gallery page styles are visible to stories | Avoid context-dependent stories |

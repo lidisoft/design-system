@@ -241,11 +241,12 @@ hr {
   --lds-color-fg-default: #1a1f2b;
   --lds-color-fg-disabled: #a7b1c2;
   --lds-color-fg-inverse: #eef1f6;
-  --lds-color-fg-link: #3480c2;
+  --lds-color-fg-link: #29649b;
   --lds-color-fg-muted: #4a5364;
   --lds-color-fg-on-accent: #ffffff;
-  --lds-color-fg-subtle: #7c8798;
-  --lds-color-focus-ring: #4a9fe3;
+  --lds-color-fg-on-warning: #12151d;
+  --lds-color-fg-subtle: #646e80;
+  --lds-color-focus-ring: #3480c2;
   --lds-color-focus-ring-offset: #ffffff;
   --lds-color-gray-0: #ffffff;
   --lds-color-gray-25: #fbfcfe;
@@ -255,6 +256,7 @@ hr {
   --lds-color-gray-300: #cfd6e0;
   --lds-color-gray-400: #a7b1c2;
   --lds-color-gray-500: #7c8798;
+  --lds-color-gray-550: #646e80;
   --lds-color-gray-600: #4a5364;
   --lds-color-gray-700: #333c4d;
   --lds-color-gray-800: #1a1f2b;
@@ -464,6 +466,7 @@ hr {
   --lds-color-fg-link: #83c1ec;
   --lds-color-fg-muted: #a7b1c2;
   --lds-color-fg-on-accent: #ffffff;
+  --lds-color-fg-on-warning: #12151d;
   --lds-color-fg-subtle: #7c8798;
   --lds-color-focus-ring: #62b0e8;
   --lds-color-focus-ring-offset: #12151d;

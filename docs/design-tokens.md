@@ -235,8 +235,16 @@ app just renders wrong.
 ## Contrast
 
 Text/background pairings must meet WCAG 2.2 AA: 4.5:1 for body text, 3:1 for
-large text and UI boundaries. This is not currently automated. When adding or
-changing a colour token, check both themes, and check the `fg` role against both
-`subtle` and `muted` of the same intent.
+large text and UI boundaries.
 
-Automating this is tracked in [roadmap.md](roadmap.md).
+`TestContrastMeetsWCAG` in `internal/tokens/contrast_test.go` checks this in
+every theme, so `make check` fails when a token change breaks a pairing.
+Translucent tints are blended over `color.bg.canvas` before measuring. The test
+only knows the pairs in `contrastPairs()`: when a component puts a role on a new
+surface, add the pair there.
+
+Pairs deliberately kept below AA go in the test's `accepted` map with the floor
+they must still hold, and need a reason in [contrast-audit.md](contrast-audit.md).
+Today that is white (`fg.on-accent`) on the solid accent, success and danger
+fills, kept for the bright look. Warning fills are too light for white and use
+`fg.on-warning` instead.

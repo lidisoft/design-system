@@ -109,8 +109,11 @@ Do not paper over these when reporting on work:
 
 - JavaScript is checked for **syntax only** (by the Go minifier's parser). There
   is no type checking and no component test suite.
-- Colour contrast is **not** automated; it must be checked by eye in both
-  themes.
+- Colour contrast is checked only for the token pairs listed in
+  `internal/tokens/contrast_test.go`. A component that puts a role on a new
+  surface must add its pair there, or check it by eye in both themes. White on
+  the solid accent, success and danger fills is deliberately below AA (see
+  [docs/contrast-audit.md](docs/contrast-audit.md)).
 - Form participation requires `form_associated = true` and
   `el.internals.setFormValue` in the behaviour; there is still no Constraint
   Validation API surface beyond what authors set on the host.

@@ -28,11 +28,14 @@ overlay = "rgba(18, 21, 29, 0.55)"
 [color.fg]
 default = "{color.gray.800}"
 muted = "{color.gray.600}"
-subtle = "{color.gray.500}"
+subtle = "{color.gray.550}"
 disabled = "{color.gray.400}"
 inverse = "{color.gray.100}"
 "on-accent" = "{color.gray.0}"
-link = "{color.blue.600}"
+# White on the solid intent fills is a deliberate brand choice below 4.5:1 (see
+# docs/contrast-audit.md). Yellow is too light for it, so warning fills take ink.
+"on-warning" = "{color.gray.900}"
+link = "{color.blue.700}"
 
 # ---------------------------------------------------------------------------
 # Borders
@@ -101,7 +104,7 @@ fg = "{color.gray.700}"
 # ---------------------------------------------------------------------------
 
 [color.focus]
-ring = "{color.blue.500}"
+ring = "{color.blue.600}"
 "ring-offset" = "{color.bg.canvas}"
 
 [focus]

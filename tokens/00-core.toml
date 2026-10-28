@@ -74,6 +74,9 @@ layer = "core"
 300 = "#cfd6e0"
 400 = "#a7b1c2"
 500 = "#7c8798"
+# Between 500 and 600 so fg.subtle meets 4.5:1 on light surfaces while staying
+# distinguishable from fg.muted (600).
+550 = "#646e80"
 600 = "#4a5364"
 700 = "#333c4d"
 800 = "#1a1f2b"
