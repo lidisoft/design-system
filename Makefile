@@ -104,7 +104,16 @@ ICON_BASE := https://cdn.jsdelivr.net/npm/lucide-static@1.25.0/icons
 ICONS := check x chevron-down chevron-up chevron-left chevron-right search \
 	plus minus menu more-horizontal alert-triangle alert-circle info \
 	circle-check external-link copy trash-2 settings user users calendar \
-	bell loader-circle
+	bell loader-circle \
+	circle circle-dashed circle-dot circle-x \
+	signal-low signal-medium signal-high octagon-alert \
+	list kanban table chart-gantt calendar-days chart-column \
+	repeat milestone flag rocket layers \
+	link paperclip tag corner-down-right archive history eye at-sign \
+	message-square inbox \
+	git-branch git-pull-request git-merge git-commit-horizontal \
+	filter arrow-up-down sliders-horizontal grip-vertical keyboard sun moon \
+	log-out lock folder bookmark
 
 icons:
 	@mkdir -p $(ICON_DIR)

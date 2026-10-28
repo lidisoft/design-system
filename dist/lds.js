@@ -555,7 +555,7 @@
     }
   };
 
-  LDS.icons = ["alert-circle", "alert-triangle", "bell", "calendar", "check", "chevron-down", "chevron-left", "chevron-right", "chevron-up", "circle-check", "copy", "external-link", "info", "loader-circle", "menu", "minus", "more-horizontal", "plus", "search", "settings", "trash-2", "user", "users", "x"];
+  LDS.icons = ["alert-circle", "alert-triangle", "archive", "arrow-up-down", "at-sign", "bell", "bookmark", "calendar", "calendar-days", "chart-column", "chart-gantt", "check", "chevron-down", "chevron-left", "chevron-right", "chevron-up", "circle", "circle-check", "circle-dashed", "circle-dot", "circle-x", "copy", "corner-down-right", "external-link", "eye", "filter", "flag", "folder", "git-branch", "git-commit-horizontal", "git-merge", "git-pull-request", "grip-vertical", "history", "inbox", "info", "kanban", "keyboard", "layers", "link", "list", "loader-circle", "lock", "log-out", "menu", "message-square", "milestone", "minus", "moon", "more-horizontal", "octagon-alert", "paperclip", "plus", "repeat", "rocket", "search", "settings", "signal-high", "signal-low", "signal-medium", "sliders-horizontal", "sun", "table", "tag", "trash-2", "user", "users", "x"];
 
   /* behaviour: lds-avatar */
   (function () {
