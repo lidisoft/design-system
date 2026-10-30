@@ -1,6 +1,6 @@
 /*!
  * LiDiSoft Design System — lds.js
- * version 0.0.1
+ * version 0.0.5
  *
  * GENERATED FILE — DO NOT EDIT.
  * Regenerate with: make build   (see docs/architecture.md)
@@ -11962,6 +11962,6 @@ a.link:hover {
 }`,
   });
 
-  LDS.version = "0.0.1";
+  LDS.version = "0.0.5";
   global.LDS = LDS;
 })(typeof globalThis !== "undefined" ? globalThis : window);

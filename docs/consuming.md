@@ -249,7 +249,10 @@ button.addEventListener("lds-click", (event) => {
 
 ### Releasing
 
-Create a version tag on `main`, then push it:
+Set `Version` in `internal/generator/generator.go` to the new version, run
+`make build` and commit the restamped bundles. The version appears in the
+bundle banners, as `LDS.version` and in the gallery header. Then create the
+tag on `main` and push it:
 
 ```bash
 git tag v0.1.0
@@ -257,7 +260,8 @@ git push origin v0.1.0
 ```
 
 Pushing a `v*` tag triggers the GitHub release workflow. It runs the release
-gate (`gofmt` check, `make vet`, `make test`, `make verify`), builds release
+gate (`gofmt` check, `make vet`, `make test`, `make verify`, and a check that
+`dist/lds.js` carries the tag's version), builds release
 notes from every commit since the previous tag, and publishes a GitHub release
 with `dist/` archives attached for static-site consumers.
 

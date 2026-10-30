@@ -35,6 +35,11 @@ jobs:
           make vet
           make test
           make verify
+          want="${GITHUB_REF_NAME#v}"
+          grep -q "LDS.version = \"$want\";" dist/lds.js || {
+            echo "dist/lds.js is not stamped $want: set Version in internal/generator/generator.go and run make build"
+            exit 1
+          }
 
       - name: Notes and archives
         shell: bash
