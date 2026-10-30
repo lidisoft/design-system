@@ -1,0 +1,27 @@
+<div class="control" part="control">
+  <span class="lead" part="lead" hidden></span>
+  <span class="chips" part="chips"></span>
+  <input
+    class="input"
+    part="input"
+    type="text"
+    role="combobox"
+    aria-autocomplete="list"
+    aria-expanded="false"
+    autocomplete="off"
+    spellcheck="false"
+  />
+  <span class="chevron" part="chevron" aria-hidden="true">
+    <lds-icon name="chevron-down" size="sm"></lds-icon>
+  </span>
+</div>
+<div class="panel" part="panel" hidden>
+  <div class="list" part="list" role="listbox">
+    <slot></slot>
+    <div class="create" part="create" role="option" aria-selected="false" hidden>
+      <lds-icon name="plus" size="sm"></lds-icon>
+      <span class="create__label"></span>
+    </div>
+  </div>
+  <div class="empty" part="empty" hidden></div>
+</div>

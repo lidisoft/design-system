@@ -1,0 +1,53 @@
+tag = "lds-segment"
+name = "Segment"
+category = "forms"
+status = "draft"
+summary = "One option inside lds-segmented."
+
+description = """
+A single choice in a segmented control. The parent owns which segment is
+checked, its tab stop and the keyboard.
+"""
+
+a11y = """
+The segment itself is the radio. Its label text is the accessible name; an
+icon-only segment needs `label`.
+"""
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Value submitted and reported in lds-change. Defaults to the text."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name, required for icon-only segments."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Visible but cannot be chosen."
+
+[[slots]]
+name = ""
+description = "Short label."
+
+[[slots]]
+name = "start"
+description = "Leading icon."
+
+[[parts]]
+name = "segment"
+description = "The inner row."
+
+[[stories]]
+name = "Inside a segmented control"
+description = "Segments only work inside lds-segmented."
+html = """
+<lds-segmented label="Group by" size="sm">
+  <lds-segment value="status">Status</lds-segment>
+  <lds-segment value="assignee">Assignee</lds-segment>
+  <lds-segment value="priority">Priority</lds-segment>
+</lds-segmented>
+"""

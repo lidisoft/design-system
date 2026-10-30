@@ -1,0 +1,72 @@
+/* One option in lds-segmented. The host is the radio: it takes focus and
+ * carries aria-checked, set by the parent. */
+
+:host {
+  display: inline-flex;
+  flex: none;
+  min-width: 0;
+  border-radius: var(--lds-control-radius-sm);
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host(:hover) {
+  color: var(--lds-color-fg-default);
+}
+
+:host([aria-checked="true"]) {
+  background: var(--lds-color-bg-canvas);
+  color: var(--lds-color-fg-default);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+:host(:focus-visible) {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([aria-disabled="true"]) {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.segment {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lds-control-gap-sm);
+  min-width: 0;
+  padding-inline: var(--lds-control-padding-x-sm);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-segmented-font-size, var(--lds-control-font-size-md));
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.start {
+  display: inline-flex;
+  flex: none;
+}
+
+.start[data-empty],
+.label[data-empty] {
+  display: none;
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* A taller line box so overflow clipping does not cut descenders. */
+  line-height: var(--lds-font-leading-snug);
+}

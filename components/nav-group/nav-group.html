@@ -3,6 +3,16 @@
     <span class="trigger__label" part="label"></span>
     <span class="trigger__chevron" part="chevron" aria-hidden="true"></span>
   </button>
+  <div class="header" part="header" hidden>
+    <a class="link" part="link">
+      <span class="link__start" part="start"><slot name="start"></slot></span>
+      <span class="link__label"></span>
+      <span class="link__end" part="end"><slot name="end"></slot></span>
+    </a>
+    <button type="button" class="toggle" part="toggle" aria-expanded="false">
+      <span class="trigger__chevron" aria-hidden="true"></span>
+    </button>
+  </div>
   <div class="items" part="items" role="group">
     <slot></slot>
   </div>

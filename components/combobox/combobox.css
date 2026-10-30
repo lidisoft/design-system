@@ -1,0 +1,162 @@
+/* Filterable single or multiple choice. The control matches lds-input; the
+ * list floats in a panel positioned with LDS.position. */
+
+:host {
+  --lds-combobox-height: var(--lds-control-height-md);
+  --lds-combobox-padding-x: var(--lds-control-padding-x-md);
+  --lds-combobox-radius: var(--lds-control-radius-md);
+  --lds-combobox-font-size: var(--lds-control-font-size-md);
+  --lds-combobox-bg: var(--lds-color-bg-canvas);
+  --lds-combobox-fg: var(--lds-color-fg-default);
+  --lds-combobox-border: var(--lds-color-border-default);
+  --lds-combobox-max-height: 18rem;
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-combobox-height: var(--lds-control-height-sm);
+  --lds-combobox-padding-x: var(--lds-control-padding-x-sm);
+  --lds-combobox-radius: var(--lds-control-radius-sm);
+  --lds-combobox-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-combobox-height: var(--lds-control-height-lg);
+  --lds-combobox-padding-x: var(--lds-control-padding-x-lg);
+  --lds-combobox-radius: var(--lds-control-radius-lg);
+  --lds-combobox-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-combobox-border: var(--lds-color-danger-border);
+}
+
+.control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-1);
+  box-sizing: border-box;
+  min-height: var(--lds-combobox-height);
+  padding-block: var(--lds-space-1);
+  padding-inline: var(--lds-combobox-padding-x) var(--lds-space-2);
+  border: var(--lds-control-border-width-default) solid var(--lds-combobox-border);
+  border-radius: var(--lds-combobox-radius);
+  background: var(--lds-combobox-bg);
+  color: var(--lds-combobox-fg);
+  box-shadow: var(--lds-shadow-sm);
+  cursor: text;
+}
+
+.control:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.lead {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.lead[hidden] {
+  display: none;
+}
+
+.chips {
+  display: contents;
+}
+
+.input {
+  flex: 1 1 4rem;
+  min-width: 4rem;
+  height: calc(var(--lds-combobox-height) - var(--lds-space-2) - 2 * var(--lds-control-border-width-default));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-combobox-font-size);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.chevron {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--lds-color-fg-muted);
+  pointer-events: none;
+}
+
+:host([disabled]) .control {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.panel {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: var(--lds-z-popover);
+  max-height: min(var(--lds-combobox-max-height), calc(100vh - var(--lds-space-4)));
+  overflow: auto;
+  padding: var(--lds-space-1);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-overlay-radius);
+  background: var(--lds-color-bg-raised);
+  color: var(--lds-color-fg-default);
+  box-shadow: var(--lds-overlay-shadow);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-px);
+}
+
+.create {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-control-gap-sm);
+  min-height: var(--lds-control-height-sm);
+  padding: var(--lds-space-1) var(--lds-control-padding-x-sm);
+  border-radius: var(--lds-control-radius-sm);
+  color: var(--lds-color-accent-fg);
+  font-size: var(--lds-font-size-sm);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.create[hidden] {
+  display: none;
+}
+
+.create[data-active] {
+  background: var(--lds-color-bg-subtle);
+}
+
+.empty {
+  padding: var(--lds-space-2) var(--lds-control-padding-x-sm);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+}
+
+.empty[hidden] {
+  display: none;
+}

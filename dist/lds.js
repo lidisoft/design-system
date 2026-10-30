@@ -1155,6 +1155,518 @@
     }
   })();
 
+  /* behaviour: lds-combobox */
+  (function () {
+    /* Behaviour for <lds-combobox> — filterable single or multiple choice.
+     *
+     * Focus stays in the shadow <input> the whole time; the highlighted option is
+     * conveyed with aria-activedescendant. Options are light-DOM lds-option
+     * children, so the reference crosses the shadow boundary outward, which only
+     * ARIA element reflection (input.ariaActiveDescendantElement) can express. An
+     * id string cannot.
+     *
+     * Values live in the `value` attribute: one value, or a comma-separated list
+     * when `multiple` is set. The form value is a FormData with one entry per
+     * value in multiple mode.
+     */
+
+    const comboState = new WeakMap();
+    let comboSeq = 0;
+
+    LDS.behavior("lds-combobox", {
+      connected(el) {
+        if (comboState.has(el)) {
+          syncAll(el);
+          return;
+        }
+        comboSeq += 1;
+        const input = el.$(".input");
+        const list = el.$(".list");
+        const create = el.$(".create");
+        list.id = "lds-combobox-list-" + comboSeq;
+        create.id = "lds-combobox-create-" + comboSeq;
+        input.setAttribute("aria-controls", list.id);
+
+        const s = {
+          open: false,
+          editing: false,
+          active: null,
+          overlay: null,
+          reposition: null,
+          defaultValue: el.getAttribute("value") || "",
+          syncing: false,
+        };
+        comboState.set(el, s);
+
+        input.addEventListener("input", () => onInput(el));
+        input.addEventListener("keydown", (event) => onKeydown(el, event));
+
+        el.$(".control").addEventListener("click", (event) => {
+          if (el.boolAttr("disabled")) return;
+          if (event.target.closest && event.target.closest("lds-tag")) return;
+          input.focus();
+          /* Clicking into the text keeps the list open; the rest of the control,
+           * chevron included, toggles it. */
+          if (!s.open) openList(el);
+          else if (event.target !== input) closeList(el);
+        });
+
+        /* Keep focus in the input while clicking options. */
+        el.$(".panel").addEventListener("pointerdown", (event) => event.preventDefault());
+        el.$(".panel").addEventListener("click", (event) => {
+          const target = targetFrom(el, event);
+          if (target) pick(el, target);
+        });
+        el.$(".panel").addEventListener("pointermove", (event) => {
+          const target = targetFrom(el, event);
+          if (target && target !== s.active) setActive(el, target, { scroll: false });
+        });
+
+        el.addEventListener("focusout", (event) => {
+          if (event.relatedTarget && el.contains(event.relatedTarget)) return;
+          /* Focus moving inside our own shadow (a chip's remove button). */
+          if (el.shadowRoot.contains(event.relatedTarget)) return;
+          closeList(el);
+          finishEditing(el);
+        });
+
+        const mo = new MutationObserver(() => {
+          if (s.syncing) return;
+          syncAll(el);
+        });
+        mo.observe(el, { childList: true, subtree: true, characterData: true, attributeFilter: ["value", "label", "disabled", "keywords"] });
+        s.mo = mo;
+
+        syncAll(el);
+      },
+
+      disconnected(el) {
+        closeList(el);
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready || !comboState.has(el)) return;
+        if (name === "value" || name === "multiple" || name === "required" || name === "name") syncSelection(el);
+        if (name === "disabled" || name === "placeholder" || name === "label" || name === "aria-label") syncInput(el);
+        if (name === "disabled" && el.boolAttr("disabled")) closeList(el);
+      },
+
+      formReset(el) {
+        const s = comboState.get(el);
+        if (!s) return;
+        el.setAttribute("value", s.defaultValue);
+        finishEditing(el);
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+      },
+
+      formStateRestore(el, state) {
+        if (state == null) return;
+        const values = typeof state === "string" ? splitValues(state) : state.getAll(el.getAttribute("name") || "value");
+        el.setAttribute("value", values.join(","));
+      },
+    });
+
+    /* ---------------------------------------------------------------- reading */
+
+    function optionsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll(":scope > lds-option"));
+    }
+
+    function valueOf(option) {
+      const v = option.getAttribute("value");
+      return v != null ? v : labelOf(option);
+    }
+
+    /* The label is the default slot's text: everything but the start/end slots. */
+    function labelOf(option) {
+      const explicit = option.getAttribute("label");
+      if (explicit) return explicit;
+      let text = "";
+      option.childNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.hasAttribute("slot")) return;
+        text += node.textContent;
+      });
+      return text.replace(/\s+/g, " ").trim();
+    }
+
+    function splitValues(raw) {
+      return (raw || "").split(",").map((v) => v.trim()).filter(Boolean);
+    }
+
+    function currentValues(el) {
+      const values = splitValues(el.getAttribute("value"));
+      return el.boolAttr("multiple") ? values : values.slice(0, 1);
+    }
+
+    function findOption(el, value) {
+      return optionsOf(el).find((o) => valueOf(o) === value) || null;
+    }
+
+    function targetFrom(el, event) {
+      const path = event.composedPath();
+      for (const node of path) {
+        if (node === el) break;
+        if (node.classList && node.classList.contains("create")) return node;
+        if (node.tagName === "LDS-OPTION" && node.parentElement === el) return node;
+      }
+      return null;
+    }
+
+    function isCreate(node) {
+      return !!node && node.classList && node.classList.contains("create");
+    }
+
+    /* ---------------------------------------------------------------- syncing */
+
+    function syncAll(el) {
+      syncInput(el);
+      syncSelection(el);
+      const s = comboState.get(el);
+      if (s && s.open) filter(el);
+    }
+
+    function syncInput(el) {
+      const input = el.$(".input");
+      input.disabled = el.boolAttr("disabled");
+      const label = el.getAttribute("label") || el.getAttribute("aria-label");
+      if (label) input.setAttribute("aria-label", label);
+      else input.removeAttribute("aria-label");
+      const list = el.$(".list");
+      if (label) list.setAttribute("aria-label", label);
+      list.setAttribute("aria-multiselectable", el.boolAttr("multiple") ? "true" : "false");
+      syncPlaceholder(el);
+    }
+
+    function syncPlaceholder(el) {
+      const input = el.$(".input");
+      const empty = currentValues(el).length === 0;
+      input.placeholder = empty || !el.boolAttr("multiple") ? el.getAttribute("placeholder") || "" : "";
+    }
+
+    function syncSelection(el) {
+      const s = comboState.get(el);
+      s.syncing = true;
+      const values = currentValues(el);
+      optionsOf(el).forEach((option) => {
+        option.setAttribute("aria-selected", values.indexOf(valueOf(option)) >= 0 ? "true" : "false");
+      });
+      el.$(".list").setAttribute("aria-multiselectable", el.boolAttr("multiple") ? "true" : "false");
+
+      if (el.boolAttr("multiple")) renderChips(el, values);
+      else renderChips(el, []);
+      renderLead(el, values);
+      if (!s.editing && !el.boolAttr("multiple")) {
+        const option = values[0] != null ? findOption(el, values[0]) : null;
+        el.$(".input").value = option ? labelOf(option) : values[0] || "";
+      }
+      syncPlaceholder(el);
+      syncForm(el, values);
+      s.syncing = false;
+    }
+
+    function syncForm(el, values) {
+      const internals = el.internals;
+      if (!internals) return;
+      if (el.boolAttr("multiple")) {
+        const data = new FormData();
+        const name = el.getAttribute("name") || "value";
+        values.forEach((v) => data.append(name, v));
+        internals.setFormValue(data);
+      } else {
+        internals.setFormValue(values[0] || "");
+      }
+      if (el.boolAttr("required") && values.length === 0) {
+        internals.setValidity({ valueMissing: true }, "Select an option.", el.$(".input"));
+      } else {
+        internals.setValidity({});
+      }
+    }
+
+    /* Single mode shows the selected option's start content (an avatar, a status
+     * glyph) in front of the text. */
+    function renderLead(el, values) {
+      const lead = el.$(".lead");
+      lead.textContent = "";
+      lead.hidden = true;
+      if (el.boolAttr("multiple") || !values.length) return;
+      const option = findOption(el, values[0]);
+      const start = option && option.querySelector(':scope > [slot="start"]');
+      if (!start) return;
+      const clone = start.cloneNode(true);
+      clone.removeAttribute("slot");
+      clone.removeAttribute("id");
+      lead.appendChild(clone);
+      lead.hidden = false;
+    }
+
+    function renderChips(el, values) {
+      const chips = el.$(".chips");
+      chips.textContent = "";
+      values.forEach((value) => {
+        const option = findOption(el, value);
+        const label = option ? labelOf(option) : value;
+        const tag = document.createElement("lds-tag");
+        tag.setAttribute("size", "sm");
+        tag.setAttribute("dismissible", "");
+        if (el.boolAttr("disabled")) tag.setAttribute("disabled", "");
+        const start = option && option.querySelector(':scope > [slot="start"]');
+        if (start) {
+          const clone = start.cloneNode(true);
+          clone.removeAttribute("id");
+          tag.appendChild(clone);
+        }
+        tag.appendChild(document.createTextNode(label));
+        tag.addEventListener("lds-remove", (event) => {
+          event.preventDefault();
+          setValues(el, currentValues(el).filter((v) => v !== value));
+          el.$(".input").focus();
+        });
+        chips.appendChild(tag);
+        const close = tag.$ && tag.$(".tag__close");
+        if (close) {
+          close.setAttribute("aria-label", "Remove " + label);
+          close.tabIndex = -1;
+        }
+      });
+    }
+
+    function setValues(el, values) {
+      el.setAttribute("value", values.join(","));
+      el.emit("lds-change", { value: values.join(","), values: values.slice() });
+    }
+
+    /* -------------------------------------------------------------- filtering */
+
+    function filter(el) {
+      const input = el.$(".input");
+      const s = comboState.get(el);
+      const query = s.editing ? input.value.trim() : "";
+      const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+      const manual = el.getAttribute("filter") === "none";
+      let visible = 0;
+      let exact = false;
+
+      optionsOf(el).forEach((option) => {
+        const label = labelOf(option).toLowerCase();
+        const haystack = label + " " + valueOf(option).toLowerCase() + " " + (option.getAttribute("keywords") || "").toLowerCase();
+        const match = manual || tokens.every((t) => haystack.indexOf(t) >= 0);
+        option.hidden = !match;
+        if (match) visible += 1;
+        if (label === query.toLowerCase()) exact = true;
+      });
+
+      const create = el.$(".create");
+      const canCreate = el.boolAttr("creatable") && query !== "" && !exact;
+      create.hidden = !canCreate;
+      el.$(".create__label").textContent = canCreate ? "Create “" + query + "”" : "";
+
+      const empty = el.$(".empty");
+      empty.hidden = visible > 0 || canCreate;
+      empty.textContent = el.getAttribute("empty") || "No results";
+    }
+
+    function candidates(el) {
+      const list = optionsOf(el).filter((o) => !o.hidden && !o.boolAttr("disabled"));
+      const create = el.$(".create");
+      if (!create.hidden) list.push(create);
+      return list;
+    }
+
+    function setActive(el, node, opts) {
+      const s = comboState.get(el);
+      const input = el.$(".input");
+      optionsOf(el).forEach((o) => o.toggleAttribute("data-active", o === node));
+      el.$(".create").toggleAttribute("data-active", isCreate(node));
+      s.active = node || null;
+
+      if ("ariaActiveDescendantElement" in input) {
+        input.ariaActiveDescendantElement = node || null;
+      } else if (node) {
+        /* Without element reflection only the in-shadow create row resolves. */
+        input.setAttribute("aria-activedescendant", node.id);
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+
+      if (node && (!opts || opts.scroll !== false)) node.scrollIntoView({ block: "nearest" });
+    }
+
+    function activateDefault(el) {
+      const list = candidates(el);
+      const values = currentValues(el);
+      const selected = list.find((o) => !isCreate(o) && values.indexOf(valueOf(o)) >= 0);
+      setActive(el, comboState.get(el).editing ? list[0] || null : selected || list[0] || null);
+    }
+
+    function move(el, delta) {
+      const list = candidates(el);
+      if (!list.length) return;
+      const s = comboState.get(el);
+      let index = list.indexOf(s.active);
+      if (index < 0) index = delta > 0 ? -1 : list.length;
+      index = Math.min(Math.max(index + delta, 0), list.length - 1);
+      setActive(el, list[index]);
+    }
+
+    /* ---------------------------------------------------------------- open / close */
+
+    function openList(el) {
+      const s = comboState.get(el);
+      if (s.open || el.boolAttr("disabled")) return;
+      s.open = true;
+      const panel = el.$(".panel");
+      panel.hidden = false;
+      el.$(".input").setAttribute("aria-expanded", "true");
+      filter(el);
+      activateDefault(el);
+      position(el);
+
+      s.reposition = () => position(el);
+      window.addEventListener("resize", s.reposition);
+      window.addEventListener("scroll", s.reposition, true);
+      s.overlay = LDS.overlay.bind(panel, {
+        trapFocus: false,
+        ignoreOutside: [el],
+        onDismiss: () => closeList(el),
+      });
+    }
+
+    function closeList(el) {
+      const s = comboState.get(el);
+      if (!s || !s.open) return;
+      s.open = false;
+      el.$(".panel").hidden = true;
+      el.$(".input").setAttribute("aria-expanded", "false");
+      setActive(el, null);
+      if (s.reposition) {
+        window.removeEventListener("resize", s.reposition);
+        window.removeEventListener("scroll", s.reposition, true);
+        s.reposition = null;
+      }
+      if (s.overlay) {
+        s.overlay.disconnect();
+        s.overlay = null;
+      }
+    }
+
+    function position(el) {
+      LDS.position(el.$(".panel"), el.$(".control"), { placement: "bottom-start", matchWidth: true });
+    }
+
+    /* Leave edit mode: single shows the selection again, multiple clears the
+     * query. */
+    function finishEditing(el) {
+      const s = comboState.get(el);
+      s.editing = false;
+      if (el.boolAttr("multiple")) el.$(".input").value = "";
+      syncSelection(el);
+    }
+
+    /* ---------------------------------------------------------------- input */
+
+    function onInput(el) {
+      const s = comboState.get(el);
+      const input = el.$(".input");
+      s.editing = true;
+      if (!s.open) openList(el);
+      filter(el);
+      setActive(el, input.value.trim() ? candidates(el)[0] || null : null);
+      position(el);
+      el.emit("lds-search", { query: input.value });
+    }
+
+    function onKeydown(el, event) {
+      const s = comboState.get(el);
+      const input = el.$(".input");
+
+      switch (event.key) {
+        case "ArrowDown":
+          event.preventDefault();
+          if (!s.open) openList(el);
+          else if (event.altKey) return;
+          else move(el, 1);
+          return;
+        case "ArrowUp":
+          event.preventDefault();
+          if (!s.open) openList(el);
+          else if (event.altKey) closeList(el);
+          else move(el, -1);
+          return;
+        case "Enter":
+          if (!s.open || !s.active) return;
+          event.preventDefault();
+          pick(el, s.active);
+          return;
+        case "Escape":
+          /* An open list is closed by the overlay helper, which handles Escape
+           * first and cancels it. Only an Escape on a closed list abandons the
+           * typed text. */
+          if (s.open || event.defaultPrevented) return;
+          if (s.editing || input.value) {
+            event.preventDefault();
+            finishEditing(el);
+          }
+          return;
+        case "Backspace":
+          if (el.boolAttr("multiple") && input.value === "" && input.selectionStart === 0) {
+            const values = currentValues(el);
+            if (values.length) {
+              event.preventDefault();
+              setValues(el, values.slice(0, -1));
+            }
+          }
+          return;
+        case "Tab":
+          closeList(el);
+          return;
+        default:
+          return;
+      }
+    }
+
+    /* ---------------------------------------------------------------- choosing */
+
+    function pick(el, node) {
+      const s = comboState.get(el);
+      const input = el.$(".input");
+
+      if (isCreate(node)) {
+        const query = input.value.trim();
+        if (!query) return;
+        const ev = el.emit("lds-create", { value: query });
+        if (ev.defaultPrevented) return;
+        const option = document.createElement("lds-option");
+        option.setAttribute("value", query.replace(/,/g, " "));
+        option.textContent = query;
+        el.appendChild(option);
+        node = option;
+      }
+
+      if (node.boolAttr && node.boolAttr("disabled")) return;
+      const value = valueOf(node);
+
+      if (el.boolAttr("multiple")) {
+        const values = currentValues(el);
+        const next = values.indexOf(value) >= 0 ? values.filter((v) => v !== value) : values.concat(value);
+        input.value = "";
+        s.editing = false;
+        setValues(el, next);
+        filter(el);
+        setActive(el, node, { scroll: false });
+        position(el);
+        return;
+      }
+
+      s.editing = false;
+      closeList(el);
+      if (currentValues(el)[0] !== value) setValues(el, [value]);
+      else syncSelection(el);
+    }
+  })();
+
   /* behaviour: lds-date-picker */
   (function () {
     /* Behaviour for <lds-date-picker> — form-associated native date/time input. */
@@ -1254,6 +1766,144 @@
 
     function setValue(el, value) {
       if (el.internals) el.internals.setFormValue(value == null ? "" : String(value));
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-date-range */
+  (function () {
+    /* Behaviour for <lds-date-range> — two native date inputs, one form value.
+     *
+     * The form value is an ISO 8601 interval, "start/end", so one field carries
+     * both dates. Each input bounds the other (end.min = start, start.max = end)
+     * and a reversed range is reported through the Constraint Validation API.
+     */
+
+    LDS.behavior("lds-date-range", {
+      connected(el) {
+        if (el._lds.rangeDefault == null) {
+          el._lds.rangeDefault = { start: el.getAttribute("start") || "", end: el.getAttribute("end") || "" };
+        }
+        const start = el.$(".start");
+        const end = el.$(".end");
+        watchSlot(el, 'slot[name="prefix"]', ".prefix");
+
+        for (const input of [start, end]) {
+          const attr = input === start ? "start" : "end";
+          input.addEventListener("input", () => {
+            el.setAttribute(attr, input.value);
+          });
+          input.addEventListener("change", () => {
+            el.emit("lds-change", { start: start.value, end: end.value, value: rangeValue(start.value, end.value) });
+          });
+        }
+
+        el.addEventListener(
+          "click",
+          (event) => {
+            if (el.boolAttr("disabled")) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true
+        );
+
+        sync(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+
+      formReset(el) {
+        const d = el._lds.rangeDefault || { start: "", end: "" };
+        el.setAttribute("start", d.start);
+        el.setAttribute("end", d.end);
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+      },
+
+      formStateRestore(el, state) {
+        if (typeof state !== "string") return;
+        const parts = state.split("/");
+        el.setAttribute("start", parts[0] || "");
+        el.setAttribute("end", parts[1] || "");
+      },
+    });
+
+    function rangeValue(start, end) {
+      return start || end ? start + "/" + end : "";
+    }
+
+    function sync(el) {
+      const start = el.$(".start");
+      const end = el.$(".end");
+      const disabled = el.boolAttr("disabled");
+      const required = el.boolAttr("required");
+
+      /* Assign only on change: rewriting a native date input resets the segment
+       * the user is typing in. */
+      const startAttr = el.getAttribute("start") || "";
+      const endAttr = el.getAttribute("end") || "";
+      if (start.value !== startAttr) start.value = startAttr;
+      if (end.value !== endAttr) end.value = endAttr;
+
+      start.setAttribute("aria-label", el.getAttribute("start-label") || "Start date");
+      end.setAttribute("aria-label", el.getAttribute("end-label") || "End date");
+      const label = el.getAttribute("label");
+      if (label) el.$(".wrap").setAttribute("aria-label", label);
+      else el.$(".wrap").removeAttribute("aria-label");
+
+      for (const input of [start, end]) {
+        input.disabled = disabled;
+        input.required = required;
+        const invalid = el.boolAttr("invalid") || el.getAttribute("aria-invalid") === "true";
+        if (invalid) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+      }
+
+      /* Each date bounds the other, inside the overall min/max. */
+      const min = el.getAttribute("min") || "";
+      const max = el.getAttribute("max") || "";
+      setBound(start, "min", min);
+      setBound(start, "max", end.value || max);
+      setBound(end, "min", start.value || min);
+      setBound(end, "max", max);
+
+      if (!el.internals) return;
+      el.internals.setFormValue(rangeValue(start.value, end.value));
+
+      if (required && (!start.value || !end.value)) {
+        el.internals.setValidity({ valueMissing: true }, "Enter a start and an end date.", start.value ? end : start);
+      } else if (start.value && end.value && end.value < start.value) {
+        el.internals.setValidity({ rangeUnderflow: true }, "The end date is before the start date.", end);
+      } else if ((min && start.value && start.value < min) || (max && end.value && end.value > max)) {
+        el.internals.setValidity({ rangeOverflow: true }, "The dates are outside the allowed range.", start);
+      } else {
+        el.internals.setValidity({});
+      }
+    }
+
+    function setBound(input, name, value) {
+      if (value) input.setAttribute(name, value);
+      else input.removeAttribute(name);
     }
 
     function watchSlot(el, slotSel, wrapSel) {
@@ -1487,6 +2137,52 @@
     }
   })();
 
+  /* behaviour: lds-option */
+  (function () {
+    /* Behaviour for <lds-option> — role, id and slot emptiness. Selection and
+     * the active highlight are set by the parent lds-combobox. */
+
+    let optionSeq = 0;
+
+    LDS.behavior("lds-option", {
+      connected(el) {
+        el.setAttribute("role", "option");
+        if (!el.id) {
+          optionSeq += 1;
+          el.id = "lds-option-" + optionSeq;
+        }
+        if (!el.hasAttribute("aria-selected")) el.setAttribute("aria-selected", "false");
+        syncDisabled(el);
+        watchSlot(el, 'slot[name="start"]', ".start");
+        watchSlot(el, 'slot[name="end"]', ".end");
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "disabled") syncDisabled(el);
+      },
+    });
+
+    function syncDisabled(el) {
+      if (el.boolAttr("disabled")) el.setAttribute("aria-disabled", "true");
+      else el.removeAttribute("aria-disabled");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-radio-group */
   (function () {
     /* Behaviour for <lds-radio-group> — FACE group with roving tabindex. */
@@ -1667,6 +2363,168 @@
 
     function optionDisabled(option) {
       return option.hasAttribute("disabled") || option.getAttribute("aria-disabled") === "true";
+    }
+  })();
+
+  /* behaviour: lds-segment */
+  (function () {
+    /* Behaviour for <lds-segment> — accessible name and slot emptiness. Role,
+     * checked state and tabindex are owned by the parent lds-segmented. */
+
+    LDS.behavior("lds-segment", {
+      connected(el) {
+        el.setAttribute("role", "radio");
+        syncLabel(el);
+        watchSlot(el, 'slot[name="start"]', ".start");
+        watchSlot(el, ".label slot", ".label");
+      },
+
+      attributeChanged(el, name) {
+        if (!el._lds.ready) return;
+        if (name === "label") syncLabel(el);
+      },
+    });
+
+    function syncLabel(el) {
+      const label = el.getAttribute("label");
+      if (label) el.setAttribute("aria-label", label);
+      else el.removeAttribute("aria-label");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
+  /* behaviour: lds-segmented */
+  (function () {
+    /* Behaviour for <lds-segmented> — a radiogroup of lds-segment children.
+     *
+     * Roving tabindex: only the checked segment is in the tab order, arrow keys
+     * move and select at once, as native radios do. Form-associated, so a
+     * segmented control inside a form submits its value under name.
+     */
+
+    LDS.behavior("lds-segmented", {
+      connected(el) {
+        if (el._lds.segDefault == null) el._lds.segDefault = el.getAttribute("value") || "";
+        const track = el.$(".track");
+
+        el.addEventListener("click", (event) => {
+          const segment = segmentFrom(el, event.target);
+          if (!segment || !enabled(el, segment)) return;
+          choose(el, segment, false);
+        });
+
+        /* Key events from slotted segments pass through the track. */
+        track.addEventListener("keydown", (event) => onKeydown(el, event));
+
+        el.$("slot").addEventListener("slotchange", () => sync(el));
+        sync(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        sync(el);
+      },
+
+      formReset(el) {
+        el.setAttribute("value", el._lds.segDefault || "");
+      },
+
+      formDisabled(el, disabled) {
+        el.toggleAttribute("disabled", disabled);
+      },
+
+      formStateRestore(el, state) {
+        if (state != null) el.setAttribute("value", String(state));
+      },
+    });
+
+    function segmentsOf(el) {
+      return Array.prototype.slice.call(el.querySelectorAll(":scope > lds-segment"));
+    }
+
+    function segmentFrom(el, node) {
+      while (node && node !== el) {
+        if (node.tagName === "LDS-SEGMENT" && node.parentElement === el) return node;
+        node = node.parentElement;
+      }
+      return null;
+    }
+
+    function valueOf(segment) {
+      return segment.getAttribute("value") || segment.textContent.trim();
+    }
+
+    function enabled(el, segment) {
+      return !el.boolAttr("disabled") && !segment.hasAttribute("disabled");
+    }
+
+    function sync(el) {
+      const track = el.$(".track");
+      const label = el.getAttribute("label");
+      if (label) track.setAttribute("aria-label", label);
+      else track.removeAttribute("aria-label");
+
+      const segments = segmentsOf(el);
+      let value = el.getAttribute("value");
+      if (!value && segments.length) {
+        value = valueOf(segments[0]);
+        el.setAttribute("value", value);
+        return;
+      }
+
+      segments.forEach((segment) => {
+        const checked = valueOf(segment) === value;
+        segment.setAttribute("role", "radio");
+        segment.setAttribute("aria-checked", checked ? "true" : "false");
+        segment.tabIndex = checked && enabled(el, segment) ? 0 : -1;
+        if (enabled(el, segment)) segment.removeAttribute("aria-disabled");
+        else segment.setAttribute("aria-disabled", "true");
+      });
+
+      /* If the checked segment cannot take focus, keep the group reachable. */
+      if (!segments.some((s) => s.tabIndex === 0)) {
+        const first = segments.find((s) => enabled(el, s));
+        if (first) first.tabIndex = 0;
+      }
+
+      if (el.internals) el.internals.setFormValue(value || "");
+    }
+
+    function choose(el, segment, focus) {
+      const value = valueOf(segment);
+      if (focus) segment.focus();
+      if (value === el.getAttribute("value")) return;
+      el.setAttribute("value", value);
+      el.emit("lds-change", { value: value });
+    }
+
+    function onKeydown(el, event) {
+      const segments = segmentsOf(el).filter((s) => enabled(el, s));
+      if (!segments.length) return;
+      const current = segments.indexOf(segmentFrom(el, event.target));
+      let next;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (current + 1) % segments.length;
+      else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (current - 1 + segments.length) % segments.length;
+      else if (event.key === "Home") next = 0;
+      else if (event.key === "End") next = segments.length - 1;
+      else if (event.key === " " || event.key === "Enter") next = Math.max(current, 0);
+      else return;
+      event.preventDefault();
+      event.stopPropagation();
+      choose(el, segments[next], true);
     }
   })();
 
@@ -3183,6 +4041,10 @@
      *
      * Toggles the `open` attribute; aria-expanded tracks it. Cancel lds-toggle to
      * keep the previous state.
+     *
+     * With href, the header is a link to the group's own page (a project) and the
+     * disclosure moves to a separate button beside it, since a link cannot also
+     * be a toggle.
      */
 
     LDS.behavior("lds-nav-group", {
@@ -3191,8 +4053,14 @@
 
         syncLabel(el, trigger);
         syncExpanded(el, trigger);
+        syncHeader(el);
+        watchSlot(el, 'slot[name="start"]', ".link__start");
+        watchSlot(el, 'slot[name="end"]', ".link__end");
 
         trigger.addEventListener("click", () => {
+          setOpen(el, !el.boolAttr("open"));
+        });
+        el.$(".toggle").addEventListener("click", () => {
           setOpen(el, !el.boolAttr("open"));
         });
       },
@@ -3203,6 +4071,7 @@
 
         if (name === "label") syncLabel(el, trigger);
         if (name === "open") syncExpanded(el, trigger);
+        if (name === "href" || name === "current" || name === "label") syncHeader(el);
       },
     });
 
@@ -3227,7 +4096,45 @@
     }
 
     function syncExpanded(el, trigger) {
-      trigger.setAttribute("aria-expanded", el.boolAttr("open") ? "true" : "false");
+      const expanded = el.boolAttr("open") ? "true" : "false";
+      trigger.setAttribute("aria-expanded", expanded);
+      const toggle = el.$(".toggle");
+      if (toggle) toggle.setAttribute("aria-expanded", expanded);
+    }
+
+    function syncHeader(el) {
+      const header = el.$(".header");
+      const link = el.$(".link");
+      const toggle = el.$(".toggle");
+      const href = el.getAttribute("href");
+      const label = el.getAttribute("label") || "";
+
+      header.hidden = !href;
+      el.$(".trigger").hidden = !!href;
+      if (!href) return;
+
+      link.setAttribute("href", href);
+      el.$(".link__label").textContent = label;
+      /* In a collapsed rail only the start content shows, so the link keeps its
+       * name through aria-label. */
+      link.setAttribute("aria-label", label);
+      if (el.boolAttr("current")) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+      toggle.setAttribute("aria-label", label ? "Pages in " + label : "Pages");
+    }
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
     }
   })();
 
@@ -3523,6 +4430,35 @@
     }
   })();
 
+  /* behaviour: lds-empty-state */
+  (function () {
+    /* Behaviour for <lds-empty-state> — hide unused regions so the gap between
+     * them stays even. CSS cannot see whether a slot has content. */
+
+    LDS.behavior("lds-empty-state", {
+      connected(el) {
+        watchSlot(el, 'slot[name="icon"]', ".icon");
+        watchSlot(el, 'slot[name="title"]', ".title");
+        watchSlot(el, ".body slot", ".body");
+        watchSlot(el, 'slot[name="actions"]', ".actions");
+      },
+    });
+
+    function watchSlot(el, slotSel, wrapSel) {
+      const slot = el.$(slotSel);
+      const wrap = el.$(wrapSel);
+      if (!slot || !wrap) return;
+      const update = () => {
+        const empty = slot.assignedNodes({ flatten: true }).every(
+          (node) => node.nodeType === Node.TEXT_NODE && !node.textContent.trim()
+        );
+        wrap.toggleAttribute("data-empty", empty);
+      };
+      slot.addEventListener("slotchange", update);
+      update();
+    }
+  })();
+
   /* behaviour: lds-pagination */
   (function () {
     /* Behaviour for <lds-pagination>.
@@ -3765,6 +4701,40 @@
 
       el.setAttribute("page-size", String(size));
       el.setAttribute("page", String(page));
+    }
+  })();
+
+  /* behaviour: lds-skeleton */
+  (function () {
+    /* Behaviour for <lds-skeleton> — render one bar per line and hide the
+     * placeholder from assistive technology. The region being loaded should carry
+     * aria-busy="true"; the skeleton itself says nothing. */
+
+    LDS.behavior("lds-skeleton", {
+      connected(el) {
+        el.setAttribute("aria-hidden", "true");
+        render(el);
+      },
+
+      attributeChanged(el) {
+        if (!el._lds.ready) return;
+        render(el);
+      },
+    });
+
+    function render(el) {
+      const lines = el.$(".lines");
+      const shape = el.getAttribute("shape") || "text";
+      let count = shape === "text" ? parseInt(el.getAttribute("lines"), 10) : 1;
+      if (Number.isNaN(count) || count < 1) count = 1;
+
+      lines.textContent = "";
+      for (let i = 0; i < count; i++) {
+        const bar = document.createElement("span");
+        bar.className = "bar";
+        if (count > 1 && i === count - 1) bar.setAttribute("data-last", "");
+        lines.appendChild(bar);
+      }
     }
   })();
 
@@ -5816,6 +6786,58 @@
 }`,
   });
 
+  /* component: lds-kbd (draft) */
+  LDS.define({
+    tag: "lds-kbd",
+    className: "LdsKbd",
+    formAssociated: false,
+    observed: ["size"],
+    defaults: {"size": "sm"},
+    template: `<kbd class="kbd" part="kbd"><slot></slot></kbd>`,
+    styles: `/* One keycap. A sequence (G then I) is two lds-kbd elements; a chord (⌘K)
+ * is one. */
+
+:host {
+  --lds-kbd-bg: var(--lds-color-bg-subtle);
+  --lds-kbd-fg: var(--lds-color-fg-muted);
+  --lds-kbd-border: var(--lds-color-border-default);
+  --lds-kbd-size: var(--lds-space-5);
+  --lds-kbd-font-size: var(--lds-font-size-2xs);
+
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="md"]) {
+  --lds-kbd-size: var(--lds-space-6);
+  --lds-kbd-font-size: var(--lds-font-size-xs);
+}
+
+.kbd {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--lds-kbd-size);
+  height: var(--lds-kbd-size);
+  padding-inline: var(--lds-space-1);
+  border: var(--lds-control-border-width-default) solid var(--lds-kbd-border);
+  border-radius: var(--lds-radius-md);
+  background: var(--lds-kbd-bg);
+  color: var(--lds-kbd-fg);
+  box-shadow: inset 0 calc(var(--lds-control-border-width-default) * -1) 0 var(--lds-kbd-border);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-kbd-font-size);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}`,
+  });
+
   /* component: lds-spinner (draft) */
   LDS.define({
     tag: "lds-spinner",
@@ -6134,6 +7156,204 @@
 }`,
   });
 
+  /* component: lds-combobox (draft) */
+  LDS.define({
+    tag: "lds-combobox",
+    className: "LdsCombobox",
+    formAssociated: true,
+    observed: ["name", "value", "multiple", "creatable", "filter", "label", "placeholder", "empty", "size", "disabled", "required", "invalid"],
+    defaults: {"filter": "auto", "size": "md"},
+    template: `<div class="control" part="control">
+  <span class="lead" part="lead" hidden></span>
+  <span class="chips" part="chips"></span>
+  <input
+    class="input"
+    part="input"
+    type="text"
+    role="combobox"
+    aria-autocomplete="list"
+    aria-expanded="false"
+    autocomplete="off"
+    spellcheck="false"
+  />
+  <span class="chevron" part="chevron" aria-hidden="true">
+    <lds-icon name="chevron-down" size="sm"></lds-icon>
+  </span>
+</div>
+<div class="panel" part="panel" hidden>
+  <div class="list" part="list" role="listbox">
+    <slot></slot>
+    <div class="create" part="create" role="option" aria-selected="false" hidden>
+      <lds-icon name="plus" size="sm"></lds-icon>
+      <span class="create__label"></span>
+    </div>
+  </div>
+  <div class="empty" part="empty" hidden></div>
+</div>`,
+    styles: `/* Filterable single or multiple choice. The control matches lds-input; the
+ * list floats in a panel positioned with LDS.position. */
+
+:host {
+  --lds-combobox-height: var(--lds-control-height-md);
+  --lds-combobox-padding-x: var(--lds-control-padding-x-md);
+  --lds-combobox-radius: var(--lds-control-radius-md);
+  --lds-combobox-font-size: var(--lds-control-font-size-md);
+  --lds-combobox-bg: var(--lds-color-bg-canvas);
+  --lds-combobox-fg: var(--lds-color-fg-default);
+  --lds-combobox-border: var(--lds-color-border-default);
+  --lds-combobox-max-height: 18rem;
+
+  display: block;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-combobox-height: var(--lds-control-height-sm);
+  --lds-combobox-padding-x: var(--lds-control-padding-x-sm);
+  --lds-combobox-radius: var(--lds-control-radius-sm);
+  --lds-combobox-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-combobox-height: var(--lds-control-height-lg);
+  --lds-combobox-padding-x: var(--lds-control-padding-x-lg);
+  --lds-combobox-radius: var(--lds-control-radius-lg);
+  --lds-combobox-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-combobox-border: var(--lds-color-danger-border);
+}
+
+.control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lds-space-1);
+  box-sizing: border-box;
+  min-height: var(--lds-combobox-height);
+  padding-block: var(--lds-space-1);
+  padding-inline: var(--lds-combobox-padding-x) var(--lds-space-2);
+  border: var(--lds-control-border-width-default) solid var(--lds-combobox-border);
+  border-radius: var(--lds-combobox-radius);
+  background: var(--lds-combobox-bg);
+  color: var(--lds-combobox-fg);
+  box-shadow: var(--lds-shadow-sm);
+  cursor: text;
+}
+
+.control:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.lead {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.lead[hidden] {
+  display: none;
+}
+
+.chips {
+  display: contents;
+}
+
+.input {
+  flex: 1 1 4rem;
+  min-width: 4rem;
+  height: calc(var(--lds-combobox-height) - var(--lds-space-2) - 2 * var(--lds-control-border-width-default));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-combobox-font-size);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--lds-color-fg-subtle);
+}
+
+.chevron {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--lds-color-fg-muted);
+  pointer-events: none;
+}
+
+:host([disabled]) .control {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.panel {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: var(--lds-z-popover);
+  max-height: min(var(--lds-combobox-max-height), calc(100vh - var(--lds-space-4)));
+  overflow: auto;
+  padding: var(--lds-space-1);
+  border: var(--lds-control-border-width-default) solid var(--lds-color-border-default);
+  border-radius: var(--lds-overlay-radius);
+  background: var(--lds-color-bg-raised);
+  color: var(--lds-color-fg-default);
+  box-shadow: var(--lds-overlay-shadow);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-px);
+}
+
+.create {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-control-gap-sm);
+  min-height: var(--lds-control-height-sm);
+  padding: var(--lds-space-1) var(--lds-control-padding-x-sm);
+  border-radius: var(--lds-control-radius-sm);
+  color: var(--lds-color-accent-fg);
+  font-size: var(--lds-font-size-sm);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.create[hidden] {
+  display: none;
+}
+
+.create[data-active] {
+  background: var(--lds-color-bg-subtle);
+}
+
+.empty {
+  padding: var(--lds-space-2) var(--lds-control-padding-x-sm);
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+}
+
+.empty[hidden] {
+  display: none;
+}`,
+  });
+
   /* component: lds-date-picker (draft) */
   LDS.define({
     tag: "lds-date-picker",
@@ -6257,6 +7477,178 @@
 :host([disabled]) .input::-webkit-calendar-picker-indicator {
   cursor: not-allowed;
   opacity: 0.4;
+}`,
+  });
+
+  /* component: lds-date-range (draft) */
+  LDS.define({
+    tag: "lds-date-range",
+    className: "LdsDateRange",
+    formAssociated: true,
+    observed: ["name", "start", "end", "min", "max", "label", "start-label", "end-label", "indicator", "size", "disabled", "required", "invalid"],
+    defaults: {"indicator": "end", "size": "md"},
+    template: `<div class="wrap" part="wrap" role="group">
+  <span class="prefix" part="prefix"><slot name="prefix"></slot></span>
+  <input class="input start" part="start" type="date" />
+  <span class="separator" part="separator" aria-hidden="true">
+    <lds-icon name="chevron-right" size="sm"></lds-icon>
+  </span>
+  <input class="input end" part="end" type="date" />
+</div>`,
+    styles: `/* Two native date inputs in one control, styled to match lds-date-picker. */
+
+:host {
+  --lds-date-range-height: var(--lds-control-height-md);
+  --lds-date-range-padding-x: var(--lds-control-padding-x-md);
+  --lds-date-range-radius: var(--lds-control-radius-md);
+  --lds-date-range-font-size: var(--lds-control-font-size-md);
+  --lds-date-range-bg: var(--lds-color-bg-canvas);
+  --lds-date-range-fg: var(--lds-color-fg-default);
+  --lds-date-range-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+  /* The layout stacks by the component's own width, not the viewport's. */
+  container-type: inline-size;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-date-range-height: var(--lds-control-height-sm);
+  --lds-date-range-padding-x: var(--lds-control-padding-x-sm);
+  --lds-date-range-radius: var(--lds-control-radius-sm);
+  --lds-date-range-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-date-range-height: var(--lds-control-height-lg);
+  --lds-date-range-padding-x: var(--lds-control-padding-x-lg);
+  --lds-date-range-radius: var(--lds-control-radius-lg);
+  --lds-date-range-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-date-range-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-date-range-height);
+  padding-inline: var(--lds-date-range-padding-x);
+  gap: var(--lds-control-gap-md);
+  border: var(--lds-control-border-width-default) solid var(--lds-date-range-border);
+  border-radius: var(--lds-date-range-radius);
+  background: var(--lds-date-range-bg);
+  color: var(--lds-date-range-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.prefix,
+.separator {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.prefix[data-empty] {
+  display: none;
+}
+
+.input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-date-range-font-size);
+  line-height: 1;
+  color-scheme: inherit;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Chromium only: Firefox draws its picker button internally and Safari has
+ * none, so there the icon stays where the browser puts it. */
+:host([indicator="start"]) .input::-webkit-calendar-picker-indicator {
+  order: -1;
+  margin-inline: 0 var(--lds-space-2);
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}
+
+:host([disabled]) .input::-webkit-calendar-picker-indicator {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Too narrow for both dates side by side: three lines, start date, a
+ * downward chevron, end date. The dates fill the width so their calendar
+ * buttons stay at the end; the chevron is centred under the date text. That
+ * text is ten characters in the formats browsers use (10/01/2026,
+ * 01.10.2026, 2026-10-01), and its separators are narrower than digits, so
+ * its width is about 9ch. Last in the file so it overrides the base rules. */
+@container (width < 20rem) {
+  .wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--lds-space-1);
+    padding-block: var(--lds-space-2);
+  }
+
+  .input {
+    flex: none;
+  }
+
+  .separator {
+    align-self: flex-start;
+    justify-content: center;
+    width: 9ch;
+    font-size: var(--lds-date-range-font-size);
+  }
+
+  /* The text starts after the calendar button: its width plus the gap set on
+   * it above. */
+  :host([indicator="start"]) .separator {
+    margin-inline-start: calc(1.25em + var(--lds-space-2));
+  }
+
+  .separator lds-icon {
+    rotate: 90deg;
+  }
 }`,
   });
 
@@ -6453,6 +7845,98 @@
 }`,
   });
 
+  /* component: lds-option (draft) */
+  LDS.define({
+    tag: "lds-option",
+    className: "LdsOption",
+    formAssociated: false,
+    observed: ["value", "label", "keywords", "disabled"],
+    defaults: {},
+    template: `<div class="option" part="option">
+  <span class="check" part="check" aria-hidden="true"><lds-icon name="check" size="sm"></lds-icon></span>
+  <span class="start" part="start"><slot name="start"></slot></span>
+  <span class="label" part="label"><slot></slot></span>
+  <span class="end" part="end"><slot name="end"></slot></span>
+</div>`,
+    styles: `/* One choice inside lds-combobox. The combobox owns selection, the active
+ * highlight and keyboard handling; this component only renders the row. */
+
+:host {
+  --lds-option-bg: transparent;
+  --lds-option-bg-active: var(--lds-color-bg-subtle);
+  --lds-option-fg: var(--lds-color-fg-default);
+
+  display: block;
+  cursor: pointer;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([data-active]) {
+  --lds-option-bg: var(--lds-option-bg-active);
+}
+
+.option {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-control-gap-sm);
+  min-height: var(--lds-control-height-sm);
+  padding: var(--lds-space-1) var(--lds-control-padding-x-sm);
+  border-radius: var(--lds-control-radius-sm);
+  background: var(--lds-option-bg);
+  color: var(--lds-option-fg);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-snug);
+}
+
+/* The check keeps its width when hidden so labels line up whether or not a
+ * row is selected. */
+.check {
+  display: inline-flex;
+  flex: none;
+  visibility: hidden;
+  color: var(--lds-color-accent-fg);
+}
+
+:host([aria-selected="true"]) .check {
+  visibility: visible;
+}
+
+.start,
+.end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.end {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+}
+
+.start[data-empty],
+.end[data-empty] {
+  display: none;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:host([disabled]) {
+  cursor: not-allowed;
+}
+
+:host([disabled]) .option {
+  color: var(--lds-color-fg-disabled);
+}`,
+  });
+
   /* component: lds-radio-group (draft) */
   LDS.define({
     tag: "lds-radio-group",
@@ -6548,6 +8032,151 @@
 :host([disabled]) {
   opacity: 0.55;
   pointer-events: none;
+}`,
+  });
+
+  /* component: lds-segment (draft) */
+  LDS.define({
+    tag: "lds-segment",
+    className: "LdsSegment",
+    formAssociated: false,
+    observed: ["value", "label", "disabled"],
+    defaults: {},
+    template: `<span class="segment" part="segment">
+  <span class="start" part="start"><slot name="start"></slot></span>
+  <span class="label" part="label"><slot></slot></span>
+</span>`,
+    styles: `/* One option in lds-segmented. The host is the radio: it takes focus and
+ * carries aria-checked, set by the parent. */
+
+:host {
+  display: inline-flex;
+  flex: none;
+  min-width: 0;
+  border-radius: var(--lds-control-radius-sm);
+  color: var(--lds-color-fg-muted);
+  cursor: pointer;
+  transition:
+    background var(--lds-transition-control),
+    color var(--lds-transition-control);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host(:hover) {
+  color: var(--lds-color-fg-default);
+}
+
+:host([aria-checked="true"]) {
+  background: var(--lds-color-bg-canvas);
+  color: var(--lds-color-fg-default);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+:host(:focus-visible) {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+:host([aria-disabled="true"]) {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.segment {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lds-control-gap-sm);
+  min-width: 0;
+  padding-inline: var(--lds-control-padding-x-sm);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-segmented-font-size, var(--lds-control-font-size-md));
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.start {
+  display: inline-flex;
+  flex: none;
+}
+
+.start[data-empty],
+.label[data-empty] {
+  display: none;
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* A taller line box so overflow clipping does not cut descenders. */
+  line-height: var(--lds-font-leading-snug);
+}`,
+  });
+
+  /* component: lds-segmented (draft) */
+  LDS.define({
+    tag: "lds-segmented",
+    className: "LdsSegmented",
+    formAssociated: true,
+    observed: ["name", "value", "label", "size", "full-width", "disabled"],
+    defaults: {"size": "md"},
+    template: `<div class="track" part="track" role="radiogroup">
+  <slot></slot>
+</div>`,
+    styles: `/* Track of lds-segment children. Segment height follows the track size via
+ * inherited custom properties. */
+
+:host {
+  --lds-segmented-height: var(--lds-control-height-md);
+  --lds-segmented-font-size: var(--lds-control-font-size-md);
+  --lds-segmented-padding: calc(var(--lds-space-1) / 2);
+  --lds-segmented-bg: var(--lds-color-bg-muted);
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-segmented-height: var(--lds-control-height-sm);
+  --lds-segmented-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([full-width]) {
+  display: flex;
+}
+
+.track {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: var(--lds-segmented-padding);
+  min-width: 0;
+  height: var(--lds-segmented-height);
+  padding: var(--lds-segmented-padding);
+  border-radius: var(--lds-control-radius-md);
+  background: var(--lds-segmented-bg);
+  overflow-x: auto;
+}
+
+:host([full-width]) ::slotted(lds-segment) {
+  flex: 1 1 0;
+}
+
+:host([disabled]) .track {
+  opacity: 0.55;
 }`,
   });
 
@@ -7910,19 +9539,32 @@ a.link:hover {
     tag: "lds-nav-group",
     className: "LdsNavGroup",
     formAssociated: false,
-    observed: ["label", "open"],
+    observed: ["label", "open", "href", "current"],
     defaults: {},
     template: `<div class="group" part="group">
   <button type="button" class="trigger" part="trigger" aria-expanded="false">
     <span class="trigger__label" part="label"></span>
     <span class="trigger__chevron" part="chevron" aria-hidden="true"></span>
   </button>
+  <div class="header" part="header" hidden>
+    <a class="link" part="link">
+      <span class="link__start" part="start"><slot name="start"></slot></span>
+      <span class="link__label"></span>
+      <span class="link__end" part="end"><slot name="end"></slot></span>
+    </a>
+    <button type="button" class="toggle" part="toggle" aria-expanded="false">
+      <span class="trigger__chevron" aria-hidden="true"></span>
+    </button>
+  </div>
   <div class="items" part="items" role="group">
     <slot></slot>
   </div>
 </div>`,
     styles: `/* Collapsible section inside <lds-nav>. Open state is the \`open\` attribute.
- * A collapsed parent nav sets --lds-nav-group-* vars so the rail stays usable. */
+ * A collapsed parent nav sets --lds-nav-group-* vars so the rail stays usable.
+ *
+ * Without href the header is a caps section trigger. With href it is a
+ * destination styled like lds-nav-item, with its own disclosure button. */
 
 :host {
   display: block;
@@ -7965,6 +9607,10 @@ a.link:hover {
   transition:
     background var(--lds-transition-control),
     color var(--lds-transition-control);
+}
+
+.trigger[hidden] {
+  display: none;
 }
 
 .trigger:hover {
@@ -8012,6 +9658,114 @@ a.link:hover {
 :host(:not([open])) .items {
   display: var(--lds-nav-group-closed-display, none);
   padding-inline-start: var(--lds-nav-group-closed-pad, var(--lds-space-2));
+}
+
+/* --- Link header ------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-space-1);
+  border-radius: var(--lds-control-radius-md);
+  transition: background var(--lds-transition-control);
+}
+
+.header[hidden] {
+  display: none;
+}
+
+.header:hover {
+  background: var(--lds-color-bg-muted);
+}
+
+:host([current]) .header {
+  background: var(--lds-color-accent-subtle);
+}
+
+.link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--lds-control-gap-md);
+  min-width: 0;
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-control-padding-x-sm);
+  border-radius: var(--lds-control-radius-md);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-color-fg-muted);
+  text-decoration: none;
+}
+
+.header:hover .link {
+  color: var(--lds-color-fg-default);
+}
+
+:host([current]) .link {
+  color: var(--lds-color-accent-fg);
+}
+
+.link:focus-visible,
+.toggle:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.link__start,
+.link__end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+}
+
+.link__end {
+  display: var(--lds-nav-group-label-display, inline-flex);
+  color: var(--lds-color-fg-subtle);
+  font-size: var(--lds-font-size-xs);
+}
+
+.link__start[data-empty],
+.link__end[data-empty] {
+  display: none;
+}
+
+.link__label {
+  display: var(--lds-nav-group-label-display, inline);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--lds-font-leading-snug);
+}
+
+.toggle {
+  display: var(--lds-nav-group-chevron-display, inline-flex);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin-inline-end: var(--lds-space-1);
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-control-radius-sm);
+  background: transparent;
+  color: var(--lds-color-fg-subtle);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-default);
+}
+
+/* Items under a destination header indent past its start content. */
+:host([href]) .items {
+  padding-inline-start: var(--lds-space-4);
 }`,
   });
 
@@ -8455,6 +10209,117 @@ a.link:hover {
 }`,
   });
 
+  /* component: lds-empty-state (draft) */
+  LDS.define({
+    tag: "lds-empty-state",
+    className: "LdsEmptyState",
+    formAssociated: false,
+    observed: ["size", "align"],
+    defaults: {"size": "md", "align": "center"},
+    template: `<div class="root" part="root">
+  <div class="icon" part="icon"><slot name="icon"></slot></div>
+  <div class="title" part="title"><slot name="title"></slot></div>
+  <div class="body" part="body"><slot></slot></div>
+  <div class="actions" part="actions"><slot name="actions"></slot></div>
+</div>`,
+    styles: `/* Nothing to show yet: an icon, a title, one or two sentences and the action
+ * that fills the space. */
+
+:host {
+  --lds-empty-state-padding: var(--lds-space-12) var(--lds-space-6);
+  --lds-empty-state-gap: var(--lds-space-3);
+  --lds-empty-state-max-width: 28rem;
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-empty-state-padding: var(--lds-space-6) var(--lds-space-4);
+  --lds-empty-state-gap: var(--lds-space-2);
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lds-empty-state-gap);
+  max-width: var(--lds-empty-state-max-width);
+  margin-inline: auto;
+  padding: var(--lds-empty-state-padding);
+  text-align: center;
+}
+
+:host([align="start"]) .root {
+  align-items: flex-start;
+  margin-inline: 0;
+  text-align: start;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-lg);
+  height: var(--lds-control-height-lg);
+  border-radius: var(--lds-radius-full);
+  background: var(--lds-color-bg-muted);
+  color: var(--lds-color-fg-muted);
+}
+
+:host([size="sm"]) .icon {
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+}
+
+.title {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  color: var(--lds-color-fg-default);
+  overflow-wrap: anywhere;
+}
+
+:host([size="sm"]) .title {
+  font-size: var(--lds-font-size-md);
+}
+
+/* Headings passed in the title slot keep the slot's typography. */
+::slotted([slot="title"]) {
+  margin: 0;
+  font: inherit;
+}
+
+.body {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--lds-space-2);
+  margin-block-start: var(--lds-space-1);
+}
+
+:host([align="start"]) .actions {
+  justify-content: flex-start;
+}
+
+.icon[data-empty],
+.title[data-empty],
+.body[data-empty],
+.actions[data-empty] {
+  display: none;
+}`,
+  });
+
   /* component: lds-pagination (draft) */
   LDS.define({
     tag: "lds-pagination",
@@ -8619,6 +10484,87 @@ a.link:hover {
   height: var(--lds-pagination-control-height);
   color: var(--lds-pagination-muted);
   user-select: none;
+}`,
+  });
+
+  /* component: lds-skeleton (draft) */
+  LDS.define({
+    tag: "lds-skeleton",
+    className: "LdsSkeleton",
+    formAssociated: false,
+    observed: ["shape", "lines"],
+    defaults: {"shape": "text"},
+    template: `<span class="lines" part="lines"></span>`,
+    styles: `/* Loading placeholder. Text renders one bar per line; rect and circle are a
+ * single block sized with --lds-skeleton-width / --lds-skeleton-height. */
+
+:host {
+  --lds-skeleton-bg: var(--lds-color-bg-muted);
+  --lds-skeleton-shine: var(--lds-color-bg-subtle);
+  --lds-skeleton-width: 100%;
+  --lds-skeleton-height: 1em;
+  --lds-skeleton-radius: var(--lds-radius-md);
+
+  display: block;
+  width: var(--lds-skeleton-width);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([shape="rect"]) {
+  --lds-skeleton-height: var(--lds-space-24);
+}
+
+:host([shape="circle"]) {
+  --lds-skeleton-width: var(--lds-control-height-md);
+  --lds-skeleton-height: var(--lds-skeleton-width);
+  --lds-skeleton-radius: var(--lds-radius-full);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+}
+
+.bar {
+  display: block;
+  height: var(--lds-skeleton-height);
+  border-radius: var(--lds-skeleton-radius);
+  background: linear-gradient(90deg, var(--lds-skeleton-bg) 0%, var(--lds-skeleton-shine) 50%, var(--lds-skeleton-bg) 100%);
+  background-size: 200% 100%;
+  /* A slow sweep: four times the slowest UI duration. */
+  animation: lds-skeleton-shine calc(var(--lds-duration-slower) * 4) linear infinite;
+}
+
+/* Text lines sit at the height of a line of text, not the font size. */
+:host(:not([shape])) .bar,
+:host([shape="text"]) .bar {
+  height: calc(var(--lds-skeleton-height) * 0.8);
+  margin-block: calc(var(--lds-skeleton-height) * 0.1);
+}
+
+/* The last line of a paragraph is shorter. */
+.bar[data-last] {
+  width: 60%;
+}
+
+@keyframes lds-skeleton-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* The document's reduced-motion reset cannot reach into a shadow root. */
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+  }
 }`,
   });
 

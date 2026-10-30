@@ -1,0 +1,77 @@
+/* One choice inside lds-combobox. The combobox owns selection, the active
+ * highlight and keyboard handling; this component only renders the row. */
+
+:host {
+  --lds-option-bg: transparent;
+  --lds-option-bg-active: var(--lds-color-bg-subtle);
+  --lds-option-fg: var(--lds-color-fg-default);
+
+  display: block;
+  cursor: pointer;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([data-active]) {
+  --lds-option-bg: var(--lds-option-bg-active);
+}
+
+.option {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--lds-control-gap-sm);
+  min-height: var(--lds-control-height-sm);
+  padding: var(--lds-space-1) var(--lds-control-padding-x-sm);
+  border-radius: var(--lds-control-radius-sm);
+  background: var(--lds-option-bg);
+  color: var(--lds-option-fg);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-snug);
+}
+
+/* The check keeps its width when hidden so labels line up whether or not a
+ * row is selected. */
+.check {
+  display: inline-flex;
+  flex: none;
+  visibility: hidden;
+  color: var(--lds-color-accent-fg);
+}
+
+:host([aria-selected="true"]) .check {
+  visibility: visible;
+}
+
+.start,
+.end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.end {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-xs);
+}
+
+.start[data-empty],
+.end[data-empty] {
+  display: none;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:host([disabled]) {
+  cursor: not-allowed;
+}
+
+:host([disabled]) .option {
+  color: var(--lds-color-fg-disabled);
+}

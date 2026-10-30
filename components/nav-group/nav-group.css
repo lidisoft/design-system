@@ -1,5 +1,8 @@
 /* Collapsible section inside <lds-nav>. Open state is the `open` attribute.
- * A collapsed parent nav sets --lds-nav-group-* vars so the rail stays usable. */
+ * A collapsed parent nav sets --lds-nav-group-* vars so the rail stays usable.
+ *
+ * Without href the header is a caps section trigger. With href it is a
+ * destination styled like lds-nav-item, with its own disclosure button. */
 
 :host {
   display: block;
@@ -42,6 +45,10 @@
   transition:
     background var(--lds-transition-control),
     color var(--lds-transition-control);
+}
+
+.trigger[hidden] {
+  display: none;
 }
 
 .trigger:hover {
@@ -89,4 +96,112 @@
 :host(:not([open])) .items {
   display: var(--lds-nav-group-closed-display, none);
   padding-inline-start: var(--lds-nav-group-closed-pad, var(--lds-space-2));
+}
+
+/* --- Link header ------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--lds-space-1);
+  border-radius: var(--lds-control-radius-md);
+  transition: background var(--lds-transition-control);
+}
+
+.header[hidden] {
+  display: none;
+}
+
+.header:hover {
+  background: var(--lds-color-bg-muted);
+}
+
+:host([current]) .header {
+  background: var(--lds-color-accent-subtle);
+}
+
+.link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--lds-control-gap-md);
+  min-width: 0;
+  min-height: var(--lds-control-height-md);
+  padding-inline: var(--lds-control-padding-x-sm);
+  border-radius: var(--lds-control-radius-md);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-font-size-sm);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  color: var(--lds-color-fg-muted);
+  text-decoration: none;
+}
+
+.header:hover .link {
+  color: var(--lds-color-fg-default);
+}
+
+:host([current]) .link {
+  color: var(--lds-color-accent-fg);
+}
+
+.link:focus-visible,
+.toggle:focus-visible {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.link__start,
+.link__end {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+}
+
+.link__end {
+  display: var(--lds-nav-group-label-display, inline-flex);
+  color: var(--lds-color-fg-subtle);
+  font-size: var(--lds-font-size-xs);
+}
+
+.link__start[data-empty],
+.link__end[data-empty] {
+  display: none;
+}
+
+.link__label {
+  display: var(--lds-nav-group-label-display, inline);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--lds-font-leading-snug);
+}
+
+.toggle {
+  display: var(--lds-nav-group-chevron-display, inline-flex);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+  margin-inline-end: var(--lds-space-1);
+  padding: 0;
+  border: 0;
+  border-radius: var(--lds-control-radius-sm);
+  background: transparent;
+  color: var(--lds-color-fg-subtle);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--lds-color-bg-subtle);
+  color: var(--lds-color-fg-default);
+}
+
+/* Items under a destination header indent past its start content. */
+:host([href]) .items {
+  padding-inline-start: var(--lds-space-4);
 }

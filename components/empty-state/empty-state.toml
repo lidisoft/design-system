@@ -1,0 +1,104 @@
+tag = "lds-empty-state"
+name = "Empty state"
+category = "data"
+status = "draft"
+summary = "What to show when a list, board or search has nothing in it, and how to fill it."
+
+description = """
+An icon, a title, a sentence or two and usually one action. Say what will
+appear here and how to make it appear: "No issues in this iteration. Move
+issues here from the backlog." Use size="sm" inside panels, drawers and
+popovers, and align="start" in a narrow column.
+
+For a search with no results, name the query and offer to clear the filters.
+For an error, use lds-alert instead.
+"""
+
+a11y = """
+Put a real heading in the title slot (h2, h3...) at the level that fits the
+page outline; the component styles it but does not choose the level. The icon
+is decorative.
+"""
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md"]
+default = "md"
+description = "md for a page or main view; sm for panels and popovers."
+
+[[attributes]]
+name = "align"
+type = "enum"
+values = ["center", "start"]
+default = "center"
+description = "Alignment of every region."
+
+[[slots]]
+name = "icon"
+description = "A decorative lds-icon."
+
+[[slots]]
+name = "title"
+description = "A heading element."
+
+[[slots]]
+name = ""
+description = "One or two sentences."
+
+[[slots]]
+name = "actions"
+description = "Buttons, usually one primary."
+
+[[parts]]
+name = "root"
+description = "The column holding every region."
+
+[[parts]]
+name = "icon"
+description = "The round icon well."
+
+[[css_vars]]
+name = "--lds-empty-state-max-width"
+default = "28rem"
+description = "Width of the text column."
+
+[[stories]]
+name = "Empty view"
+description = "Says what belongs here and offers the action that fills it."
+html = """
+<lds-empty-state>
+  <lds-icon slot="icon" name="inbox"></lds-icon>
+  <h2 slot="title">No issues in this iteration</h2>
+  Move issues here from the backlog, or create one to get started.
+  <div slot="actions">
+    <lds-button size="sm"><lds-icon slot="start" name="plus"></lds-icon>New issue</lds-button>
+    <lds-button size="sm" variant="secondary">Open backlog</lds-button>
+  </div>
+</lds-empty-state>
+"""
+
+[[stories]]
+name = "No search results, small"
+description = "Inside a panel: names the query and offers to clear filters."
+html = """
+<lds-card style="max-width: 22rem">
+  <lds-empty-state size="sm">
+    <lds-icon slot="icon" name="search"></lds-icon>
+    <h3 slot="title">No results for “rollbck”</h3>
+    Check the spelling or remove a filter.
+    <lds-button slot="actions" size="sm" variant="ghost">Clear filters</lds-button>
+  </lds-empty-state>
+</lds-card>
+"""
+
+[[stories]]
+name = "Start aligned, title only"
+description = "Unused regions collapse without leaving gaps."
+html = """
+<div style="max-width: 16rem">
+  <lds-empty-state size="sm" align="start">
+    <h3 slot="title">Nothing pinned yet</h3>
+  </lds-empty-state>
+</div>
+"""

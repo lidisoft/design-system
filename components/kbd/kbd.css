@@ -1,0 +1,42 @@
+/* One keycap. A sequence (G then I) is two lds-kbd elements; a chord (⌘K)
+ * is one. */
+
+:host {
+  --lds-kbd-bg: var(--lds-color-bg-subtle);
+  --lds-kbd-fg: var(--lds-color-fg-muted);
+  --lds-kbd-border: var(--lds-color-border-default);
+  --lds-kbd-size: var(--lds-space-5);
+  --lds-kbd-font-size: var(--lds-font-size-2xs);
+
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="md"]) {
+  --lds-kbd-size: var(--lds-space-6);
+  --lds-kbd-font-size: var(--lds-font-size-xs);
+}
+
+.kbd {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--lds-kbd-size);
+  height: var(--lds-kbd-size);
+  padding-inline: var(--lds-space-1);
+  border: var(--lds-control-border-width-default) solid var(--lds-kbd-border);
+  border-radius: var(--lds-radius-md);
+  background: var(--lds-kbd-bg);
+  color: var(--lds-kbd-fg);
+  box-shadow: inset 0 calc(var(--lds-control-border-width-default) * -1) 0 var(--lds-kbd-border);
+  font-family: var(--lds-font-family-sans);
+  font-size: var(--lds-kbd-font-size);
+  font-weight: var(--lds-font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}

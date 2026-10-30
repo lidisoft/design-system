@@ -128,7 +128,7 @@ html = """
 <div class="lds-cluster" style="padding-block: var(--lds-space-12)">
   <lds-tooltip>
     <lds-button size="sm"><lds-icon slot="start" name="plus"></lds-icon>New issue</lds-button>
-    <span slot="content">Create an issue · <kbd>C</kbd></span>
+    <span slot="content">Create an issue <lds-kbd>C</lds-kbd></span>
   </lds-tooltip>
   <lds-tooltip content="Escalates to the secondary on-call after 15 minutes without acknowledgement, then to the engineering manager after 30.">
     <lds-button variant="link" size="sm">Escalation policy</lds-button>

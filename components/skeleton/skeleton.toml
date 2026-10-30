@@ -1,0 +1,77 @@
+tag = "lds-skeleton"
+name = "Skeleton"
+category = "data"
+status = "draft"
+summary = "Placeholder shapes while content loads, so the layout does not jump."
+
+description = """
+Grey shapes in the size and position of the content they stand in for: text
+lines, a rectangle for a card or chart, a circle for an avatar. Use them for
+loads you expect to take more than a moment; for a quick action use the
+button's loading state or lds-spinner.
+
+Size rect and circle with --lds-skeleton-width and --lds-skeleton-height. Text
+lines take the current font size, so a skeleton inside a heading is as tall as
+the heading.
+"""
+
+a11y = """
+The skeleton is aria-hidden. Mark the region being loaded with
+aria-busy="true" and remove it when the content arrives. The shimmer stops
+when the user prefers reduced motion.
+"""
+
+[[attributes]]
+name = "shape"
+type = "enum"
+values = ["text", "rect", "circle"]
+default = "text"
+description = "text renders lines; rect and circle render one block."
+
+[[attributes]]
+name = "lines"
+type = "number"
+description = "Number of text lines. The last of several is shorter."
+
+[[parts]]
+name = "lines"
+description = "The column of bars."
+
+[[css_vars]]
+name = "--lds-skeleton-width"
+default = "100% (circle: control height md)"
+description = "Width of the placeholder."
+
+[[css_vars]]
+name = "--lds-skeleton-height"
+default = "1em (rect: space.24)"
+description = "Line or block height."
+
+[[css_vars]]
+name = "--lds-skeleton-radius"
+default = "--lds-radius-md"
+description = "Corner radius."
+
+[[stories]]
+name = "Issue row and card"
+description = "Shapes matching an avatar, a title line and a paragraph."
+html = """
+<div class="lds-stack" aria-busy="true" style="max-width: 28rem">
+  <div class="lds-cluster" style="flex-wrap: nowrap">
+    <lds-skeleton shape="circle" style="--lds-skeleton-width: var(--lds-control-height-sm)"></lds-skeleton>
+    <lds-skeleton style="--lds-skeleton-width: 60%"></lds-skeleton>
+  </div>
+  <lds-skeleton lines="3"></lds-skeleton>
+  <lds-skeleton shape="rect" style="--lds-skeleton-height: var(--lds-space-32)"></lds-skeleton>
+</div>
+"""
+
+[[stories]]
+name = "Follows the font size"
+description = "In a heading the line is as tall as the heading's text."
+html = """
+<div class="lds-stack" style="max-width: 20rem">
+  <h2 class="lds-title" style="margin: 0"><lds-skeleton style="--lds-skeleton-width: 70%"></lds-skeleton></h2>
+  <lds-skeleton lines="2"></lds-skeleton>
+</div>
+"""

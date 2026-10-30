@@ -99,10 +99,9 @@ All three are solved in `components/button/button.js`.
 
 ## Where to pick up work
 
-[docs/roadmap.md](docs/roadmap.md). Form association and the first form controls
-(`lds-field`, inputs, select, checkbox, radio-group, switch) are in place — next
-high-value gaps are `lds-combobox`, `lds-kbd`, a segmented control, a date range
-picker, `lds-empty-state` and `lds-skeleton`.
+[docs/roadmap.md](docs/roadmap.md). Forms, overlays, navigation and the Horizon
+gaps (combobox, segmented control, date range, kbd, empty state, skeleton) are
+in place. Next: `lds-confirm`, `lds-stat`, and the reduced-motion gap below.
 
 ## Honest limitations
 
@@ -115,6 +114,10 @@ Do not paper over these when reporting on work:
   surface must add its pair there, or check it by eye in both themes. White on
   the solid accent, success and danger fills is deliberately below AA (see
   [docs/contrast-audit.md](docs/contrast-audit.md)).
+- The reduced-motion rule in `runtime/reset.css` does not reach inside shadow
+  roots, so component animations (spinner, drawer, tooltip) still play when
+  the user prefers reduced motion. `lds-skeleton` handles it locally; a shared
+  fix in the runtime is pending.
 - Form participation requires `form_associated = true` and
   `el.internals.setFormValue` in the behaviour; there is still no Constraint
   Validation API surface beyond what authors set on the host.

@@ -8,6 +8,12 @@ description = """
 Groups related lds-nav-item children under a labelled trigger. Open state is
 the open attribute. Inside a collapsed lds-nav, the trigger hides and items
 remain visible so the icon rail stays usable.
+
+Set href when the group is itself a destination, such as a project whose
+pages (Issues, Board, Backlog) are the items. The header then becomes a link
+with start and end slots (a colour swatch, a project key) and a separate
+chevron button opens and closes the items. In a collapsed nav only the start
+content shows.
 """
 
 a11y = """
@@ -15,6 +21,9 @@ The trigger is a real <button> with aria-expanded reflecting open. The label
 attribute is the visible (and accessible) name of the section.
 
 - lds-toggle fires before open changes; cancel to keep the previous state.
+- With href, the header is a link named by label and the chevron is a
+  separate button named "Pages in <label>". current sets aria-current="page"
+  on the link.
 - Callers own the item names inside the group.
 """
 
@@ -32,11 +41,29 @@ description = "Expanded. Absent means collapsed (items still show in a collapsed
 
 # ---------------------------------------------------------------------------
 
+[[attributes]]
+name = "href"
+type = "string"
+description = "Make the header a link to the group's own page; the chevron moves to a separate button."
+
+[[attributes]]
+name = "current"
+type = "boolean"
+description = "With href, marks the header link as the current page."
+
 [[slots]]
 name = ""
 description = "Grouped lds-nav-item children."
 
 # ---------------------------------------------------------------------------
+
+[[slots]]
+name = "start"
+description = "With href: leading content of the header link, e.g. a project colour swatch. Shown in a collapsed nav."
+
+[[slots]]
+name = "end"
+description = "With href: trailing secondary text, e.g. the project key."
 
 [[events]]
 name = "lds-toggle"
@@ -67,6 +94,18 @@ description = "Wrapper around the default slot."
 
 # ---------------------------------------------------------------------------
 
+[[parts]]
+name = "header"
+description = "With href: the row holding the link and the toggle."
+
+[[parts]]
+name = "link"
+description = "With href: the header link."
+
+[[parts]]
+name = "toggle"
+description = "With href: the disclosure button."
+
 [[stories]]
 name = "Closed and open"
 description = "Two groups side by side."
@@ -84,5 +123,29 @@ html = """
       <lds-nav-item href="#">Billing</lds-nav-item>
     </lds-nav-group>
   </div>
+</div>
+"""
+
+[[stories]]
+name = "Projects as link headers"
+description = "Each project is a destination with its own pages. The chevron opens the pages without navigating. Collapse the nav to see the swatches alone."
+html = """
+<div class="lds-stack" style="--lds-stack-gap: var(--lds-space-2)">
+  <lds-button size="sm" variant="secondary" style="align-self: start" onclick="this.nextElementSibling.toggleAttribute('collapsed')">Toggle collapsed</lds-button>
+  <lds-nav style="height: 22rem">
+    <lds-nav-group label="Horizon web" href="#hor" open current>
+      <span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-sm); background: var(--lds-color-accent-default)"></span>
+      <span slot="end">HOR</span>
+      <lds-nav-item href="#hor-issues" active><lds-icon slot="start" name="list"></lds-icon>Issues</lds-nav-item>
+      <lds-nav-item href="#hor-board"><lds-icon slot="start" name="kanban"></lds-icon>Board</lds-nav-item>
+      <lds-nav-item href="#hor-backlog"><lds-icon slot="start" name="layers"></lds-icon>Backlog</lds-nav-item>
+    </lds-nav-group>
+    <lds-nav-group label="Platform API with a long project name" href="#api">
+      <span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-sm); background: var(--lds-color-success-default)"></span>
+      <span slot="end">API</span>
+      <lds-nav-item href="#api-issues"><lds-icon slot="start" name="list"></lds-icon>Issues</lds-nav-item>
+      <lds-nav-item href="#api-board"><lds-icon slot="start" name="kanban"></lds-icon>Board</lds-nav-item>
+    </lds-nav-group>
+  </lds-nav>
 </div>
 """

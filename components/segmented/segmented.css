@@ -1,0 +1,48 @@
+/* Track of lds-segment children. Segment height follows the track size via
+ * inherited custom properties. */
+
+:host {
+  --lds-segmented-height: var(--lds-control-height-md);
+  --lds-segmented-font-size: var(--lds-control-font-size-md);
+  --lds-segmented-padding: calc(var(--lds-space-1) / 2);
+  --lds-segmented-bg: var(--lds-color-bg-muted);
+
+  display: inline-flex;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-segmented-height: var(--lds-control-height-sm);
+  --lds-segmented-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([full-width]) {
+  display: flex;
+}
+
+.track {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: var(--lds-segmented-padding);
+  min-width: 0;
+  height: var(--lds-segmented-height);
+  padding: var(--lds-segmented-padding);
+  border-radius: var(--lds-control-radius-md);
+  background: var(--lds-segmented-bg);
+  overflow-x: auto;
+}
+
+:host([full-width]) ::slotted(lds-segment) {
+  flex: 1 1 0;
+}
+
+:host([disabled]) .track {
+  opacity: 0.55;
+}

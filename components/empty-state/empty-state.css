@@ -1,0 +1,96 @@
+/* Nothing to show yet: an icon, a title, one or two sentences and the action
+ * that fills the space. */
+
+:host {
+  --lds-empty-state-padding: var(--lds-space-12) var(--lds-space-6);
+  --lds-empty-state-gap: var(--lds-space-3);
+  --lds-empty-state-max-width: 28rem;
+
+  display: block;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-empty-state-padding: var(--lds-space-6) var(--lds-space-4);
+  --lds-empty-state-gap: var(--lds-space-2);
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lds-empty-state-gap);
+  max-width: var(--lds-empty-state-max-width);
+  margin-inline: auto;
+  padding: var(--lds-empty-state-padding);
+  text-align: center;
+}
+
+:host([align="start"]) .root {
+  align-items: flex-start;
+  margin-inline: 0;
+  text-align: start;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lds-control-height-lg);
+  height: var(--lds-control-height-lg);
+  border-radius: var(--lds-radius-full);
+  background: var(--lds-color-bg-muted);
+  color: var(--lds-color-fg-muted);
+}
+
+:host([size="sm"]) .icon {
+  width: var(--lds-control-height-sm);
+  height: var(--lds-control-height-sm);
+}
+
+.title {
+  font-family: var(--lds-font-family-display);
+  font-size: var(--lds-font-size-lg);
+  font-weight: var(--lds-font-weight-semibold);
+  line-height: var(--lds-font-leading-tight);
+  color: var(--lds-color-fg-default);
+  overflow-wrap: anywhere;
+}
+
+:host([size="sm"]) .title {
+  font-size: var(--lds-font-size-md);
+}
+
+/* Headings passed in the title slot keep the slot's typography. */
+::slotted([slot="title"]) {
+  margin: 0;
+  font: inherit;
+}
+
+.body {
+  color: var(--lds-color-fg-muted);
+  font-size: var(--lds-font-size-sm);
+  line-height: var(--lds-font-leading-normal);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--lds-space-2);
+  margin-block-start: var(--lds-space-1);
+}
+
+:host([align="start"]) .actions {
+  justify-content: flex-start;
+}
+
+.icon[data-empty],
+.title[data-empty],
+.body[data-empty],
+.actions[data-empty] {
+  display: none;
+}

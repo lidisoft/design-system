@@ -1,0 +1,80 @@
+tag = "lds-option"
+name = "Option"
+category = "forms"
+status = "draft"
+summary = "One choice inside lds-combobox, with optional start and end content."
+
+description = """
+A row in an lds-combobox list. The default slot is the label, which is what
+filtering matches and what a chip or the input shows once the option is
+selected. Use the start slot for an avatar, a status glyph or a colour swatch,
+and the end slot for secondary text such as a count or an issue key.
+
+lds-option does nothing on its own: the parent lds-combobox owns selection,
+the active highlight and the keyboard.
+"""
+
+a11y = """
+role="option", with aria-selected and aria-disabled kept in sync by the
+combobox. The label text is the accessible name, so keep it short and put
+decorative start content (avatars, swatches) in the start slot, where it is
+announced only if it has its own label.
+"""
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Submitted value. Must not contain a comma, which separates values in a multiple combobox."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Text used for filtering, chips and the input when the default slot holds more than plain text."
+
+[[attributes]]
+name = "keywords"
+type = "string"
+description = "Extra space-separated terms that filtering also matches, e.g. an email for a person."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Visible but cannot be chosen."
+
+[[slots]]
+name = ""
+description = "The option label."
+
+[[slots]]
+name = "start"
+description = "Leading content: an avatar, a status icon or a colour swatch."
+
+[[slots]]
+name = "end"
+description = "Trailing secondary content, e.g. an issue key or a count."
+
+[[parts]]
+name = "option"
+description = "The row."
+
+[[parts]]
+name = "check"
+description = "Selection mark, visible when the option is selected."
+
+[[css_vars]]
+name = "--lds-option-bg-active"
+default = "--lds-color-bg-subtle"
+description = "Row background while highlighted by keyboard or pointer."
+
+[[stories]]
+name = "Inside a combobox"
+description = "Options only render inside lds-combobox. Open the list to see start and end content."
+html = """
+<lds-combobox label="Status" placeholder="Set status" style="max-width: 18rem">
+  <lds-option value="backlog"><lds-icon slot="start" name="circle-dashed"></lds-icon>Backlog</lds-option>
+  <lds-option value="todo"><lds-icon slot="start" name="circle"></lds-icon>Todo</lds-option>
+  <lds-option value="in-progress"><lds-icon slot="start" name="circle-dot"></lds-icon>In progress<span slot="end">3</span></lds-option>
+  <lds-option value="done"><lds-icon slot="start" name="circle-check"></lds-icon>Done</lds-option>
+  <lds-option value="canceled" disabled><lds-icon slot="start" name="circle-x"></lds-icon>Canceled</lds-option>
+</lds-combobox>
+"""

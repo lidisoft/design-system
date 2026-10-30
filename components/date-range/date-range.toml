@@ -1,0 +1,143 @@
+tag = "lds-date-range"
+name = "Date range"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "A start and an end date in one control, submitted as an ISO 8601 interval."
+
+description = """
+Two native date inputs side by side, for start → due dates and iteration
+dates. Each input bounds the other, so the end picker cannot go before the
+start. The form value is "start/end" (for example 2026-10-01/2026-10-14), the
+ISO 8601 interval form, which servers can split on the slash.
+
+It uses the browser's own date pickers. A custom two-month calendar can come
+later if a product needs one. When the control is narrower than 20rem it
+stacks on three lines: start date, a downward chevron, end date.
+"""
+
+a11y = """
+The pair is a labelled group. The inputs are named "Start date" and "End
+date"; override with start-label and end-label. A reversed range sets the
+form's validity, so submitting shows the browser's message on the end date.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "start"
+type = "string"
+description = "Start date, YYYY-MM-DD."
+
+[[attributes]]
+name = "end"
+type = "string"
+description = "End date, YYYY-MM-DD."
+
+[[attributes]]
+name = "min"
+type = "string"
+description = "Earliest allowed start."
+
+[[attributes]]
+name = "max"
+type = "string"
+description = "Latest allowed end."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name of the pair."
+
+[[attributes]]
+name = "start-label"
+type = "string"
+description = "Accessible name of the start input. Defaults to \"Start date\"."
+
+[[attributes]]
+name = "end-label"
+type = "string"
+description = "Accessible name of the end input. Defaults to \"End date\"."
+
+[[attributes]]
+name = "indicator"
+type = "enum"
+values = ["end", "start"]
+default = "end"
+description = "Side of each date the calendar button sits on. Chromium only; Firefox and Safari keep their own placement."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Control height from control.* tokens."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks interaction."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "Both dates are required."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling."
+
+[[slots]]
+name = "prefix"
+description = "Leading content, typically a calendar icon."
+
+[[events]]
+name = "lds-change"
+detail = "{ start: string, end: string, value: string }"
+description = "Fired when either date is committed. value is the \"start/end\" interval."
+
+[[parts]]
+name = "wrap"
+description = "The control box."
+
+[[parts]]
+name = "start"
+description = "The start date input."
+
+[[parts]]
+name = "end"
+description = "The end date input."
+
+[[stories]]
+name = "Start and due date"
+description = "The end picker cannot go before the start."
+html = """
+<lds-date-range label="Schedule" start-label="Start date" end-label="Due date" start="2026-10-28" end="2026-11-13" style="max-width: 24rem"></lds-date-range>
+"""
+
+[[stories]]
+name = "Iteration in a form"
+description = "Bounded to the quarter and required, with the calendar buttons before each date. A reversed range blocks submit."
+html = """
+<form class="lds-stack" style="max-width: 24rem" onsubmit="event.preventDefault(); this.querySelector('output').textContent = new FormData(this).get('iteration')">
+  <lds-field label="Iteration dates" required>
+    <lds-date-range name="iteration" label="Iteration dates" indicator="start" required min="2026-10-01" max="2026-12-31" start="2026-11-02" end="2026-11-13"></lds-date-range>
+  </lds-field>
+  <div class="lds-cluster"><lds-button type="submit" size="sm">Save</lds-button><lds-button type="reset" size="sm" variant="ghost">Reset</lds-button><output class="lds-muted"></output></div>
+</form>
+"""
+
+[[stories]]
+name = "Sizes and disabled"
+description = "Heights match lds-input. Below 20rem the dates stack on three lines."
+html = """
+<div class="lds-stack" style="max-width: 24rem">
+  <lds-date-range label="Small" size="sm" start="2026-10-01" end="2026-10-14"></lds-date-range>
+  <lds-date-range label="Disabled" disabled start="2026-10-01" end="2026-10-14"></lds-date-range>
+  <div style="max-width: 14rem"><lds-date-range label="Narrow" start="2026-10-01" end="2026-10-14"></lds-date-range></div>
+</div>
+"""

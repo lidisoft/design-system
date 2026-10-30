@@ -1,0 +1,68 @@
+tag = "lds-kbd"
+name = "Kbd"
+category = "primitives"
+status = "draft"
+summary = "A keyboard key, for shortcut hints in menus, the command palette, tooltips and buttons."
+
+description = """
+Renders one keycap with a native <kbd>. Write a chord as one key (⌘K, Ctrl+K)
+and a sequence as several (G then I). Use the platform's own symbols; LDS does
+not translate ⌘ to Ctrl.
+"""
+
+a11y = """
+The text is read as written, so ⌘ is announced as "command" by most screen
+readers. For a sequence, put a visually hidden "then" between keys if the
+order matters to understand it.
+"""
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md"]
+default = "sm"
+description = "sm fits menus and tooltips; md sits next to body text."
+
+[[slots]]
+name = ""
+description = "The key: a letter, a symbol or a short chord."
+
+[[parts]]
+name = "kbd"
+description = "The native kbd element."
+
+[[css_vars]]
+name = "--lds-kbd-bg"
+default = "--lds-color-bg-subtle"
+description = "Keycap background. Use --lds-color-bg-canvas on subtle surfaces."
+
+[[stories]]
+name = "Keys, chords and sequences"
+description = "One element per key the user presses in turn."
+html = """
+<div class="lds-cluster">
+  <lds-kbd>C</lds-kbd>
+  <lds-kbd>⌘K</lds-kbd>
+  <span class="lds-cluster" style="--lds-cluster-gap: var(--lds-space-1)"><lds-kbd>G</lds-kbd><span class="lds-muted" style="font-size: var(--lds-font-size-xs)">then</span><lds-kbd>I</lds-kbd></span>
+  <lds-kbd size="md">Esc</lds-kbd>
+  <lds-kbd size="md">Shift+Enter</lds-kbd>
+</div>
+"""
+
+[[stories]]
+name = "In a menu, a tooltip and the command palette"
+description = "The end slot of menu and command items, and a tooltip's content slot."
+html = """
+<div class="lds-cluster" style="align-items: start; padding-block: var(--lds-space-8)">
+  <lds-menu placement="bottom-start">
+    <lds-button slot="trigger" variant="secondary" size="sm">Issue actions</lds-button>
+    <lds-menu-item>Assign to me<lds-kbd slot="end">I</lds-kbd></lds-menu-item>
+    <lds-menu-item>Change status<lds-kbd slot="end">S</lds-kbd></lds-menu-item>
+    <lds-menu-item>Copy link<lds-kbd slot="end">⌘L</lds-kbd></lds-menu-item>
+  </lds-menu>
+  <lds-tooltip>
+    <lds-button size="sm"><lds-icon slot="start" name="plus"></lds-icon>New issue</lds-button>
+    <span slot="content">Create an issue <lds-kbd>C</lds-kbd></span>
+  </lds-tooltip>
+</div>
+"""

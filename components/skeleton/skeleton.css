@@ -1,0 +1,71 @@
+/* Loading placeholder. Text renders one bar per line; rect and circle are a
+ * single block sized with --lds-skeleton-width / --lds-skeleton-height. */
+
+:host {
+  --lds-skeleton-bg: var(--lds-color-bg-muted);
+  --lds-skeleton-shine: var(--lds-color-bg-subtle);
+  --lds-skeleton-width: 100%;
+  --lds-skeleton-height: 1em;
+  --lds-skeleton-radius: var(--lds-radius-md);
+
+  display: block;
+  width: var(--lds-skeleton-width);
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([shape="rect"]) {
+  --lds-skeleton-height: var(--lds-space-24);
+}
+
+:host([shape="circle"]) {
+  --lds-skeleton-width: var(--lds-control-height-md);
+  --lds-skeleton-height: var(--lds-skeleton-width);
+  --lds-skeleton-radius: var(--lds-radius-full);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lds-space-2);
+}
+
+.bar {
+  display: block;
+  height: var(--lds-skeleton-height);
+  border-radius: var(--lds-skeleton-radius);
+  background: linear-gradient(90deg, var(--lds-skeleton-bg) 0%, var(--lds-skeleton-shine) 50%, var(--lds-skeleton-bg) 100%);
+  background-size: 200% 100%;
+  /* A slow sweep: four times the slowest UI duration. */
+  animation: lds-skeleton-shine calc(var(--lds-duration-slower) * 4) linear infinite;
+}
+
+/* Text lines sit at the height of a line of text, not the font size. */
+:host(:not([shape])) .bar,
+:host([shape="text"]) .bar {
+  height: calc(var(--lds-skeleton-height) * 0.8);
+  margin-block: calc(var(--lds-skeleton-height) * 0.1);
+}
+
+/* The last line of a paragraph is shorter. */
+.bar[data-last] {
+  width: 60%;
+}
+
+@keyframes lds-skeleton-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* The document's reduced-motion reset cannot reach into a shadow root. */
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+  }
+}

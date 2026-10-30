@@ -1,0 +1,242 @@
+tag = "lds-combobox"
+name = "Combobox"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "Filterable single or multiple choice, with rich options, chips and an optional create row."
+
+description = """
+Type to filter a list of lds-option children, then pick with the keyboard or
+pointer. Use it for property pickers: status, assignee, labels, iteration,
+release. For a short fixed list with no filtering, lds-select is lighter.
+With one value, the input shows the chosen label and the option's start
+content (an avatar, a status glyph) sits in front of it. With multiple,
+chosen values become removable chips, the list stays open while you pick, and
+Backspace in an empty input removes the last chip. With creatable, a Create
+row appears when the typed text matches no option; choosing it fires
+lds-create and, unless cancelled, appends and selects a new option. Set
+filter="none" to load options yourself from lds-search. The value attribute
+holds one value, or comma-separated values with multiple, and the form
+receives one entry per value under name.
+"""
+
+a11y = """
+Follows the ARIA combobox pattern with list autocomplete. Focus stays in the
+input: ArrowDown and ArrowUp move the highlight, Enter chooses, Escape closes
+the list and, pressed again, abandons the typed text. Alt+ArrowUp closes.
+
+The highlighted option is exposed through aria-activedescendant using ARIA
+element reflection, which can reference the light-DOM options from the
+shadow input (an id cannot). Browsers without element reflection still get
+filtering and selection but do not announce the highlighted option.
+
+Give the control a name with `label` (or aria-label). Chips have remove
+buttons labelled "Remove <label>"; they are skipped by Tab, and Backspace
+removes the last one from the keyboard.
+"""
+
+# ---------------------------------------------------------------------------
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Selected value, or comma-separated values when multiple."
+
+[[attributes]]
+name = "multiple"
+type = "boolean"
+description = "Allow several values, shown as chips."
+
+[[attributes]]
+name = "creatable"
+type = "boolean"
+description = "Offer a Create row when the typed text matches no option."
+
+[[attributes]]
+name = "filter"
+type = "enum"
+values = ["auto", "none"]
+default = "auto"
+description = "auto hides options that do not match; none leaves filtering to the caller via lds-search."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name of the input and list."
+
+[[attributes]]
+name = "placeholder"
+type = "string"
+description = "Shown while nothing is selected."
+
+[[attributes]]
+name = "empty"
+type = "string"
+description = "Text when nothing matches. Defaults to \"No results\"."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md", "lg"]
+default = "md"
+description = "Control height from control.* tokens, matching lds-input."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Blocks interaction."
+
+[[attributes]]
+name = "required"
+type = "boolean"
+description = "At least one value is required for form validation."
+
+[[attributes]]
+name = "invalid"
+type = "boolean"
+description = "Error styling. Set by lds-field when it has an error."
+
+# ---------------------------------------------------------------------------
+
+[[slots]]
+name = ""
+description = "lds-option children."
+
+# ---------------------------------------------------------------------------
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string, values: string[] }"
+description = "Fired when the selection changes."
+
+[[events]]
+name = "lds-search"
+detail = "{ query: string }"
+description = "Fired as the user types. Use with filter=\"none\" to load options."
+
+[[events]]
+name = "lds-create"
+detail = "{ value: string }"
+description = "Fired when the Create row is chosen. Cancel it to add the option yourself."
+
+# ---------------------------------------------------------------------------
+
+[[parts]]
+name = "control"
+description = "The field box holding chips, input and chevron."
+
+[[parts]]
+name = "input"
+description = "The text input."
+
+[[parts]]
+name = "panel"
+description = "The floating list surface."
+
+[[parts]]
+name = "create"
+description = "The Create row."
+
+# ---------------------------------------------------------------------------
+
+[[css_vars]]
+name = "--lds-combobox-max-height"
+default = "18rem"
+description = "Maximum list height before it scrolls."
+
+[[css_vars]]
+name = "--lds-combobox-bg"
+default = "--lds-color-bg-canvas"
+description = "Control background."
+
+# ---------------------------------------------------------------------------
+
+[[stories]]
+name = "Status"
+description = "Single choice with a status glyph per option. The chosen glyph shows in the control."
+html = """
+<lds-combobox label="Status" value="in-progress" style="max-width: 18rem">
+  <lds-option value="backlog"><lds-icon slot="start" name="circle-dashed"></lds-icon>Backlog</lds-option>
+  <lds-option value="todo"><lds-icon slot="start" name="circle"></lds-icon>Todo</lds-option>
+  <lds-option value="in-progress"><lds-icon slot="start" name="circle-dot"></lds-icon>In progress</lds-option>
+  <lds-option value="done"><lds-icon slot="start" name="circle-check"></lds-icon>Done</lds-option>
+  <lds-option value="canceled" disabled><lds-icon slot="start" name="circle-x"></lds-icon>Canceled</lds-option>
+</lds-combobox>
+"""
+
+[[stories]]
+name = "Assignee"
+description = "Avatars in the start slot; keywords let an email match. Type \"grace@\" to see it."
+html = """
+<lds-combobox label="Assignee" placeholder="Assign to…" style="max-width: 18rem">
+  <lds-option value="ada" keywords="ada@lidisoft.com"><lds-avatar slot="start" name="Ada Lovelace" size="sm"></lds-avatar>Ada Lovelace</lds-option>
+  <lds-option value="grace" keywords="grace@lidisoft.com"><lds-avatar slot="start" name="Grace Hopper" size="sm"></lds-avatar>Grace Hopper</lds-option>
+  <lds-option value="linus" keywords="linus@lidisoft.com"><lds-avatar slot="start" name="Linus Torvalds" size="sm"></lds-avatar>Linus Torvalds</lds-option>
+  <lds-option value="margaret" keywords="margaret@lidisoft.com"><lds-avatar slot="start" name="Margaret Hamilton" size="sm"></lds-avatar>Margaret Hamilton<span slot="end">away</span></lds-option>
+</lds-combobox>
+"""
+
+[[stories]]
+name = "Labels, multiple and creatable"
+description = "Colour swatches, chips, and a Create row for a label that does not exist yet. Backspace removes the last chip."
+html = """
+<lds-combobox label="Labels" multiple creatable value="bug,frontend" placeholder="Add labels…" style="max-width: 24rem">
+  <lds-option value="bug"><span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-full); background: var(--lds-color-danger-default)"></span>Bug</lds-option>
+  <lds-option value="feature"><span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-full); background: var(--lds-color-accent-default)"></span>Feature</lds-option>
+  <lds-option value="frontend"><span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-full); background: var(--lds-color-success-default)"></span>Frontend</lds-option>
+  <lds-option value="performance"><span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-full); background: var(--lds-color-warning-default)"></span>Performance</lds-option>
+  <lds-option value="tech-debt"><span slot="start" style="width: 0.625rem; height: 0.625rem; border-radius: var(--lds-radius-full); background: var(--lds-color-fg-subtle)"></span>Tech debt</lds-option>
+</lds-combobox>
+"""
+
+[[stories]]
+name = "In a form"
+description = "Required, form-associated. Submitting shows the values the form received."
+html = """
+<form class="lds-stack" style="max-width: 24rem" onsubmit="event.preventDefault(); this.querySelector('output').textContent = JSON.stringify([...new FormData(this)])">
+  <lds-field label="Iteration" required>
+    <lds-combobox name="iteration" label="Iteration" required placeholder="Choose an iteration">
+      <lds-option value="13">Iteration 13<span slot="end">ended</span></lds-option>
+      <lds-option value="14">Iteration 14<span slot="end">current</span></lds-option>
+      <lds-option value="15">Iteration 15</lds-option>
+    </lds-combobox>
+  </lds-field>
+  <lds-field label="Watchers">
+    <lds-combobox name="watchers" label="Watchers" multiple value="ada">
+      <lds-option value="ada">Ada Lovelace</lds-option>
+      <lds-option value="grace">Grace Hopper</lds-option>
+      <lds-option value="linus">Linus Torvalds</lds-option>
+    </lds-combobox>
+  </lds-field>
+  <div class="lds-cluster">
+    <lds-button type="submit">Save</lds-button>
+    <lds-button type="reset" variant="ghost">Reset</lds-button>
+  </div>
+  <output class="lds-muted"></output>
+</form>
+"""
+
+[[stories]]
+name = "Sizes, disabled and long content"
+description = "Heights match lds-input. Long labels wrap in the list and chips wrap onto new lines."
+html = """
+<div class="lds-stack" style="max-width: 24rem">
+  <lds-combobox label="Small" size="sm" placeholder="Small">
+    <lds-option value="a">Release 2.4</lds-option>
+  </lds-combobox>
+  <lds-combobox label="Disabled" disabled value="a">
+    <lds-option value="a">Release 2.4</lds-option>
+  </lds-combobox>
+  <lds-combobox label="Projects" multiple value="one,two,three">
+    <lds-option value="one">Migrate the escalation policy engine to the new scheduler</lds-option>
+    <lds-option value="two">Platform API</lds-option>
+    <lds-option value="three">Mobile app</lds-option>
+    <lds-option value="four">An_option_with_a_very_long_unbroken_identifier_that_must_wrap</lds-option>
+  </lds-combobox>
+</div>
+"""

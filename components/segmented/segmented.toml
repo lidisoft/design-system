@@ -1,0 +1,118 @@
+tag = "lds-segmented"
+name = "Segmented control"
+category = "forms"
+status = "draft"
+form_associated = true
+summary = "A row of mutually exclusive options, for view switchers and small toggles."
+
+description = """
+Pick one of two to six short options shown side by side: List, Board, Backlog
+views, or Unread and All. Children are lds-segment elements. For more options
+or longer labels use lds-radio-group or lds-select; for actions rather than a
+choice use buttons.
+
+Selection follows the arrow keys, like native radios, so switching views from
+the keyboard is immediate.
+"""
+
+a11y = """
+role="radiogroup" with role="radio" segments. Only the checked segment is in
+the tab order; arrow keys, Home and End move and select. Give the group a name
+with `label`, and icon-only segments a name with their own `label`.
+"""
+
+[[attributes]]
+name = "name"
+type = "string"
+description = "Form field name."
+
+[[attributes]]
+name = "value"
+type = "string"
+description = "Checked segment's value. Defaults to the first segment."
+
+[[attributes]]
+name = "label"
+type = "string"
+description = "Accessible name of the group."
+
+[[attributes]]
+name = "size"
+type = "enum"
+values = ["sm", "md"]
+default = "md"
+description = "Height from control.height.*."
+
+[[attributes]]
+name = "full-width"
+type = "boolean"
+description = "Stretch to the container and share the width equally."
+
+[[attributes]]
+name = "disabled"
+type = "boolean"
+description = "Disables every segment."
+
+[[slots]]
+name = ""
+description = "lds-segment children."
+
+[[events]]
+name = "lds-change"
+detail = "{ value: string }"
+description = "Fired when the checked segment changes."
+
+[[parts]]
+name = "track"
+description = "The background track holding the segments."
+
+[[css_vars]]
+name = "--lds-segmented-bg"
+default = "--lds-color-bg-muted"
+description = "Track background."
+
+[[stories]]
+name = "View switcher"
+description = "Icon and label per view. Tab in, then use the arrow keys."
+html = """
+<lds-segmented label="View" value="board">
+  <lds-segment value="list"><lds-icon slot="start" name="list"></lds-icon>List</lds-segment>
+  <lds-segment value="board"><lds-icon slot="start" name="kanban"></lds-icon>Board</lds-segment>
+  <lds-segment value="backlog"><lds-icon slot="start" name="layers"></lds-icon>Backlog</lds-segment>
+  <lds-segment value="table"><lds-icon slot="start" name="table"></lds-icon>Table</lds-segment>
+  <lds-segment value="timeline"><lds-icon slot="start" name="chart-gantt"></lds-icon>Timeline</lds-segment>
+  <lds-segment value="calendar"><lds-icon slot="start" name="calendar-days"></lds-icon>Calendar</lds-segment>
+</lds-segmented>
+"""
+
+[[stories]]
+name = "Small toggle and icon-only"
+description = "A two-way filter, and icon-only segments named with label."
+html = """
+<div class="lds-cluster">
+  <lds-segmented label="Notifications" size="sm" value="unread">
+    <lds-segment value="unread">Unread</lds-segment>
+    <lds-segment value="all">All</lds-segment>
+  </lds-segmented>
+  <lds-segmented label="Theme" size="sm" value="light">
+    <lds-segment value="light" label="Light"><lds-icon slot="start" name="sun"></lds-icon></lds-segment>
+    <lds-segment value="dark" label="Dark"><lds-icon slot="start" name="moon"></lds-icon></lds-segment>
+  </lds-segmented>
+</div>
+"""
+
+[[stories]]
+name = "Full width, disabled segment and form"
+description = "Shares the width; a disabled segment is skipped by the arrow keys. The value is submitted under name."
+html = """
+<form class="lds-stack" style="max-width: 24rem" onsubmit="event.preventDefault(); this.querySelector('output').textContent = new FormData(this).get('estimate')">
+  <lds-segmented name="estimate" label="Estimate" full-width value="3">
+    <lds-segment value="1">1</lds-segment>
+    <lds-segment value="2">2</lds-segment>
+    <lds-segment value="3">3</lds-segment>
+    <lds-segment value="5">5</lds-segment>
+    <lds-segment value="8" disabled>8</lds-segment>
+  </lds-segmented>
+  <div class="lds-cluster"><lds-button type="submit" size="sm">Save</lds-button><output class="lds-muted"></output></div>
+</form>
+"""

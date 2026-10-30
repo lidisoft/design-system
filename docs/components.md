@@ -56,6 +56,14 @@ every LiDiSoft service needs.
 | `lds-radio-group` | **draft** — form-associated one-of-many |
 | `lds-switch` | **draft** — form-associated immediate toggle |
 | `lds-date-picker` | **draft** — native date/time control |
+| `lds-date-range` | **draft** — start and end date, ISO interval value |
+| `lds-combobox` | **draft** — filterable single/multiple choice |
+| `lds-option` | **draft** — combobox option with start/end slots |
+| `lds-segmented` | **draft** — view switcher / small toggle |
+| `lds-segment` | **draft** — segmented option |
+| `lds-kbd` | **draft** — keyboard key |
+| `lds-empty-state` | **draft** — nothing to show yet |
+| `lds-skeleton` | **draft** — loading placeholder |
 | everything else | not started |
 
 ## Foundations (not components)
@@ -87,7 +95,7 @@ the page created. Resist any urge to add `<lds-stack>`.
 | `lds-avatar` | User/team identity | **Done (draft).** image, initials, icon fallback, size, shape; `lds-avatar-group` for stacks |
 | `lds-spinner` | Indeterminate progress | **Done (draft).** size, label; `aria-busy` on the region, not the spinner |
 | `lds-divider` | Visual separation | **Done (draft).** orientation; optional inline label slot |
-| `lds-kbd` | Keyboard shortcuts | Trivial, but recurring in help and command surfaces |
+| `lds-kbd` | Keyboard shortcuts | **Done (draft).** One keycap per element; size sm/md |
 
 ### Icons
 
@@ -122,7 +130,9 @@ forms — see the form-association note in
 | `lds-checkbox` | Boolean | **Done (draft).** FACE; indeterminate supported |
 | `lds-radio-group` | One of several | **Done (draft).** FACE; roving tabindex + arrows |
 | `lds-switch` | Immediate toggle | **Done (draft).** FACE; distinct from checkbox |
-| `lds-combobox` | Filterable choice | Hardest in the set; needs `lds-listbox` and full `aria-activedescendant` |
+| `lds-combobox` | Filterable choice | **Done (draft).** FACE; `lds-option` children with start/end slots, `multiple` chips, `creatable`, `filter="none"` + `lds-search`; active option via ARIA element reflection |
+| `lds-segmented` | View switcher, small toggles | **Done (draft).** FACE radiogroup of `lds-segment`; roving tabindex, size, full-width |
+| `lds-date-range` | Start and end dates | **Done (draft).** FACE; two native date inputs bounding each other; value `start/end` |
 | `lds-date-picker` | Dates | **Done (draft).** FACE; native `date` / `time` / `datetime-local` / `month` / `week` |
 
 **Build `lds-field` first.** Doing it last means retrofitting label and error
@@ -146,7 +156,7 @@ so the runtime attaches `ElementInternals`.
 | `lds-navbar` | Top bar | Brand / links / actions slots; auto or forced compact with an inline toggle panel. Active page via `aria-current="page"` on slotted links |
 | `lds-nav` | App sidebar | Brand / items / footer; `collapsed` icon rail via inherited CSS variables |
 | `lds-nav-item` | Sidebar destination | `href`, `active`, `disabled`; start/end slots for icons |
-| `lds-nav-group` | Collapsible section | `label`, `open`; trigger hides in a collapsed parent nav |
+| `lds-nav-group` | Collapsible section | `label`, `open`; trigger hides in a collapsed parent nav. `href` turns the header into a link (start/end slots, `current`) with a separate disclosure button |
 | `lds-breadcrumb` | Hierarchy trail | Collapses middle steps behind an ellipsis when narrow; `expanded`, `max-items` |
 | `lds-breadcrumb-item` | Breadcrumb step | `href`, `current`; leading separator hides on the first item |
 | `lds-menu` | Dropdown actions | **Done (draft).** `lds-menu-item`, `<hr>` separators; keyboard arrows; account-menu composition |
@@ -166,11 +176,11 @@ matrix.
 |-----|---------|-------|
 | `lds-table` | Tabular data | **Done (draft).** Light-DOM `<table>`; density, sticky header, striped, sortable columns |
 | `lds-pagination` | Paging | **Done (draft).** Summary, page-size select, ellipsis page list; `lds-page-change` / `lds-page-size-change` |
-| `lds-empty-state` | Nothing to show | Icon, title, description, action slots |
+| `lds-empty-state` | Nothing to show | **Done (draft).** icon/title/body/actions slots; size, align |
 | `lds-stat` | Single metric | Value, label, delta with direction |
 | `lds-timeline` | Chronological events | **Done (draft).** `lds-timeline-item`; rail + intent markers |
 | `lds-code` | Code and payloads | **Done (draft).** Copy button; no syntax highlighting |
-| `lds-skeleton` | Loading placeholder | Shape variants; respects reduced motion |
+| `lds-skeleton` | Loading placeholder | **Done (draft).** text lines, rect, circle; stops shimmering for reduced motion |
 
 `lds-table` is the one to think hardest about. Putting rows in a shadow root
 breaks text selection across cells, browser find-in-page and screen-reader table

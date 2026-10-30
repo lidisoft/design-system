@@ -1,0 +1,155 @@
+/* Two native date inputs in one control, styled to match lds-date-picker. */
+
+:host {
+  --lds-date-range-height: var(--lds-control-height-md);
+  --lds-date-range-padding-x: var(--lds-control-padding-x-md);
+  --lds-date-range-radius: var(--lds-control-radius-md);
+  --lds-date-range-font-size: var(--lds-control-font-size-md);
+  --lds-date-range-bg: var(--lds-color-bg-canvas);
+  --lds-date-range-fg: var(--lds-color-fg-default);
+  --lds-date-range-border: var(--lds-color-border-default);
+
+  display: block;
+  max-width: 100%;
+  /* The layout stacks by the component's own width, not the viewport's. */
+  container-type: inline-size;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+:host([size="sm"]) {
+  --lds-date-range-height: var(--lds-control-height-sm);
+  --lds-date-range-padding-x: var(--lds-control-padding-x-sm);
+  --lds-date-range-radius: var(--lds-control-radius-sm);
+  --lds-date-range-font-size: var(--lds-control-font-size-sm);
+}
+
+:host([size="lg"]) {
+  --lds-date-range-height: var(--lds-control-height-lg);
+  --lds-date-range-padding-x: var(--lds-control-padding-x-lg);
+  --lds-date-range-radius: var(--lds-control-radius-lg);
+  --lds-date-range-font-size: var(--lds-control-font-size-lg);
+}
+
+:host([invalid]),
+:host([aria-invalid="true"]) {
+  --lds-date-range-border: var(--lds-color-danger-border);
+}
+
+.wrap {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--lds-date-range-height);
+  padding-inline: var(--lds-date-range-padding-x);
+  gap: var(--lds-control-gap-md);
+  border: var(--lds-control-border-width-default) solid var(--lds-date-range-border);
+  border-radius: var(--lds-date-range-radius);
+  background: var(--lds-date-range-bg);
+  color: var(--lds-date-range-fg);
+  box-shadow: var(--lds-shadow-sm);
+}
+
+.wrap:focus-within {
+  outline: var(--lds-focus-width) solid var(--lds-color-focus-ring);
+  outline-offset: var(--lds-focus-offset);
+}
+
+.prefix,
+.separator {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--lds-color-fg-muted);
+}
+
+.prefix[data-empty] {
+  display: none;
+}
+
+.input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--lds-date-range-font-size);
+  line-height: 1;
+  color-scheme: inherit;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input:disabled {
+  color: var(--lds-color-fg-disabled);
+  cursor: not-allowed;
+}
+
+.input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Chromium only: Firefox draws its picker button internally and Safari has
+ * none, so there the icon stays where the browser puts it. */
+:host([indicator="start"]) .input::-webkit-calendar-picker-indicator {
+  order: -1;
+  margin-inline: 0 var(--lds-space-2);
+}
+
+:host([disabled]) .wrap {
+  background: var(--lds-color-bg-subtle);
+  cursor: not-allowed;
+}
+
+:host([disabled]) .input::-webkit-calendar-picker-indicator {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Too narrow for both dates side by side: three lines, start date, a
+ * downward chevron, end date. The dates fill the width so their calendar
+ * buttons stay at the end; the chevron is centred under the date text. That
+ * text is ten characters in the formats browsers use (10/01/2026,
+ * 01.10.2026, 2026-10-01), and its separators are narrower than digits, so
+ * its width is about 9ch. Last in the file so it overrides the base rules. */
+@container (width < 20rem) {
+  .wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--lds-space-1);
+    padding-block: var(--lds-space-2);
+  }
+
+  .input {
+    flex: none;
+  }
+
+  .separator {
+    align-self: flex-start;
+    justify-content: center;
+    width: 9ch;
+    font-size: var(--lds-date-range-font-size);
+  }
+
+  /* The text starts after the calendar button: its width plus the gap set on
+   * it above. */
+  :host([indicator="start"]) .separator {
+    margin-inline-start: calc(1.25em + var(--lds-space-2));
+  }
+
+  .separator lds-icon {
+    rotate: 90deg;
+  }
+}

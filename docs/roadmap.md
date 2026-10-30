@@ -49,7 +49,8 @@ components will.
       `lds-switch`
 - [x] `lds-table` — light-DOM `<table>`, sorting, sticky header, density
 - [x] `lds-tabs` + `lds-tab-panel`
-- [ ] `lds-empty-state`, `lds-stat`, `lds-skeleton`
+- [x] **`lds-empty-state`**, **`lds-skeleton`**
+- [ ] `lds-stat`
 - [x] **`lds-avatar` + `lds-avatar-group`** — image / initials / icon; stack + max
 - [x] **`lds-tag`** — dismissible chip + `lds-remove`
 - [x] `lds-divider`
@@ -92,7 +93,9 @@ Genuinely optional; none of it blocks shipping.
 
 - [x] **`lds-command` + `lds-command-item` + `lds-command-group`** — global
       search palette (dedicated surface; general `lds-combobox` still later)
-- [ ] `lds-combobox` — form filterable select (hardest remaining form control)
+- [x] **`lds-combobox` + `lds-option`** — filterable single/multiple choice,
+      chips, create row, server-side filtering via `lds-search`
+- [x] **`lds-segmented` + `lds-segment`**, **`lds-kbd`**, **`lds-date-range`**
 - [x] **`lds-date-picker`** — native `<input type="date">` (plus time /
       datetime-local / month / week); sufficient until a product needs a custom
       calendar grid
